@@ -16,9 +16,16 @@
         .header {
             background-color: #3A5795;
             color: white;
-            padding: 15px 0;
+            padding: 15px 20px;
             font-size: 20px;
             font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .header img {
+            height: 40px; /* Adjust as needed */
+            margin-right: 10px;
         }
         .login-panel {
             width: 500px;
@@ -131,7 +138,10 @@
     </style>
 </head>
 <body>
-    <div class="header">Datara - Salud</div>
+    <div class="header">
+        <img src="img/midatara_logo_texto.png" alt="Datara Logo">
+        Datara - Salud
+    </div>
     <div class="login-panel">
         <h2>Ingrese a Datara</h2>
         <form id="loginForm">
