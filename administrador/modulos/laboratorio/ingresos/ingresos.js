@@ -1111,9 +1111,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 let addedCount = 0;
                 const totalRows = json.length;
-                let batch = writeBatch(db);
+                const useBatch = typeof writeBatch === 'function';
+                let batch = useBatch ? writeBatch(db) : null;
                 const batchSize = 500;
                 let batchCount = 0;
+
+                if (!useBatch) {
+                    showToast('Advertencia: La importación por lotes no está disponible. Usando método alternativo (más lento).', 'warning');
+                }
 
                 showImportProgress(0);
 
@@ -1196,29 +1201,47 @@ document.addEventListener('DOMContentLoaded', () => {
                         createdAt: new Date()
                     };
 
-                    const ingresoRef = doc(collection(db, "ingresos_lab"));
-                    batch.set(ingresoRef, processedRow);
-                    batch.set(doc(collection(db, "ingresos_lab_historial")), {
-                        ingresoId: ingresoRef.id,
-                        action: 'create',
-                        timestamp: new Date(),
-                        userId: auth.currentUser ? auth.currentUser.uid : null,
-                        userFullName: window.currentUserData.fullName || 'Usuario Invitado',
-                        username: window.currentUserData.username || 'invitado',
-                        oldData: null,
-                        newData: processedRow
-                    });
+                    if (useBatch) {
+                        const ingresoRef = doc(collection(db, "ingresos_lab"));
+                        batch.set(ingresoRef, processedRow);
+                        batch.set(doc(collection(db, "ingresos_lab_historial")), {
+                            ingresoId: ingresoRef.id,
+                            action: 'create',
+                            timestamp: new Date(),
+                            userId: auth.currentUser ? auth.currentUser.uid : null,
+                            userFullName: window.currentUserData.fullName || 'Usuario Invitado',
+                            username: window.currentUserData.username || 'invitado',
+                            oldData: null,
+                            newData: processedRow
+                        });
+                        batchCount += 2;
+                    } else {
+                        const ingresoRef = await addDoc(collection(db, "ingresos_lab"), processedRow);
+                        await addDoc(collection(db, "ingresos_lab_historial"), {
+                            ingresoId: ingresoRef.id,
+                            action: 'create',
+                            timestamp: new Date(),
+                            userId: auth.currentUser ? auth.currentUser.uid : null,
+                            userFullName: window.currentUserData.fullName || 'Usuario Invitado',
+                            username: window.currentUserData.username || 'invitado',
+                            oldData: null,
+                            newData: processedRow
+                        });
+                    }
 
                     addedCount++;
-                    batchCount += 2;
 
-                    if (batchCount >= batchSize || i === json.length - 1) {
+                    if (useBatch && (batchCount >= batchSize || i === json.length - 1)) {
                         await batch.commit();
                         batch = writeBatch(db);
                         batchCount = 0;
                     }
 
                     showImportProgress(((i + 1) / totalRows) * 100);
+                }
+
+                if (useBatch && batchCount > 0) {
+                    await batch.commit();
                 }
 
                 hideImportProgress();
