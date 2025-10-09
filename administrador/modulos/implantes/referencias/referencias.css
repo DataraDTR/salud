@@ -25,7 +25,7 @@ html, body {
 .referencias-title {
     text-align: start;
     margin: 0 0 15px 0;
-    font-size: 16px;
+    font-size: 18px;
 }
 
 .referencias-form-type {
@@ -232,19 +232,24 @@ html, body {
     position: sticky;
     top: 0;
     z-index: 10;
-    resize: horizontal;
-    overflow: auto;
+    cursor: default;
+    user-select: none;
 }
 
-.referencias-table th::after {
-    content: '';
+.referencias-table th .resize-handle {
     position: absolute;
-    right: -5px;
+    right: -3px;
     top: 0;
-    width: 10px;
+    width: 6px;
     height: 100%;
     cursor: col-resize;
+    background: transparent;
     z-index: 11;
+}
+
+.referencias-table th .resize-handle:hover,
+.referencias-table th .resize-handle.active {
+    background: #007bff;
 }
 
 .referencias-table tbody tr:hover {

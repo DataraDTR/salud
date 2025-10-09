@@ -146,21 +146,25 @@ async function logAction(referenciaId, action, oldData = null, newData = null) {
 function setupColumnResize() {
     const headers = document.querySelectorAll('.referencias-table th');
     headers.forEach((header, index) => {
-        const resizeHandle = header.querySelector('::after') || header;
+        // Remove any existing resize handles
+        const existingHandle = header.querySelector('.resize-handle');
+        if (existingHandle) existingHandle.remove();
+
+        // Create resize handle
+        const resizeHandle = document.createElement('div');
+        resizeHandle.className = 'resize-handle';
+        header.appendChild(resizeHandle);
         header.style.position = 'relative';
-        header.style.overflow = 'auto';
-        header.style.resize = 'horizontal';
 
         let isResizing = false;
         let startX, startWidth;
 
         resizeHandle.addEventListener('mousedown', (e) => {
-            if (e.offsetX > header.offsetWidth - 10) {
-                isResizing = true;
-                startX = e.pageX;
-                startWidth = header.offsetWidth;
-                e.preventDefault();
-            }
+            isResizing = true;
+            startX = e.pageX;
+            startWidth = header.offsetWidth;
+            resizeHandle.classList.add('active');
+            e.preventDefault();
         });
 
         document.addEventListener('mousemove', (e) => {
@@ -178,7 +182,10 @@ function setupColumnResize() {
         });
 
         document.addEventListener('mouseup', () => {
-            isResizing = false;
+            if (isResizing) {
+                isResizing = false;
+                resizeHandle.classList.remove('active');
+            }
         });
     });
 }
@@ -657,7 +664,6 @@ document.addEventListener('DOMContentLoaded', () => {
             setupAutocomplete('existProveedor', 'existProveedorIcon', 'existProveedorList');
             setupAutocomplete('editProveedor', 'editProveedorIcon', 'editProveedorList');
             await loadReferencias();
-            setupColumnResize();
         } catch (error) {
             window.currentUserData = { fullName: 'Usuario Invitado', username: 'invitado' };
             showToast('Error al cargar datos del usuario.', 'error');
@@ -674,7 +680,6 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             referencias.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
             renderTable();
-            setupColumnResize();
             hideLoading();
         } catch (error) {
             hideLoading();
