@@ -829,7 +829,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     String(ingreso.acta || '').toLowerCase().includes(searchActa.toLowerCase()) &&
                     String(ingreso.salida || '').toLowerCase().includes(searchSalidas.toLowerCase()) &&
                     (!fechaDesde || parseDateDDMMYYYY(ingreso.fechaIngreso) >= parseDateDDMMYYYY(fechaDesde.replace(/-/g, '/'))) &&
-                    (!fechaHasta || parseDateDDMMYYYY(ingreso.fechaIngreso) <= parseDateDDMMYYYY(fechaHasta.replace(/-/g, '/')))
+                    (!fechaHasta || parseDateDDMMYYYY(ingreso.fechaIngreso) <= parseDateDDMMYYYY(fechaHasta.replace(/-/g, '/'))) &&
+                    (!selectedAno || parseDateDDMMYYYY(ingreso.fechaIngreso).getFullYear().toString() === selectedAno)
                 );
             }).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
         }
@@ -1110,7 +1111,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 let addedCount = 0;
                 const totalRows = json.length;
-                const batch = writeBatch(db);
+                let batch = writeBatch(db);
                 const batchSize = 500;
                 let batchCount = 0;
 
@@ -1213,6 +1214,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     if (batchCount >= batchSize || i === json.length - 1) {
                         await batch.commit();
+                        batch = writeBatch(db);
                         batchCount = 0;
                     }
 
