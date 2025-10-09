@@ -212,7 +212,8 @@ html, body {
 }
 
 .referencias-table {
-    width: 100%;
+    width: auto; /* Allow table to expand with column widths */
+    table-layout: fixed;
     border-collapse: collapse;
     font-size: 11px;
 }

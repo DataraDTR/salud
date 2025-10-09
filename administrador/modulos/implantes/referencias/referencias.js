@@ -169,14 +169,18 @@ function setupColumnResize() {
 
         document.addEventListener('mousemove', (e) => {
             if (isResizing) {
-                const newWidth = startWidth + (e.pageX - startX);
-                if (newWidth >= 80) { // Minimum width
-                    header.style.width = `${newWidth}px`;
-                    const cells = document.querySelectorAll(`.referencias-table td:nth-child(${index + 1})`);
-                    cells.forEach(cell => {
-                        cell.style.width = `${newWidth}px`;
-                    });
-                }
+                const newWidth = Math.max(80, startWidth + (e.pageX - startX)); // Minimum width 80px
+                // Update header width
+                header.style.width = `${newWidth}px`;
+                // Update corresponding cells in the column
+                const cells = document.querySelectorAll(`.referencias-table td:nth-child(${index + 1})`);
+                cells.forEach(cell => {
+                    cell.style.width = `${newWidth}px`;
+                });
+                // Update table width to prevent shrinking
+                const table = document.querySelector('.referencias-table');
+                const totalWidth = Array.from(headers).reduce((sum, h) => sum + h.offsetWidth, 0);
+                table.style.width = `${totalWidth}px`;
                 e.preventDefault();
             }
         });
