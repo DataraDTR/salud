@@ -203,7 +203,7 @@ function setupColumnResize() {
                 }
             });
 
-            // Update table width
+            // Recalculate and set table width
             const currentWidths = Array.from(headers).map(h => h.offsetWidth);
             table.style.width = `${currentWidths.reduce((sum, width) => sum + width, 0)}px`;
             console.log(`Table width updated to ${table.style.width}, current widths: ${currentWidths.join(', ')}`);
@@ -225,7 +225,7 @@ function setupColumnResize() {
 
         // Add touch and mouse events
         resizeHandle.addEventListener('mousedown', startResize);
-        resizeHandle.addEventListener('touchstart', startResize);
+        resizeHandle.addEventListener('touchstart', startResize, { passive: false });
         document.addEventListener('mousemove', resize);
         document.addEventListener('touchmove', resize, { passive: false });
         document.addEventListener('mouseup', stopResize);
