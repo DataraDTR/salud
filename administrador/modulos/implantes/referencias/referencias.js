@@ -166,9 +166,9 @@ function setupColumnResize() {
         let startX, startWidth;
 
         const startResize = (e) => {
-            console.log(`Starting resize on column ${index + 1}`); // Debug log
+            console.log(`Starting resize on column ${index + 1}, initial widths: ${initialWidths.join(', ')}`);
             isResizing = true;
-            startX = e.pageX;
+            startX = e.pageX || (e.touches && e.touches[0].pageX);
             startWidth = header.offsetWidth;
             resizeHandle.classList.add('active');
             e.preventDefault();
@@ -176,31 +176,29 @@ function setupColumnResize() {
 
         const resize = (e) => {
             if (!isResizing) return;
-            const newWidth = Math.max(80, startWidth + (e.pageX - startX)); // Minimum width 80px
-            console.log(`Resizing column ${index + 1} to ${newWidth}px`); // Debug log
+            const clientX = e.pageX || (e.touches && e.touches[0].pageX);
+            if (!clientX) return; // Prevent undefined clientX
+            const newWidth = Math.max(80, startWidth + (clientX - startX)); // Minimum width 80px
+            console.log(`Resizing column ${index + 1} to ${newWidth}px`);
 
             // Update the selected column
             header.style.width = `${newWidth}px`;
             header.style.minWidth = `${newWidth}px`;
-            header.style.maxWidth = `${newWidth}px`;
             const cells = document.querySelectorAll(`.referencias-table td:nth-child(${index + 1})`);
             cells.forEach(cell => {
                 cell.style.width = `${newWidth}px`;
                 cell.style.minWidth = `${newWidth}px`;
-                cell.style.maxWidth = `${newWidth}px`;
             });
 
-            // Restore original widths for other columns
+            // Explicitly lock other columns to their initial widths
             headers.forEach((h, i) => {
                 if (i !== index) {
                     h.style.width = `${initialWidths[i]}px`;
                     h.style.minWidth = `${initialWidths[i]}px`;
-                    h.style.maxWidth = `${initialWidths[i]}px`;
                     const otherCells = document.querySelectorAll(`.referencias-table td:nth-child(${i + 1})`);
                     otherCells.forEach(cell => {
                         cell.style.width = `${initialWidths[i]}px`;
                         cell.style.minWidth = `${initialWidths[i]}px`;
-                        cell.style.maxWidth = `${initialWidths[i]}px`;
                     });
                 }
             });
@@ -208,22 +206,30 @@ function setupColumnResize() {
             // Update table width
             const currentWidths = Array.from(headers).map(h => h.offsetWidth);
             table.style.width = `${currentWidths.reduce((sum, width) => sum + width, 0)}px`;
+            console.log(`Table width updated to ${table.style.width}, current widths: ${currentWidths.join(', ')}`);
             e.preventDefault();
         };
 
         const stopResize = () => {
             if (isResizing) {
-                console.log(`Stopped resizing column ${index + 1}`); // Debug log
+                console.log(`Stopped resizing column ${index + 1}, final width: ${header.offsetWidth}px`);
                 isResizing = false;
                 resizeHandle.classList.remove('active');
                 // Update initialWidths for the resized column
                 initialWidths[index] = header.offsetWidth;
+                // Log all column widths for debugging
+                const finalWidths = Array.from(headers).map(h => h.offsetWidth);
+                console.log(`Final column widths: ${finalWidths.join(', ')}`);
             }
         };
 
+        // Add touch and mouse events
         resizeHandle.addEventListener('mousedown', startResize);
+        resizeHandle.addEventListener('touchstart', startResize);
         document.addEventListener('mousemove', resize);
+        document.addEventListener('touchmove', resize, { passive: false });
         document.addEventListener('mouseup', stopResize);
+        document.addEventListener('touchend', stopResize);
     });
 }
 

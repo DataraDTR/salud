@@ -212,7 +212,7 @@ html, body {
 }
 
 .referencias-table {
-    table-layout: fixed;
+    table-layout: auto; /* Changed to auto to prevent column redistribution */
     border-collapse: collapse;
     font-size: 11px;
     width: max-content; /* Allow table to adjust based on column widths */
