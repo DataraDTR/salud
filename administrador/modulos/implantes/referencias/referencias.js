@@ -146,10 +146,12 @@ async function logAction(referenciaId, action, oldData = null, newData = null) {
 function setupColumnResize() {
     const table = document.querySelector('.referencias-table');
     const headers = document.querySelectorAll('.referencias-table th');
-    let initialWidths = Array.from(headers).map(header => header.offsetWidth);
+    let initialWidths = Array.from(headers).map(header => header.getBoundingClientRect().width);
 
-    // Set initial table width
-    table.style.width = `${initialWidths.reduce((sum, width) => sum + width, 0)}px`;
+    // Set initial table width explicitly
+    const totalWidth = initialWidths.reduce((sum, width) => sum + width, 0);
+    table.style.width = `${totalWidth}px`;
+    table.style.tableLayout = 'fixed'; // Reinforce table-layout: fixed
 
     headers.forEach((header, index) => {
         // Remove existing resize handles
@@ -169,7 +171,7 @@ function setupColumnResize() {
             console.log(`Starting resize on column ${index + 1}, initial widths: ${initialWidths.join(', ')}`);
             isResizing = true;
             startX = e.pageX || (e.touches && e.touches[0].pageX);
-            startWidth = header.offsetWidth;
+            startWidth = header.getBoundingClientRect().width;
             resizeHandle.classList.add('active');
             e.preventDefault();
         };
@@ -184,31 +186,31 @@ function setupColumnResize() {
             // Update the selected column
             header.style.width = `${newWidth}px`;
             header.style.minWidth = `${newWidth}px`;
-            header.style.maxWidth = `${newWidth}px`; // Lock the width
+            header.style.maxWidth = `${newWidth}px`;
             const cells = document.querySelectorAll(`.referencias-table td:nth-child(${index + 1})`);
             cells.forEach(cell => {
                 cell.style.width = `${newWidth}px`;
                 cell.style.minWidth = `${newWidth}px`;
-                cell.style.maxWidth = `${newWidth}px`; // Lock the width
+                cell.style.maxWidth = `${newWidth}px`;
             });
 
-            // Explicitly lock other columns to their initial widths
+            // Lock other columns to their initial widths
             headers.forEach((h, i) => {
                 if (i !== index) {
                     h.style.width = `${initialWidths[i]}px`;
                     h.style.minWidth = `${initialWidths[i]}px`;
-                    h.style.maxWidth = `${initialWidths[i]}px`; // Lock the width
+                    h.style.maxWidth = `${initialWidths[i]}px`;
                     const otherCells = document.querySelectorAll(`.referencias-table td:nth-child(${i + 1})`);
                     otherCells.forEach(cell => {
                         cell.style.width = `${initialWidths[i]}px`;
                         cell.style.minWidth = `${initialWidths[i]}px`;
-                        cell.style.maxWidth = `${initialWidths[i]}px`; // Lock the width
+                        cell.style.maxWidth = `${initialWidths[i]}px`;
                     });
                 }
             });
 
-            // Recalculate and set table width
-            const currentWidths = Array.from(headers).map(h => h.offsetWidth);
+            // Update table width based on current column widths
+            const currentWidths = Array.from(headers).map(h => h.getBoundingClientRect().width);
             table.style.width = `${currentWidths.reduce((sum, width) => sum + width, 0)}px`;
             console.log(`Table width updated to ${table.style.width}, current widths: ${currentWidths.join(', ')}`);
             e.preventDefault();
@@ -216,13 +218,12 @@ function setupColumnResize() {
 
         const stopResize = () => {
             if (isResizing) {
-                console.log(`Stopped resizing column ${index + 1}, final width: ${header.offsetWidth}px`);
+                console.log(`Stopped resizing column ${index + 1}, final width: ${header.getBoundingClientRect().width}px`);
                 isResizing = false;
                 resizeHandle.classList.remove('active');
                 // Update initialWidths for the resized column
-                initialWidths[index] = header.offsetWidth;
-                // Log all column widths for debugging
-                const finalWidths = Array.from(headers).map(h => h.offsetWidth);
+                initialWidths[index] = header.getBoundingClientRect().width;
+                const finalWidths = Array.from(headers).map(h => h.getBoundingClientRect().width);
                 console.log(`Final column widths: ${finalWidths.join(', ')}`);
             }
         };

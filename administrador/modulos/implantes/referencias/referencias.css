@@ -216,6 +216,7 @@ html, body {
     border-collapse: collapse;
     font-size: 11px;
     width: 100%;
+    box-sizing: border-box;
 }
 
 .referencias-table th, .referencias-table td {
@@ -226,6 +227,7 @@ html, body {
     overflow: hidden;
     text-overflow: ellipsis;
     box-sizing: border-box;
+    width: auto !important; /* Prevent CSS width overrides */
 }
 
 .referencias-table th {
