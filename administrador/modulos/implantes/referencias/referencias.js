@@ -1,5 +1,5 @@
 const { initializeApp, getAuth, onAuthStateChanged, setPersistence, browserSessionPersistence } = window.firebaseModules;
-const { getFirestore, collection, addDoc, getDocs, query, where, doc, updateDoc, deleteDoc, orderBy, getDoc, writeBatch } = window.firebaseModules;
+const { getFirestore, collection, addDoc, getDocs, query, where, doc, updateDoc, deleteDoc, orderBy, getDoc } = window.firebaseModules;
 
 const firebaseConfig = {
     apiKey: "AIzaSyD6JY7FaRqjZoN6OzbFHoIXxd-IJL3H-Ek",
@@ -184,10 +184,12 @@ function setupColumnResize() {
             // Update the selected column
             header.style.width = `${newWidth}px`;
             header.style.minWidth = `${newWidth}px`;
+            header.style.maxWidth = `${newWidth}px`; // Lock the width
             const cells = document.querySelectorAll(`.referencias-table td:nth-child(${index + 1})`);
             cells.forEach(cell => {
                 cell.style.width = `${newWidth}px`;
                 cell.style.minWidth = `${newWidth}px`;
+                cell.style.maxWidth = `${newWidth}px`; // Lock the width
             });
 
             // Explicitly lock other columns to their initial widths
@@ -195,10 +197,12 @@ function setupColumnResize() {
                 if (i !== index) {
                     h.style.width = `${initialWidths[i]}px`;
                     h.style.minWidth = `${initialWidths[i]}px`;
+                    h.style.maxWidth = `${initialWidths[i]}px`; // Lock the width
                     const otherCells = document.querySelectorAll(`.referencias-table td:nth-child(${i + 1})`);
                     otherCells.forEach(cell => {
                         cell.style.width = `${initialWidths[i]}px`;
                         cell.style.minWidth = `${initialWidths[i]}px`;
+                        cell.style.maxWidth = `${initialWidths[i]}px`; // Lock the width
                     });
                 }
             });
@@ -871,7 +875,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
     downloadTemplate.addEventListener('click', (e) => {
         e.preventDefault();
-        downloadImportTemplate();
+        const templateData = [{
+            referencia: '',
+            detalles: '',
+            precioUnitario: '',
+            codigo: '',
+            proveedor: '',
+            descripcion: '',
+            tipo: 'IMPLANTES',
+            atributo: 'COTIZACION'
+        }];
+        const ws = XLSX.utils.json_to_sheet(templateData);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Template");
+        XLSX.writeFile(wb, 'formato_importacion_referencias.xlsx');
         actionsMenu.style.display = 'none';
     });
 
@@ -917,6 +934,67 @@ document.addEventListener('DOMContentLoaded', () => {
         actionsMenu.style.display = 'none';
     });
 
+    async function importFromExcel(file) {
+        showLoading();
+        try {
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const sheetName = workbook.SheetNames[0];
+                const sheet = workbook.Sheets[sheetName];
+                const jsonData = XLSX.utils.sheet_to_json(sheet);
+
+                const totalRows = jsonData.length;
+                let processedRows = 0;
+
+                for (const row of jsonData) {
+                    const processedRow = {
+                        referencia: row.referencia ? String(row.referencia).trim().toUpperCase() : '',
+                        detalles: row.detalles ? String(row.detalles).trim().toUpperCase() : '',
+                        precioUnitario: row.precioUnitario ? String(row.precioUnitario).replace(/[^\d]/g, '') : '',
+                        codigo: row.codigo ? String(row.codigo).trim().toUpperCase() : '',
+                        proveedor: row.proveedor ? String(row.proveedor).trim().toUpperCase() : '',
+                        descripcion: row.descripcion ? String(row.descripcion).trim().toUpperCase() : '',
+                        tipo: row.tipo ? String(row.tipo).trim().toUpperCase() : 'IMPLANTES',
+                        atributo: row.atributo ? String(row.atributo).trim().toUpperCase() : 'COTIZACION',
+                        fullName: window.currentUserData.fullName
+                    };
+
+                    if (processedRow.referencia && processedRow.descripcion) {
+                        const existing = await getReferenciaByUniqueKey(processedRow.referencia);
+                        if (!existing) {
+                            const docRef = await addDoc(collection(db, "referencias_implantes"), {
+                                ...processedRow,
+                                createdAt: new Date()
+                            });
+                            await logAction(docRef.id, 'create', null, processedRow);
+                        }
+                    }
+                    processedRows++;
+                    showImportProgress((processedRows / totalRows) * 100);
+                }
+
+                hideImportProgress();
+                hideLoading();
+                showToast('Importación completada exitosamente', 'success');
+                await loadReferencias();
+            };
+            reader.readAsArrayBuffer(file);
+        } catch (error) {
+            hideImportProgress();
+            hideLoading();
+            showToast('Error al importar el archivo: ' + error.message, 'error');
+        }
+    }
+
+    function exportToExcel(data, filename) {
+        const ws = XLSX.utils.json_to_sheet(data);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Referencias");
+        XLSX.writeFile(wb, `${filename}.xlsx`);
+    }
+
     fileUpload.addEventListener('change', async (e) => {
         const file = e.target.files[0];
         if (file) {
@@ -924,123 +1002,4 @@ document.addEventListener('DOMContentLoaded', () => {
             fileUpload.value = '';
         }
     });
-
-    function exportToExcel(data, filename) {
-        const ws = XLSX.utils.json_to_sheet(data);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Referencias");
-        XLSX.writeFile(wb, filename + '.xlsx');
-    }
-
-    function downloadImportTemplate() {
-        const ws = XLSX.utils.aoa_to_sheet([[
-            "Referencia", "Detalles", "Precio Unitario", "Código", "Proveedor", "Descripción", "Tipo", "Atributo", "Nombre Completo"
-        ], [
-            "REF001", "DETALLES EJEMPLO", "10000", "COD001", "PROVEEDOR A", "REF001 DETALLES EJEMPLO", "IMPLANTES", "COTIZACION", "Usuario Ejemplo"
-        ]]);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Template");
-        XLSX.writeFile(wb, 'template_referencias.xlsx');
-    }
-
-    async function importFromExcel(file) {
-        try {
-            const reader = new FileReader();
-            reader.onload = async (e) => {
-                const data = new Uint8Array(e.target.result);
-                const wb = XLSX.read(data, { type: 'array' });
-                const ws = wb.Sheets[wb.SheetNames[0]];
-                const json = XLSX.utils.sheet_to_json(ws, {
-                    header: ["referencia", "detalles", "precioUnitario", "codigo", "proveedor", "descripcion", "tipo", "atributo", "fullName"],
-                    range: 1,
-                    defval: ''
-                });
-
-                let addedCount = 0;
-                const totalRows = json.length;
-                const useBatch = typeof writeBatch === 'function';
-                let batch = useBatch ? writeBatch(db) : null;
-                const batchSize = 500;
-                let batchCount = 0;
-
-                if (!useBatch) {
-                    showToast('Advertencia: La importación por lotes no está disponible. Usando método alternativo (más lento).', 'warning');
-                }
-
-                showImportProgress(0);
-
-                for (let i = 0; i < json.length; i++) {
-                    const row = json[i];
-                    const processedRow = {
-                        referencia: String(row.referencia || '').trim().toUpperCase(),
-                        detalles: String(row.detalles || '').trim().toUpperCase(),
-                        precioUnitario: String(row.precioUnitario || '').replace(/[^\d]/g, ''),
-                        codigo: String(row.codigo || '').trim().toUpperCase(),
-                        proveedor: String(row.proveedor || '').trim().toUpperCase(),
-                        descripcion: String(row.descripcion || '').trim().toUpperCase(),
-                        tipo: String(row.tipo || 'IMPLANTES').trim().toUpperCase(),
-                        atributo: String(row.atributo || 'COTIZACION').trim().toUpperCase(),
-                        fullName: String(row.fullName || window.currentUserData.fullName || 'Usuario Invitado'),
-                        createdAt: new Date()
-                    };
-
-                    if (!processedRow.referencia || !processedRow.descripcion) {
-                        showToast(`Fila ${i + 2}: Referencia o descripción no válidas`, 'error');
-                        continue;
-                    }
-
-                    const existing = await getReferenciaByUniqueKey(processedRow.referencia);
-                    if (existing) {
-                        showToast(`Fila ${i + 2}: La referencia ${processedRow.referencia} ya existe`, 'error');
-                        continue;
-                    }
-
-                    if (useBatch) {
-                        const referenciaRef = doc(collection(db, "referencias_implantes"));
-                        batch.set(referenciaRef, processedRow);
-                        batch.set(doc(collection(db, "referencias_implantes_historial")), {
-                            referenciaId: referenciaRef.id,
-                            action: 'create',
-                            timestamp: new Date(),
-                            userId: auth.currentUser ? auth.currentUser.uid : null,
-                            userFullName: window.currentUserData.fullName || 'Usuario Invitado',
-                            username: window.currentUserData.username || 'invitado',
-                            oldData: null,
-                            newData: processedRow
-                        });
-                        batchCount += 2;
-
-                        if (batchCount >= batchSize || i === json.length - 1) {
-                            await batch.commit();
-                            batch = writeBatch(db);
-                            batchCount = 0;
-                        }
-                    } else {
-                        const referenciaRef = await addDoc(collection(db, "referencias_implantes"), processedRow);
-                        await addDoc(collection(db, "referencias_implantes_historial"), {
-                            referenciaId: referenciaRef.id,
-                            action: 'create',
-                            timestamp: new Date(),
-                            userId: auth.currentUser ? auth.currentUser.uid : null,
-                            userFullName: window.currentUserData.fullName || 'Usuario Invitado',
-                            username: window.currentUserData.username || 'invitado',
-                            oldData: null,
-                            newData: processedRow
-                        });
-                    }
-
-                    addedCount++;
-                    showImportProgress((i + 1) / totalRows * 100);
-                }
-
-                hideImportProgress();
-                showToast(`Importación completada: ${addedCount} referencias añadidas`, 'success');
-                await loadReferencias();
-            };
-            reader.readAsArrayBuffer(file);
-        } catch (error) {
-            hideImportProgress();
-            showToast('Error al importar el archivo: ' + error.message, 'error');
-        }
-    }
 });

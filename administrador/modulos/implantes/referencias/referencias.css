@@ -212,10 +212,10 @@ html, body {
 }
 
 .referencias-table {
-    table-layout: auto;
+    table-layout: fixed;
     border-collapse: collapse;
     font-size: 11px;
-    width: max-content;
+    width: 100%;
 }
 
 .referencias-table th, .referencias-table td {
