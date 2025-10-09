@@ -25,6 +25,8 @@ let searchCodigo = '';
 let searchDescripcion = '';
 let searchDetalles = '';
 let searchProveedor = '';
+let searchTipo = '';
+let searchAtributo = '';
 let proveedores = [];
 
 function formatNumberWithThousandsSeparator(number) {
@@ -53,27 +55,76 @@ async function loadProveedores() {
             proveedores.push({ id: doc.id, ...doc.data() });
         });
         proveedores.sort((a, b) => a.nombre.localeCompare(b.nombre));
-        populateProveedorSelects();
     } catch (error) {
         showToast('Error al cargar proveedores: ' + error.message, 'error');
     }
 }
 
-function populateProveedorSelects() {
-    const selects = [
-        document.getElementById('proveedor'),
-        document.getElementById('existProveedor'),
-        document.getElementById('editProveedor')
-    ];
-    selects.forEach(select => {
-        if (select) {
-            select.innerHTML = '<option value="">Seleccionar Proveedor</option>';
-            proveedores.forEach(proveedor => {
-                const option = document.createElement('option');
-                option.value = proveedor.nombre.toUpperCase();
-                option.textContent = proveedor.nombre.toUpperCase();
-                select.appendChild(option);
+function setupAutocomplete(inputId, iconId, listId) {
+    const input = document.getElementById(inputId);
+    const icon = document.getElementById(iconId);
+    const list = document.getElementById(listId);
+
+    function showSuggestions(value) {
+        list.innerHTML = '';
+        if (!value) {
+            list.classList.remove('show');
+            return;
+        }
+        const filtered = proveedores.filter(p => p.nombre.toUpperCase().includes(value.toUpperCase()));
+        if (filtered.length === 0) {
+            list.classList.remove('show');
+            return;
+        }
+        filtered.forEach(proveedor => {
+            const div = document.createElement('div');
+            div.textContent = proveedor.nombre.toUpperCase();
+            div.addEventListener('click', () => {
+                input.value = proveedor.nombre.toUpperCase();
+                list.innerHTML = '';
+                list.classList.remove('show');
             });
+            list.appendChild(div);
+        });
+        list.classList.add('show');
+    }
+
+    function showAllProveedores() {
+        list.innerHTML = '';
+        proveedores.forEach(proveedor => {
+            const div = document.createElement('div');
+            div.textContent = proveedor.nombre.toUpperCase();
+            div.addEventListener('click', () => {
+                input.value = proveedor.nombre.toUpperCase();
+                list.innerHTML = '';
+                list.classList.remove('show');
+            });
+            list.appendChild(div);
+        });
+        list.classList.add('show');
+    }
+
+    input.addEventListener('input', (e) => {
+        showSuggestions(e.target.value);
+    });
+
+    input.addEventListener('blur', () => {
+        setTimeout(() => {
+            list.classList.remove('show');
+        }, 200);
+    });
+
+    icon.addEventListener('click', () => {
+        if (list.classList.contains('show')) {
+            list.classList.remove('show');
+        } else {
+            showAllProveedores();
+        }
+    });
+
+    document.addEventListener('click', (e) => {
+        if (!input.contains(e.target) && !icon.contains(e.target) && !list.contains(e.target)) {
+            list.classList.remove('show');
         }
     });
 }
@@ -127,6 +178,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const buscarDescripcionInput = document.getElementById('buscarDescripcion');
     const buscarDetallesInput = document.getElementById('buscarDetalles');
     const buscarProveedorInput = document.getElementById('buscarProveedor');
+    const buscarTipoInput = document.getElementById('buscarTipo');
+    const buscarAtributoInput = document.getElementById('buscarAtributo');
     const actionsBtn = document.getElementById('actionsBtn');
     const actionsMenu = document.getElementById('actionsMenu');
     const downloadTemplate = document.getElementById('downloadTemplate');
@@ -183,8 +236,16 @@ document.addEventListener('DOMContentLoaded', () => {
         descripcionInput.value = referencia && detalles ? `${referencia} ${detalles}` : '';
     }
 
+    function updateExistDescripcion() {
+        const referencia = existReferenciaInput.value.trim().toUpperCase();
+        const detalles = existDetallesInput.value.trim().toUpperCase();
+        existDescripcionInput.value = referencia && detalles ? `${referencia} ${detalles}` : '';
+    }
+
     referenciaInput.addEventListener('input', updateDescripcion);
     detallesInput.addEventListener('input', updateDescripcion);
+    existReferenciaInput.addEventListener('input', updateExistDescripcion);
+    existDetallesInput.addEventListener('input', updateExistDescripcion);
 
     document.querySelectorAll('input[name="formType"]').forEach(radio => {
         radio.addEventListener('change', (e) => {
@@ -248,6 +309,7 @@ document.addEventListener('DOMContentLoaded', () => {
         currentEditId = null;
         currentEditOldData = null;
         editForm.reset();
+        document.getElementById('editProveedorList').classList.remove('show');
     }
 
     window.openDeleteModal = function (id, referencia) {
@@ -321,7 +383,7 @@ document.addEventListener('DOMContentLoaded', () => {
             detalles: document.getElementById('editDetalles').value.trim().toUpperCase(),
             precioUnitario: document.getElementById('editPrecioUnitario').value.replace(/[^\d]/g, ''),
             codigo: document.getElementById('editCodigo').value.trim().toUpperCase(),
-            proveedor: document.getElementById('editProveedor').value,
+            proveedor: document.getElementById('editProveedor').value.trim().toUpperCase(),
             descripcion: document.getElementById('editDescripcion').value.trim().toUpperCase(),
             tipo: document.getElementById('editTipo').value,
             atributo: document.getElementById('editAtributo').value,
@@ -420,6 +482,22 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    if (buscarTipoInput) {
+        buscarTipoInput.addEventListener('change', (e) => {
+            searchTipo = e.target.value;
+            currentPage = 1;
+            renderTable();
+        });
+    }
+
+    if (buscarAtributoInput) {
+        buscarAtributoInput.addEventListener('change', (e) => {
+            searchAtributo = e.target.value;
+            currentPage = 1;
+            renderTable();
+        });
+    }
+
     if (ingresarNewCodeBtn) {
         ingresarNewCodeBtn.addEventListener('click', async (e) => {
             e.preventDefault();
@@ -428,7 +506,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 detalles: detallesInput.value.trim().toUpperCase(),
                 precioUnitario: precioUnitarioInput.value.replace(/[^\d]/g, ''),
                 codigo: '',
-                proveedor: proveedorInput.value,
+                proveedor: proveedorInput.value.trim().toUpperCase(),
                 descripcion: descripcionInput.value.trim().toUpperCase(),
                 tipo: tipoInput.value,
                 atributo: atributoInput.value,
@@ -458,6 +536,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     descripcionInput.value = '';
                     tipoInput.value = 'IMPLANTES';
                     atributoInput.value = 'COTIZACION';
+                    document.getElementById('proveedorList').classList.remove('show');
                     await loadReferencias();
                 } catch (error) {
                     hideLoading();
@@ -477,7 +556,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 detalles: existDetallesInput.value.trim().toUpperCase(),
                 precioUnitario: existPrecioUnitarioInput.value.replace(/[^\d]/g, ''),
                 codigo: existCodigoInput.value.trim().toUpperCase(),
-                proveedor: existProveedorInput.value,
+                proveedor: existProveedorInput.value.trim().toUpperCase(),
                 descripcion: existDescripcionInput.value.trim().toUpperCase(),
                 tipo: existTipoInput.value,
                 atributo: existAtributoInput.value,
@@ -508,6 +587,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     existDescripcionInput.value = '';
                     existTipoInput.value = 'IMPLANTES';
                     existAtributoInput.value = 'COTIZACION';
+                    document.getElementById('existProveedorList').classList.remove('show');
                     await loadReferencias();
                 } catch (error) {
                     hideLoading();
@@ -533,6 +613,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 window.currentUserData = { fullName: user.displayName || 'Usuario Invitado', username: user.email || 'invitado' };
             }
             await loadProveedores();
+            setupAutocomplete('proveedor', 'proveedorIcon', 'proveedorList');
+            setupAutocomplete('existProveedor', 'existProveedorIcon', 'existProveedorList');
+            setupAutocomplete('editProveedor', 'editProveedorIcon', 'editProveedorList');
             await loadReferencias();
         } catch (error) {
             window.currentUserData = { fullName: 'Usuario Invitado', username: 'invitado' };
@@ -563,7 +646,9 @@ document.addEventListener('DOMContentLoaded', () => {
             (referencia.codigo || '').toUpperCase().includes(searchCodigo) &&
             referencia.descripcion.toUpperCase().includes(searchDescripcion) &&
             referencia.detalles.toUpperCase().includes(searchDetalles) &&
-            (referencia.proveedor || '').toUpperCase().includes(searchProveedor)
+            (referencia.proveedor || '').toUpperCase().includes(searchProveedor) &&
+            (searchTipo === '' || referencia.tipo === searchTipo) &&
+            (searchAtributo === '' || referencia.atributo === searchAtributo)
         ).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     }
 
@@ -813,6 +898,12 @@ document.addEventListener('DOMContentLoaded', () => {
                         continue;
                     }
 
+                    const existing = await getReferenciaByUniqueKey(processedRow.referencia);
+                    if (existing) {
+                        showToast(`Fila ${i + 2}: La referencia ${processedRow.referencia} ya existe`, 'error');
+                        continue;
+                    }
+
                     if (useBatch) {
                         const referenciaRef = doc(collection(db, "referencias_implantes"));
                         batch.set(referenciaRef, processedRow);
@@ -827,6 +918,12 @@ document.addEventListener('DOMContentLoaded', () => {
                             newData: processedRow
                         });
                         batchCount += 2;
+
+                        if (batchCount >= batchSize || i === json.length - 1) {
+                            await batch.commit();
+                            batch = writeBatch(db);
+                            batchCount = 0;
+                        }
                     } else {
                         const referenciaRef = await addDoc(collection(db, "referencias_implantes"), processedRow);
                         await addDoc(collection(db, "referencias_implantes_historial"), {
@@ -842,28 +939,17 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
 
                     addedCount++;
-
-                    if (useBatch && (batchCount >= batchSize || i === json.length - 1)) {
-                        await batch.commit();
-                        batch = writeBatch(db);
-                        batchCount = 0;
-                    }
-
-                    showImportProgress(((i + 1) / totalRows) * 100);
-                }
-
-                if (useBatch && batchCount > 0) {
-                    await batch.commit();
+                    showImportProgress((i + 1) / totalRows * 100);
                 }
 
                 hideImportProgress();
-                showToast(`Importación completada: ${addedCount} referencias añadidas.`, 'success');
+                showToast(`Importación completada: ${addedCount} referencias añadidas`, 'success');
                 await loadReferencias();
             };
             reader.readAsArrayBuffer(file);
         } catch (error) {
             hideImportProgress();
-            showToast('Error al importar el archivo Excel: ' + error.message, 'error');
+            showToast('Error al importar el archivo: ' + error.message, 'error');
         }
     }
 });

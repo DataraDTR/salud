@@ -65,7 +65,7 @@ html, body {
 
 #referencia, #detalles, #precioUnitario, #proveedor, #descripcion, #tipo, #atributo,
 #existReferencia, #existDetalles, #existPrecioUnitario, #existCodigo, #existProveedor, #existDescripcion, #existTipo, #existAtributo,
-#buscarReferencia, #buscarCodigo, #buscarDescripcion, #buscarDetalles, #buscarProveedor,
+#buscarReferencia, #buscarCodigo, #buscarDescripcion, #buscarDetalles, #buscarProveedor, #buscarTipo, #buscarAtributo,
 #editReferencia, #editDetalles, #editPrecioUnitario, #editCodigo, #editProveedor, #editDescripcion, #editTipo, #editAtributo {
     width: 100%;
     padding: 8px;
@@ -78,7 +78,7 @@ html, body {
 
 #referencia:focus, #detalles:focus, #precioUnitario:focus, #proveedor:focus, #descripcion:focus, #tipo:focus, #atributo:focus,
 #existReferencia:focus, #existDetalles:focus, #existPrecioUnitario:focus, #existCodigo:focus, #existProveedor:focus, #existDescripcion:focus, #existTipo:focus, #existAtributo:focus,
-#buscarReferencia:focus, #buscarCodigo:focus, #buscarDescripcion:focus, #buscarDetalles:focus, #buscarProveedor:focus,
+#buscarReferencia:focus, #buscarCodigo:focus, #buscarDescripcion:focus, #buscarDetalles:focus, #buscarProveedor:focus, #buscarTipo:focus, #buscarAtributo:focus,
 #editReferencia:focus, #editDetalles:focus, #editPrecioUnitario:focus, #editCodigo:focus, #editProveedor:focus, #editDescripcion:focus, #editTipo:focus, #editAtributo:focus {
     box-shadow: 0 0 12px rgba(0, 123, 255, 0.5);
     outline: none;
@@ -87,6 +87,60 @@ html, body {
 #descripcion, #editDescripcion {
     background-color: #f8f9fa;
     cursor: not-allowed;
+}
+
+.referencias-autocomplete {
+    position: relative;
+    width: 100%;
+}
+
+.referencias-autocomplete input {
+    width: 100%;
+    padding-right: 30px;
+}
+
+.referencias-icon {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    color: #333;
+    font-size: 12px;
+}
+
+.referencias-icon:hover {
+    color: #007bff;
+}
+
+.referencias-autocomplete-list {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    max-height: 150px;
+    overflow-y: auto;
+    z-index: 100;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+.referencias-autocomplete-list.show {
+    display: block;
+}
+
+.referencias-autocomplete-list div {
+    padding: 8px;
+    cursor: pointer;
+    font-size: 11px;
+    text-transform: uppercase;
+}
+
+.referencias-autocomplete-list div:hover {
+    background-color: #f1f1f1;
 }
 
 .referencias-actions-menu {

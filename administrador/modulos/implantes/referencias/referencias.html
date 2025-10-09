@@ -41,7 +41,11 @@
             </div>
             <div class="referencias-form-group">
                 <label for="proveedor" class="referencias-label">Proveedor:</label>
-                <select id="proveedor" autocomplete="off"></select>
+                <div class="referencias-autocomplete">
+                    <input type="text" id="proveedor" autocomplete="off">
+                    <span class="referencias-icon" id="proveedorIcon"><i class="fas fa-chevron-down"></i></span>
+                    <div class="referencias-autocomplete-list" id="proveedorList"></div>
+                </div>
             </div>
             <div class="referencias-form-group">
                 <label for="descripcion" class="referencias-label">Descripción:</label>
@@ -83,7 +87,11 @@
             </div>
             <div class="referencias-form-group">
                 <label for="existProveedor" class="referencias-label">Proveedor:</label>
-                <select id="existProveedor" autocomplete="off"></select>
+                <div class="referencias-autocomplete">
+                    <input type="text" id="existProveedor" autocomplete="off">
+                    <span class="referencias-icon" id="existProveedorIcon"><i class="fas fa-chevron-down"></i></span>
+                    <div class="referencias-autocomplete-list" id="existProveedorList"></div>
+                </div>
             </div>
             <div class="referencias-form-group">
                 <label for="existDescripcion" class="referencias-label">Descripción:</label>
@@ -126,6 +134,22 @@
             <div class="referencias-form-group">
                 <label for="buscarProveedor" class="referencias-label">Buscar Proveedor:</label>
                 <input type="text" id="buscarProveedor" placeholder="Buscar por proveedor" autocomplete="off">
+            </div>
+            <div class="referencias-form-group">
+                <label for="buscarTipo" class="referencias-label">Buscar Tipo:</label>
+                <select id="buscarTipo" autocomplete="off">
+                    <option value="">Todos</option>
+                    <option value="IMPLANTES">IMPLANTES</option>
+                    <option value="CONSIGNACION">CONSIGNACION</option>
+                </select>
+            </div>
+            <div class="referencias-form-group">
+                <label for="buscarAtributo" class="referencias-label">Buscar Atributo:</label>
+                <select id="buscarAtributo" autocomplete="off">
+                    <option value="">Todos</option>
+                    <option value="COTIZACION">COTIZACION</option>
+                    <option value="CONSIGNACION">CONSIGNACION</option>
+                </select>
             </div>
             <div class="referencias-actions-menu">
                 <button id="actionsBtn"><i class="fas fa-angle-down"></i> Acciones</button>
@@ -208,7 +232,11 @@
                     </div>
                     <div class="modal-form-group">
                         <label for="editProveedor">Proveedor:</label>
-                        <select id="editProveedor" autocomplete="off"></select>
+                        <div class="referencias-autocomplete">
+                            <input type="text" id="editProveedor" autocomplete="off">
+                            <span class="referencias-icon" id="editProveedorIcon"><i class="fas fa-chevron-down"></i></span>
+                            <div class="referencias-autocomplete-list" id="editProveedorList"></div>
+                        </div>
                     </div>
                     <div class="modal-form-group">
                         <label for="editDescripcion">Descripción:</label>
