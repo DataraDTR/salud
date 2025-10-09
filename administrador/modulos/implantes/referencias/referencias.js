@@ -170,14 +170,15 @@ function setupColumnResize() {
         document.addEventListener('mousemove', (e) => {
             if (isResizing) {
                 const newWidth = Math.max(80, startWidth + (e.pageX - startX)); // Minimum width 80px
-                // Update header width
+                // Update only the selected header and corresponding cells
                 header.style.width = `${newWidth}px`;
-                // Update corresponding cells in the column
+                header.style.maxWidth = `${newWidth}px`; // Update max-width to match
                 const cells = document.querySelectorAll(`.referencias-table td:nth-child(${index + 1})`);
                 cells.forEach(cell => {
                     cell.style.width = `${newWidth}px`;
+                    cell.style.maxWidth = `${newWidth}px`; // Update max-width to match
                 });
-                // Update table width to prevent shrinking
+                // Update table width to reflect the sum of all column widths
                 const table = document.querySelector('.referencias-table');
                 const totalWidth = Array.from(headers).reduce((sum, h) => sum + h.offsetWidth, 0);
                 table.style.width = `${totalWidth}px`;
