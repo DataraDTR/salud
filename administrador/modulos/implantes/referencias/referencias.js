@@ -143,6 +143,46 @@ async function logAction(referenciaId, action, oldData = null, newData = null) {
     });
 }
 
+function setupColumnResize() {
+    const headers = document.querySelectorAll('.referencias-table th');
+    headers.forEach((header, index) => {
+        const resizeHandle = header.querySelector('::after') || header;
+        header.style.position = 'relative';
+        header.style.overflow = 'auto';
+        header.style.resize = 'horizontal';
+
+        let isResizing = false;
+        let startX, startWidth;
+
+        resizeHandle.addEventListener('mousedown', (e) => {
+            if (e.offsetX > header.offsetWidth - 10) {
+                isResizing = true;
+                startX = e.pageX;
+                startWidth = header.offsetWidth;
+                e.preventDefault();
+            }
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (isResizing) {
+                const newWidth = startWidth + (e.pageX - startX);
+                if (newWidth >= 80) { // Minimum width
+                    header.style.width = `${newWidth}px`;
+                    const cells = document.querySelectorAll(`.referencias-table td:nth-child(${index + 1})`);
+                    cells.forEach(cell => {
+                        cell.style.width = `${newWidth}px`;
+                    });
+                }
+                e.preventDefault();
+            }
+        });
+
+        document.addEventListener('mouseup', () => {
+            isResizing = false;
+        });
+    });
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     const loading = document.getElementById('referencias-loading');
     const importProgress = document.getElementById('referencias-import-progress');
@@ -617,6 +657,7 @@ document.addEventListener('DOMContentLoaded', () => {
             setupAutocomplete('existProveedor', 'existProveedorIcon', 'existProveedorList');
             setupAutocomplete('editProveedor', 'editProveedorIcon', 'editProveedorList');
             await loadReferencias();
+            setupColumnResize();
         } catch (error) {
             window.currentUserData = { fullName: 'Usuario Invitado', username: 'invitado' };
             showToast('Error al cargar datos del usuario.', 'error');
@@ -633,6 +674,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             referencias.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
             renderTable();
+            setupColumnResize();
             hideLoading();
         } catch (error) {
             hideLoading();
@@ -686,6 +728,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         updatePagination(filteredReferencias.length);
+        setupColumnResize();
     }
 
     function updatePagination(total) {
