@@ -145,6 +145,13 @@ async function logAction(referenciaId, action, oldData = null, newData = null) {
 
 function setupColumnResize() {
     const headers = document.querySelectorAll('.referencias-table th');
+    // Store initial widths to enforce fixed sizes
+    const initialWidths = Array.from(headers).map(header => ({
+        width: parseFloat(getComputedStyle(header).width),
+        minWidth: parseFloat(getComputedStyle(header).minWidth),
+        maxWidth: parseFloat(getComputedStyle(header).maxWidth)
+    }));
+
     headers.forEach((header, index) => {
         // Remove any existing resize handles
         const existingHandle = header.querySelector('.resize-handle');
@@ -172,16 +179,44 @@ function setupColumnResize() {
                 const newWidth = Math.max(80, startWidth + (e.pageX - startX)); // Minimum width 80px
                 // Update only the selected header and corresponding cells
                 header.style.width = `${newWidth}px`;
-                header.style.maxWidth = `${newWidth}px`; // Update max-width to match
+                header.style.minWidth = `${newWidth}px`;
+                header.style.maxWidth = `${newWidth}px`;
                 const cells = document.querySelectorAll(`.referencias-table td:nth-child(${index + 1})`);
                 cells.forEach(cell => {
                     cell.style.width = `${newWidth}px`;
-                    cell.style.maxWidth = `${newWidth}px`; // Update max-width to match
+                    cell.style.minWidth = `${newWidth}px`;
+                    cell.style.maxWidth = `${newWidth}px`;
                 });
-                // Update table width to reflect the sum of all column widths
+
+                // Restore original widths for all other headers and cells
+                headers.forEach((h, i) => {
+                    if (i !== index) {
+                        h.style.width = `${initialWidths[i].width}px`;
+                        h.style.minWidth = `${initialWidths[i].minWidth}px`;
+                        h.style.maxWidth = `${initialWidths[i].maxWidth}px`;
+                        const otherCells = document.querySelectorAll(`.referencias-table td:nth-child(${i + 1})`);
+                        otherCells.forEach(cell => {
+                            cell.style.width = `${initialWidths[i].width}px`;
+                            cell.style.minWidth = `${initialWidths[i].minWidth}px`;
+                            cell.style.maxWidth = `${initialWidths[i].maxWidth}px`;
+                        });
+                    }
+                });
+
+                // Update table width to sum of all column widths
                 const table = document.querySelector('.referencias-table');
-                const totalWidth = Array.from(headers).reduce((sum, h) => sum + h.offsetWidth, 0);
+                const totalWidth = Array.from(headers).reduce((sum, h, i) => {
+                    return sum + (i === index ? newWidth : initialWidths[i].width);
+                }, 0);
                 table.style.width = `${totalWidth}px`;
+
+                // Update initialWidths for the resized column
+                initialWidths[index] = {
+                    width: newWidth,
+                    minWidth: newWidth,
+                    maxWidth: newWidth
+                };
+
                 e.preventDefault();
             }
         });
