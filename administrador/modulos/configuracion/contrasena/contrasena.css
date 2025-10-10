@@ -100,6 +100,55 @@ body {
     outline: none;
 }
 
+.toggle-password {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #aaa;
+    font-size: 16px;
+    cursor: pointer;
+    z-index: 1;
+}
+
+.toggle-password:hover {
+    color: #3A5795;
+}
+
+.password-requirements {
+    list-style: none;
+    padding: 5px 0 0 0;
+    margin: 5px 0 0 0;
+    font-size: 12px;
+    color: #333;
+}
+
+.password-requirements li {
+    display: flex;
+    align-items: center;
+    margin-bottom: 5px;
+}
+
+.password-requirements li::before {
+    content: '✗';
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    margin-right: 8px;
+    color: #721c24;
+    font-weight: bold;
+}
+
+.password-requirements li.valid::before {
+    content: '✓';
+    color: #155724;
+}
+
+.password-requirements li.invalid::before {
+    content: '✗';
+    color: #721c24;
+}
+
 .btn-crear {
     grid-column: 1 / -1;
     width: auto;

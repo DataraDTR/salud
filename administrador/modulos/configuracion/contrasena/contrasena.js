@@ -16,16 +16,8 @@ const auth = getAuth(app);
 
 const form = document.getElementById('changePasswordForm');
 const message = document.getElementById('message');
-const changePasswordBtn = document.getElementById('changePasswordBtn');
-
-onAuthStateChanged(auth, (user) => {
-    if (!user) {
-        showMessage('Debes estar autenticado para cambiar la contraseña.', 'error');
-        setTimeout(() => {
-            window.location.href = '../../../../index.html';
-        }, 2000);
-    }
-});
+const changePasswordBtn = document.querySelector('.btn-crear');
+const newPasswordInput = document.getElementById('newPassword');
 
 function validatePassword(password) {
     const minLength = 8;
@@ -35,23 +27,59 @@ function validatePassword(password) {
     const hasNumber = /[0-9]/.test(password);
     const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
 
-    if (password.length < minLength || password.length > maxLength) {
-        return 'La contraseña debe tener entre 8 y 20 caracteres.';
-    }
-    if (!hasUpperCase) {
-        return 'La contraseña debe contener al menos una letra mayúscula.';
-    }
-    if (!hasLowerCase) {
-        return 'La contraseña debe contener al menos una letra minúscula.';
-    }
-    if (!hasNumber) {
-        return 'La contraseña debe contener al menos un número.';
-    }
-    if (!hasSpecialChar) {
-        return 'La contraseña debe contener al menos un carácter especial (!@#$%^&*).';
-    }
-    return null; // Contraseña válida
+    return {
+        length: password.length >= minLength && password.length <= maxLength,
+        uppercase: hasUpperCase,
+        lowercase: hasLowerCase,
+        number: hasNumber,
+        special: hasSpecialChar,
+        error: !password.length ? 'Por favor, ingrese una contraseña.' :
+                password.length < minLength || password.length > maxLength ? 'La contraseña debe tener entre 8 y 20 caracteres.' :
+                !hasUpperCase ? 'La contraseña debe contener al menos una letra mayúscula.' :
+                !hasLowerCase ? 'La contraseña debe contener al menos una letra minúscula.' :
+                !hasNumber ? 'La contraseña debe contener al menos un número.' :
+                !hasSpecialChar ? 'La contraseña debe contener al menos un carácter especial (!@#$%^&*).' : null
+    };
 }
+
+function updatePasswordRequirements(password) {
+    const validation = validatePassword(password);
+    document.getElementById('req-length').classList.toggle('valid', validation.length);
+    document.getElementById('req-length').classList.toggle('invalid', !validation.length);
+    document.getElementById('req-uppercase').classList.toggle('valid', validation.uppercase);
+    document.getElementById('req-uppercase').classList.toggle('invalid', !validation.uppercase);
+    document.getElementById('req-lowercase').classList.toggle('valid', validation.lowercase);
+    document.getElementById('req-lowercase').classList.toggle('invalid', !validation.lowercase);
+    document.getElementById('req-number').classList.toggle('valid', validation.number);
+    document.getElementById('req-number').classList.toggle('invalid', !validation.number);
+    document.getElementById('req-special').classList.toggle('valid', validation.special);
+    document.getElementById('req-special').classList.toggle('invalid', !validation.special);
+}
+
+newPasswordInput.addEventListener('input', () => {
+    const password = newPasswordInput.value;
+    updatePasswordRequirements(password);
+});
+
+document.querySelectorAll('.toggle-password').forEach(toggle => {
+    toggle.addEventListener('click', () => {
+        const targetId = toggle.getAttribute('data-target');
+        const input = document.getElementById(targetId);
+        const isPassword = input.type === 'password';
+        input.type = isPassword ? 'text' : 'password';
+        toggle.classList.toggle('fa-eye', !isPassword);
+        toggle.classList.toggle('fa-eye-slash', isPassword);
+    });
+});
+
+onAuthStateChanged(auth, (user) => {
+    if (!user) {
+        showMessage('Debes estar autenticado para cambiar la contraseña.', 'error');
+        setTimeout(() => {
+            window.location.href = '../../../../index.html';
+        }, 2000);
+    }
+});
 
 form.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -70,9 +98,9 @@ form.addEventListener('submit', async (e) => {
         return;
     }
 
-    const passwordError = validatePassword(newPassword);
-    if (passwordError) {
-        showMessage(passwordError, 'error');
+    const validation = validatePassword(newPassword);
+    if (validation.error) {
+        showMessage(validation.error, 'error');
         return;
     }
 
@@ -93,6 +121,7 @@ form.addEventListener('submit', async (e) => {
 
         showMessage('Contraseña cambiada exitosamente.', 'success');
         form.reset();
+        updatePasswordRequirements('');
     } catch (error) {
         console.error('Error:', error);
         if (error.code === 'auth/wrong-password') {
