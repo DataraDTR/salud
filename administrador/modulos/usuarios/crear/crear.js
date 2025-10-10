@@ -68,7 +68,7 @@ form.addEventListener('submit', async (e) => {
     const module = document.getElementById('crear-module').value;
     const category = document.getElementById('crear-category').value;
     const password = document.getElementById('crear-password').value;
-    const repeatPassword = document.getElementById('crear-repeatPassword').value;
+    const repeatPassword = document.getElementById('-crear-repeatPassword').value;
 
     if (!fullName || !username || !birthDate || !email || !sex || !module || !category || !password || !repeatPassword) {
         showMessage('Por favor, complete todos los campos.', 'error');
@@ -97,12 +97,13 @@ form.addEventListener('submit', async (e) => {
             firstLogin: true, // Indicar que es el primer inicio de sesión
             createdAt: new Date()
         });
+        console.log(`Usuario creado en Firestore con UID: ${user.uid}, firstLogin: true`);
 
         showMessage('Usuario creado exitosamente.', 'success');
         form.reset();
         updateCard(); // Resetear la tarjeta también
     } catch (error) {
-        console.error('Error:', error);
+        console.error('Error al crear usuario:', error);
         if (error.code === 'auth/email-already-in-use') {
             showMessage('El correo electrónico ya está en uso.', 'error');
         } else if (error.code === 'auth/invalid-email') {

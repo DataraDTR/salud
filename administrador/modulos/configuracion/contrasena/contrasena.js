@@ -94,10 +94,13 @@ onAuthStateChanged(auth, async (user) => {
             window.location.href = '../../../../index.html';
         }, 2000);
     } else {
-        // Verificar si es el primer inicio de sesión para mostrar un mensaje específico
-        const userDoc = await getDoc(doc(db, 'users', user.uid));
-        if (userDoc.exists() && userDoc.data().firstLogin) {
-            showMessage('Por favor, establece tu nueva contraseña.', 'info');
+        try {
+            const userDoc = await getDoc(doc(db, 'users', user.uid));
+            if (userDoc.exists() && userDoc.data().firstLogin) {
+                showMessage('Por favor, establece tu nueva contraseña.', 'info');
+            }
+        } catch (error) {
+            console.error('Error al verificar firstLogin:', error);
         }
     }
 });
@@ -144,13 +147,22 @@ form.addEventListener('submit', async (e) => {
         await updateDoc(doc(db, 'users', user.uid), {
             firstLogin: false
         });
+        console.log(`firstLogin actualizado a false para UID: ${user.uid}`);
 
         showMessage('Contraseña cambiada exitosamente.', 'success');
         form.reset();
         updatePasswordRequirements('');
         updateRepeatMatchIndicator();
+        // Redirigir al menú principal después de cambiar la contraseña
+        setTimeout(() => {
+            const userDoc = await getDoc(doc(db, 'users', user.uid));
+            if (userDoc.exists()) {
+                const category = userDoc.data().category;
+                window.location.href = `${category.toLowerCase()}/menu.html`;
+            }
+        }, 2000);
     } catch (error) {
-        console.error('Error:', error);
+        console.error('Error al cambiar contraseña:', error);
         if (error.code === 'auth/invalid-credential') {
             showMessage('La contraseña actual no corresponde.', 'error');
         } else if (error.code === 'auth/too-many-requests') {

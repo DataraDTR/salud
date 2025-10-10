@@ -187,21 +187,32 @@
 
         onAuthStateChanged(auth, async (user) => {
             if (user) {
-                const userDoc = await getDoc(doc(db, 'users', user.uid));
-                if (userDoc.exists()) {
-                    const userData = userDoc.data();
-                    const category = userData.category;
-                    // Verificar si es el primer inicio de sesión
-                    if (userData.firstLogin) {
-                        // Redirigir a la página de cambio de contraseña
-                        window.location.href = `${category.toLowerCase()}/menu.html#contrasena`;
+                console.log('Usuario autenticado:', user.uid);
+                try {
+                    const userDoc = await getDoc(doc(db, 'users', user.uid));
+                    if (userDoc.exists()) {
+                        const userData = userDoc.data();
+                        console.log('Datos del usuario:', userData);
+                        const category = userData.category;
+                        if (userData.firstLogin) {
+                            console.log('Primer login detectado, redirigiendo a cambio de contraseña');
+                            window.location.href = `${category.toLowerCase()}/menu.html#contrasena`;
+                        } else {
+                            console.log('No es primer login, redirigiendo a menú principal');
+                            window.location.href = `${category.toLowerCase()}/menu.html`;
+                        }
+                        // Actualizar el enlace de "Cambiar Clave"
+                        changePasswordLink.href = `${category.toLowerCase()}/menu.html#contrasena`;
                     } else {
-                        // Redirigir al menú principal
-                        window.location.href = `${category.toLowerCase()}/menu.html`;
+                        console.error('Documento de usuario no encontrado en Firestore');
+                        showMessage('Error: No se encontraron datos del usuario.', 'error');
                     }
-                    // Actualizar el enlace de "Cambiar Clave"
-                    changePasswordLink.href = `${category.toLowerCase()}/menu.html#contrasena`;
+                } catch (error) {
+                    console.error('Error al consultar Firestore:', error);
+                    showMessage('Error al verificar datos del usuario: ' + error.message, 'error');
                 }
+                form.reset();
+                message.style.display = 'none';
             }
         });
 
@@ -235,12 +246,9 @@
                 const email = userData.email;
 
                 await signInWithEmailAndPassword(auth, email, password);
-
                 // La redirección se maneja en onAuthStateChanged
-                showMessage('Credenciales correctas. Redirigiendo...', 'success');
-                form.reset();
             } catch (error) {
-                console.error('Error:', error);
+                console.error('Error al iniciar sesión:', error);
                 if (error.code === 'auth/invalid-credential') {
                     showMessage('Usuario o contraseña incorrectos.', 'error');
                 } else if (error.code === 'auth/too-many-requests') {
