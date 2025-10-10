@@ -227,12 +227,6 @@ body {
     border: 1px solid #bee5eb;
 }
 
-#message.info {
-    background-color: #d1ecf1;
-    color: #0c5460;
-    border: 1px solid #bee5eb;
-}
-
 @media (max-width: 768px) {
     #content-crear-usuario {
         padding: 15px;
