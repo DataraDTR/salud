@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cambiar Contraseña - Datara</title>
+    <link rel="icon" href="img/midatara_logo.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="contrasena.css">
+</head>
+<body>
+    <div class="header">Datara - Salud</div>
+    <div class="login-panel">
+        <h2>Cambiar Contraseña</h2>
+        <form id="changePasswordForm">
+            <div class="form-group">
+                <label for="currentPassword">Contraseña Actual</label>
+                <div class="input-wrapper">
+                    <i class="fas fa-lock input-icon"></i>
+                    <input type="password" id="currentPassword" name="currentPassword" placeholder="Contraseña Actual" autocomplete="off" required>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="newPassword">Nueva Contraseña</label>
+                <div class="input-wrapper">
+                    <i class="fas fa-lock input-icon"></i>
+                    <input type="password" id="newPassword" name="newPassword" placeholder="Nueva Contraseña" autocomplete="off" required minlength="6">
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="repeatNewPassword">Repetir Nueva Contraseña</label>
+                <div class="input-wrapper">
+                    <i class="fas fa-lock input-icon"></i>
+                    <input type="password" id="repeatNewPassword" name="repeatNewPassword" placeholder="Repetir Nueva Contraseña" autocomplete="off" required minlength="6">
+                </div>
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Cambiar Contraseña" class="btn-conectar" id="changePasswordBtn">
+            </div>
+            <div class="change-link">
+                <a href="index.html">Volver al Inicio</a>
+            </div>
+        </form>
+        <div id="message"></div>
+    </div>
+
+    <script type="module" src="contrasena.js"></script>
+</body>
+</html>
