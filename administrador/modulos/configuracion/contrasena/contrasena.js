@@ -27,6 +27,32 @@ onAuthStateChanged(auth, (user) => {
     }
 });
 
+function validatePassword(password) {
+    const minLength = 8;
+    const maxLength = 20;
+    const hasUpperCase = /[A-Z]/.test(password);
+    const hasLowerCase = /[a-z]/.test(password);
+    const hasNumber = /[0-9]/.test(password);
+    const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+
+    if (password.length < minLength || password.length > maxLength) {
+        return 'La contraseña debe tener entre 8 y 20 caracteres.';
+    }
+    if (!hasUpperCase) {
+        return 'La contraseña debe contener al menos una letra mayúscula.';
+    }
+    if (!hasLowerCase) {
+        return 'La contraseña debe contener al menos una letra minúscula.';
+    }
+    if (!hasNumber) {
+        return 'La contraseña debe contener al menos un número.';
+    }
+    if (!hasSpecialChar) {
+        return 'La contraseña debe contener al menos un carácter especial (!@#$%^&*).';
+    }
+    return null; // Contraseña válida
+}
+
 form.addEventListener('submit', async (e) => {
     e.preventDefault();
 
@@ -44,8 +70,9 @@ form.addEventListener('submit', async (e) => {
         return;
     }
 
-    if (newPassword.length < 6) {
-        showMessage('La nueva contraseña debe tener al menos 6 caracteres.', 'error');
+    const passwordError = validatePassword(newPassword);
+    if (passwordError) {
+        showMessage(passwordError, 'error');
         return;
     }
 
