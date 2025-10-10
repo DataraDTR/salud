@@ -1,9 +1,7 @@
-// Import the functions you need from the SDKs you need
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
 import { getFirestore, collection, getDocs, query, where, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 
-// Your web app's Firebase configuration
 const firebaseConfig = {
     apiKey: "AIzaSyD6JY7FaRqjZoN6OzbFHoIXxd-IJL3H-Ek",
     authDomain: "datara-salud.firebaseapp.com",
@@ -14,16 +12,14 @@ const firebaseConfig = {
     measurementId: "G-MLYVTZPPLD"
 };
 
-// Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
 const usersList = document.getElementById('users-list');
 const searchInput = document.getElementById('search-input');
-let allUsers = []; // Almacenar todos los usuarios para filtrado local
+let allUsers = []; 
 
-// Función para crear input o select para el campo (definida antes de usarla)
 function createInputForField(fieldName, value) {
     if (fieldName === 'sex') {
         return `
@@ -81,7 +77,6 @@ function createInputForField(fieldName, value) {
     `;
 }
 
-// Verificar autenticación
 onAuthStateChanged(auth, async (user) => {
     if (!user) {
         window.location.replace('../../../../index.html');
@@ -90,7 +85,6 @@ onAuthStateChanged(auth, async (user) => {
     await loadUsers();
 });
 
-// Cargar usuarios desde Firestore
 async function loadUsers(searchTerm = '') {
     try {
         const q = query(collection(db, 'users'));
@@ -122,7 +116,6 @@ async function loadUsers(searchTerm = '') {
     }
 }
 
-// Renderizar tarjeta de usuario con funcionalidad de edición
 function renderUserCard(user) {
     const card = document.createElement('div');
     card.className = 'user-card';
@@ -138,7 +131,7 @@ function renderUserCard(user) {
 
     card.innerHTML = `
         <div class="card-header">
-            <img src="../../../../img/letra-d.png" alt="Datara-Salud" class="company-icon">
+            <img src="../../../../img/midatara_logo_texto.png" alt="Datara-Salud" class="company-icon">
             <h2>Datara-Salud</h2>
         </div>
         <div class="card-body">
