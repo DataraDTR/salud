@@ -18,6 +18,8 @@ const form = document.getElementById('changePasswordForm');
 const message = document.getElementById('message');
 const changePasswordBtn = document.querySelector('.btn-crear');
 const newPasswordInput = document.getElementById('newPassword');
+const repeatNewPasswordInput = document.getElementById('repeatNewPassword');
+const repeatMatchIndicator = document.getElementById('repeatMatch');
 
 function validatePassword(password) {
     const minLength = 8;
@@ -25,7 +27,7 @@ function validatePassword(password) {
     const hasUpperCase = /[A-Z]/.test(password);
     const hasLowerCase = /[a-z]/.test(password);
     const hasNumber = /[0-9]/.test(password);
-    const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+    const hasSpecialChar = /[!@#$%^&*+\-(),.?":{}|<>]/.test(password);
 
     return {
         length: password.length >= minLength && password.length <= maxLength,
@@ -38,7 +40,7 @@ function validatePassword(password) {
                 !hasUpperCase ? 'La contraseña debe contener al menos una letra mayúscula.' :
                 !hasLowerCase ? 'La contraseña debe contener al menos una letra minúscula.' :
                 !hasNumber ? 'La contraseña debe contener al menos un número.' :
-                !hasSpecialChar ? 'La contraseña debe contener al menos un carácter especial (!@#$%^&*).' : null
+                !hasSpecialChar ? 'La contraseña debe contener al menos un carácter especial (!@#$%^&*+-(),.?":{}|<>).' : null
     };
 }
 
@@ -56,10 +58,21 @@ function updatePasswordRequirements(password) {
     document.getElementById('req-special').classList.toggle('invalid', !validation.special);
 }
 
+function updateRepeatMatchIndicator() {
+    const newPassword = newPasswordInput.value;
+    const repeatNewPassword = repeatNewPasswordInput.value;
+    const isMatch = newPassword === repeatNewPassword && newPassword.length > 0;
+    repeatMatchIndicator.classList.toggle('valid', isMatch);
+    repeatMatchIndicator.classList.toggle('invalid', !isMatch);
+}
+
 newPasswordInput.addEventListener('input', () => {
     const password = newPasswordInput.value;
     updatePasswordRequirements(password);
+    updateRepeatMatchIndicator();
 });
+
+repeatNewPasswordInput.addEventListener('input', updateRepeatMatchIndicator);
 
 document.querySelectorAll('.toggle-password').forEach(toggle => {
     toggle.addEventListener('click', () => {
@@ -122,10 +135,11 @@ form.addEventListener('submit', async (e) => {
         showMessage('Contraseña cambiada exitosamente.', 'success');
         form.reset();
         updatePasswordRequirements('');
+        updateRepeatMatchIndicator();
     } catch (error) {
         console.error('Error:', error);
-        if (error.code === 'auth/wrong-password') {
-            showMessage('La contraseña actual es incorrecta.', 'error');
+        if (error.code === 'auth/invalid-credential') {
+            showMessage('La contraseña actual no corresponde.', 'error');
         } else if (error.code === 'auth/too-many-requests') {
             showMessage('Demasiados intentos. Intente de nuevo más tarde.', 'error');
         } else {

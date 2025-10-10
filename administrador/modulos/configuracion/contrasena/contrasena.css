@@ -149,6 +149,33 @@ body {
     color: #721c24;
 }
 
+.match-indicator {
+    font-size: 12px;
+    margin-top: 5px;
+    display: flex;
+    align-items: center;
+}
+
+.match-indicator::before {
+    content: '✗';
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    margin-right: 8px;
+    color: #721c24;
+    font-weight: bold;
+}
+
+.match-indicator.valid::before {
+    content: '✓';
+    color: #155724;
+}
+
+.match-indicator.invalid::before {
+    content: '✗';
+    color: #721c24;
+}
+
 .btn-crear {
     grid-column: 1 / -1;
     width: auto;
