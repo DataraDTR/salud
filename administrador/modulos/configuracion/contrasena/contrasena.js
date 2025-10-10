@@ -22,7 +22,7 @@ onAuthStateChanged(auth, (user) => {
     if (!user) {
         showMessage('Debes estar autenticado para cambiar la contraseña.', 'error');
         setTimeout(() => {
-            window.location.href = 'index.html';
+            window.location.href = '../../../index.html';
         }, 2000);
     }
 });
@@ -50,7 +50,7 @@ form.addEventListener('submit', async (e) => {
     }
 
     changePasswordBtn.disabled = true;
-    changePasswordBtn.value = 'Cambiando...';
+    changePasswordBtn.textContent = 'Cambiando...';
     showMessage('Procesando cambio de contraseña...', 'loading');
 
     try {
@@ -64,11 +64,8 @@ form.addEventListener('submit', async (e) => {
 
         await updatePassword(user, newPassword);
 
-        showMessage('Contraseña cambiada exitosamente. Redirigiendo...', 'success');
+        showMessage('Contraseña cambiada exitosamente.', 'success');
         form.reset();
-        setTimeout(() => {
-            window.location.href = 'index.html';
-        }, 2000);
     } catch (error) {
         console.error('Error:', error);
         if (error.code === 'auth/wrong-password') {
@@ -95,5 +92,5 @@ function showMessage(text, type) {
 
 function resetButtonState() {
     changePasswordBtn.disabled = false;
-    changePasswordBtn.value = 'Cambiar Contraseña';
+    changePasswordBtn.textContent = 'Cambiar Contraseña';
 }
