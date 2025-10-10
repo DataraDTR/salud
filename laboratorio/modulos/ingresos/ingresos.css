@@ -37,13 +37,6 @@ html, body {
     flex-wrap: wrap;
 }
 
-.ingresos-search-section {
-    display: flex;
-    flex-direction: row;
-    gap: 20px;
-    flex: 1;
-}
-
 .ingresos-form-group {
     display: flex;
     flex-direction: column;
@@ -61,10 +54,8 @@ html, body {
     white-space: nowrap;
 }
 
-#fechaIngreso, #numeroFactura, #fechaFactura, #monto, #ordenCompra, #acta, #salida, #fechaOc, #proveedor, #fechaSalida, 
 #buscarNumeroFactura, #buscarProveedor, #buscarOrdenCompra, #buscarActa, #buscarSalidas, #fechaDesde, #fechaHasta, 
-#selectAno, #selectMes, #editFechaIngreso, #editNumeroFactura, #editFechaFactura, #editMonto, #editOrdenCompra, 
-#editActa, #editSalida, #editFechaOc, #editProveedor, #editFechaSalida, #selectDownloadAno, #selectDownloadMes {
+#selectAno, #selectMes, #selectDownloadAno, #selectDownloadMes {
     width: 100%;
     padding: 8px;
     border: 1px solid #ddd;
@@ -73,19 +64,10 @@ html, body {
     box-sizing: border-box;
 }
 
-#fechaIngreso:focus, #numeroFactura:focus, #fechaFactura:focus, #monto:focus, #ordenCompra:focus, #acta:focus, 
-#salida:focus, #fechaOc:focus, #proveedor:focus, #fechaSalida:focus, #buscarNumeroFactura:focus, #buscarProveedor:focus, 
-#buscarOrdenCompra:focus, #buscarActa:focus, #buscarSalidas:focus, #fechaDesde:focus, #fechaHasta:focus, 
-#selectAno:focus, #selectMes:focus, #editFechaIngreso:focus, #editNumeroFactura:focus, #editFechaFactura:focus, 
-#editMonto:focus, #editOrdenCompra:focus, #editActa:focus, #editSalida:focus, #editFechaOc:focus, #editProveedor:focus, 
-#editFechaSalida:focus, #selectDownloadAno:focus, #selectDownloadMes:focus {
+#buscarNumeroFactura:focus, #buscarProveedor:focus, #buscarOrdenCompra:focus, #buscarActa:focus, #buscarSalidas:focus, 
+#fechaDesde:focus, #fechaHasta:focus, #selectAno:focus, #selectMes:focus, #selectDownloadAno:focus, #selectDownloadMes:focus {
     box-shadow: 0 0 12px rgba(0, 123, 255, 0.5);
     outline: none;
-}
-
-#fechaOc, #proveedor, #editFechaOc, #editProveedor {
-    background-color: #f8f9fa;
-    cursor: not-allowed;
 }
 
 .ingresos-actions-menu {
@@ -118,7 +100,7 @@ html, body {
     background-color: white;
     min-width: 200px;
     box-shadow: 2px 8px 16px rgba(0,0,0,0.2);
-    z-index: 20; /* Actualizado para asegurar que el menú esté por encima del encabezado de la tabla */
+    z-index: 20;
     border-radius: 4px;
     overflow: hidden;
     flex-direction: column;
@@ -196,65 +178,19 @@ html, body {
 }
 
 .ingresos-table th:nth-child(1), .ingresos-table td:nth-child(1) { width: 120px; min-width: 100px; max-width: 120px; }
-.ingresos-table th:nth-child(2), .ingresos-table td:nth-child(2) { width: 120px; min-width: 100px; max-width: 120px; }
+.ingresos-table th:nth-child(2), .ingresos-table td:nth-child(2) { width: 100px; min-width: 80px; max-width: 100px; }
 .ingresos-table th:nth-child(3), .ingresos-table td:nth-child(3) { width: 100px; min-width: 80px; max-width: 100px; }
 .ingresos-table th:nth-child(4), .ingresos-table td:nth-child(4) { width: 100px; min-width: 80px; max-width: 100px; }
 .ingresos-table th:nth-child(5), .ingresos-table td:nth-child(5) { width: 100px; min-width: 80px; max-width: 100px; }
 .ingresos-table th:nth-child(6), .ingresos-table td:nth-child(6) { width: 100px; min-width: 80px; max-width: 100px; }
-.ingresos-table th:nth-child(7), .ingresos-table td:nth-child(7) { width: 100px; min-width: 80px; max-width: 100px; }
-.ingresos-table th:nth-child(8), .ingresos-table td:nth-child(8) { width: 150px; min-width: 120px; max-width: 150px; }
+.ingresos-table th:nth-child(7), .ingresos-table td:nth-child(7) { width: 150px; min-width: 120px; max-width: 150px; }
+.ingresos-table th:nth-child(8), .ingresos-table td:nth-child(8) { width: 100px; min-width: 80px; max-width: 100px; }
 .ingresos-table th:nth-child(9), .ingresos-table td:nth-child(9) { width: 100px; min-width: 80px; max-width: 100px; }
 .ingresos-table th:nth-child(10), .ingresos-table td:nth-child(10) { width: 100px; min-width: 80px; max-width: 100px; }
-.ingresos-table th:nth-child(11), .ingresos-table td:nth-child(11) { width: 100px; min-width: 80px; max-width: 100px; }
-.ingresos-table th:nth-child(12), .ingresos-table td:nth-child(12) { width: 150px; min-width: 120px; max-width: 150px; }
+.ingresos-table th:nth-child(11), .ingresos-table td:nth-child(11) { width: 150px; min-width: 120px; max-width: 150px; }
 
 .resizing {
     user-select: none;
-}
-
-.ingresos-actions {
-    display: flex;
-    gap: 5px;
-}
-
-.ingresos-actions button {
-    padding: 4px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 12px;
-    width: 24px;
-    height: 24px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.ingresos-btn-edit {
-    background-color: #ffc107;
-    color: #000;
-}
-
-.ingresos-btn-edit:hover {
-    background-color: #e0a800;
-}
-
-.ingresos-btn-delete {
-    background-color: #dc3545;
-    color: white;
-}
-
-.ingresos-btn-delete:hover {
-    background-color: #c82333;
-}
-
-.ingresos-btn-history {
-    background-color: #17a2b8;
-    color: white;
-}
-
-.ingresos-btn-history:hover {
-    background-color: #138496;
 }
 
 .ingresos-pagination {
@@ -315,7 +251,7 @@ html, body {
     cursor: pointer;
     font-size: 11px;
     border-radius: 4px;
-    color: #333; /* Agregado para asegurar que el texto de botones no activos sea visible */
+    color: #333;
 }
 
 .ingresos-page-numbers button.active {
@@ -326,7 +262,7 @@ html, body {
 
 .ingresos-page-numbers button:hover:not(.active) {
     background-color: #f0f0f0;
-    color: #333; /* Agregado para mantener el texto visible en hover */
+    color: #333;
 }
 
 .ingresos-page-numbers .ingresos-dots {
@@ -397,46 +333,6 @@ html, body {
 @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
-}
-
-.ingresos-import-progress {
-    display: none;
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: rgba(255, 255, 255, 0.95);
-    padding: 16px;
-    border-radius: 8px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-    z-index: 1000;
-    width: 300px;
-    text-align: center;
-}
-
-.ingresos-import-progress.show {
-    display: block;
-}
-
-.ingresos-progress-bar-container {
-    width: 100%;
-    background: #f0f0f0;
-    border-radius: 4px;
-    overflow: hidden;
-    height: 20px;
-    margin-bottom: 8px;
-}
-
-.ingresos-progress-bar {
-    width: 0%;
-    height: 100%;
-    background: #007bff;
-    transition: width 0.3s ease;
-}
-
-.ingresos-progress-text {
-    font-size: 12px;
-    color: #333;
 }
 
 .ingresos-toast {
@@ -578,29 +474,4 @@ html, body {
 
 .modal-btn-secondary:hover {
     background-color: #5a6268;
-}
-
-.modal-btn-danger {
-    background-color: #dc3545;
-    color: white;
-}
-
-.modal-btn-danger:hover {
-    background-color: #c82333;
-}
-
-.delete-modal-text {
-    font-size: 12px;
-    margin-bottom: 20px;
-    color: #333;
-}
-
-.history-entry {
-    font-size: 11px;
-    padding: 8px 0;
-    border-bottom: 1px solid #ddd;
-}
-
-.history-entry:last-child {
-    border-bottom: none;
 }
