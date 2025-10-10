@@ -22,7 +22,7 @@ onAuthStateChanged(auth, (user) => {
     if (!user) {
         showMessage('Debes estar autenticado para cambiar la contraseña.', 'error');
         setTimeout(() => {
-            window.location.href = '../../../index.html';
+            window.location.href = '../../../../index.html';
         }, 2000);
     }
 });
