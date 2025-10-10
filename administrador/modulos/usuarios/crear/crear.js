@@ -68,7 +68,7 @@ form.addEventListener('submit', async (e) => {
     const module = document.getElementById('crear-module').value;
     const category = document.getElementById('crear-category').value;
     const password = document.getElementById('crear-password').value;
-    const repeatPassword = document.getElementById('-crear-repeatPassword').value;
+    const repeatPassword = document.getElementById('crear-repeatPassword').value;
 
     if (!fullName || !username || !birthDate || !email || !sex || !module || !category || !password || !repeatPassword) {
         showMessage('Por favor, complete todos los campos.', 'error');

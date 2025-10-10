@@ -94,13 +94,25 @@ onAuthStateChanged(auth, async (user) => {
             window.location.href = '../../../../index.html';
         }, 2000);
     } else {
+        console.log('Usuario autenticado en contrasena.js:', user.uid);
         try {
             const userDoc = await getDoc(doc(db, 'users', user.uid));
-            if (userDoc.exists() && userDoc.data().firstLogin) {
-                showMessage('Por favor, establece tu nueva contraseña.', 'info');
+            if (userDoc.exists()) {
+                const userData = userDoc.data();
+                console.log('Datos del usuario en contrasena.js:', userData);
+                if (userData.firstLogin) {
+                    showMessage('Por favor, establece tu nueva contraseña.', 'info');
+                }
+            } else {
+                console.error('Documento de usuario no encontrado en Firestore para UID:', user.uid);
+                showMessage('Error: No se encontraron datos del usuario. Contacta al administrador.', 'error');
+                setTimeout(() => {
+                    window.location.href = '../../../../index.html';
+                }, 2000);
             }
         } catch (error) {
-            console.error('Error al verificar firstLogin:', error);
+            console.error('Error al consultar Firestore en contrasena.js:', error);
+            showMessage('Error al verificar datos del usuario: ' + error.message, 'error');
         }
     }
 });
@@ -154,13 +166,21 @@ form.addEventListener('submit', async (e) => {
         updatePasswordRequirements('');
         updateRepeatMatchIndicator();
         // Redirigir al menú principal después de cambiar la contraseña
-        setTimeout(() => {
+        try {
             const userDoc = await getDoc(doc(db, 'users', user.uid));
             if (userDoc.exists()) {
                 const category = userDoc.data().category;
-                window.location.href = `${category.toLowerCase()}/menu.html`;
+                console.log(`Redirigiendo al menú principal: ${category.toLowerCase()}/menu.html`);
+                setTimeout(() => {
+                    window.location.href = `${category.toLowerCase()}/menu.html`;
+                }, 2000);
+            } else {
+                throw new Error('Documento de usuario no encontrado después de actualizar contraseña.');
             }
-        }, 2000);
+        } catch (error) {
+            console.error('Error al obtener categoría para redirección:', error);
+            showMessage('Contraseña cambiada, pero no se pudo redirigir. Contacta al administrador.', 'error');
+        }
     } catch (error) {
         console.error('Error al cambiar contraseña:', error);
         if (error.code === 'auth/invalid-credential') {
