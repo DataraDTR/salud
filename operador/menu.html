@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Menú - Datara Salud</title>
-    <link rel="icon" href="../img/letra-d.png">
+    <link rel="icon" href="../img/logo_ope_V1.png">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * {
@@ -198,7 +198,7 @@
 </head>
 <body>
     <div class="header">
-        <h1>Datara - Salud - Operador</h1>
+        <h1>Datara Salud - Operador</h1>
         <div class="info">
             <div class="user">Bienvenido, <span id="userName">Usuario</span></div>
             <div class="date" id="currentDate"></div>
@@ -254,7 +254,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
-        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
+        import { getAuth, onAuthStateChanged, signOut, setPersistence, browserSessionPersistence } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
         import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 
         const firebaseConfig = {
@@ -270,6 +270,9 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
+
+        // NUEVO: Configurar persistencia a 'session' (por pestaña/iframe, no compartida)
+        setPersistence(auth, browserSessionPersistence);
 
         onAuthStateChanged(auth, async (user) => {
             if (!user) {
@@ -312,10 +315,11 @@
                 { text: 'Tránsito', path: 'modulos/implantes/transito/transito.html', icon: 'fas fa-shipping-fast' }
             ],
             'consignacion': [
-                { text: 'Inventario', path: 'modulos/consignacion/inventario/inventario.html', icon: 'fas fa-list' },
-                { text: 'Entradas', path: 'modulos/consignacion/entradas/entradas.html', icon: 'fas fa-sign-in-alt' },
-                { text: 'Salidas', path: 'modulos/consignacion/salidas/salidas.html', icon: 'fas fa-sign-out-alt' },
-                { text: 'Reportes', path: 'modulos/consignacion/reportes/reportes.html', icon: 'fas fa-chart-bar' }
+                { text: 'Cargas', path: 'modulos/consignacion/cargas/cargas.html', icon: 'fas fa-boxes' },
+                { text: 'Pacientes', path: 'modulos/consignacion/pacientes/pacientes.html', icon: 'fas fa-user-injured' },
+                { text: 'Historial', path: 'modulos/consignacion/historial/historial.html', icon: 'fas fa-history' },
+                { text: 'Guías', path: 'modulos/consignacion/guias/guias.html', icon: 'fas fa-route' },
+                { text: 'Reportes', path: 'modulos/consignacion/reportes/reportes.html', icon: 'fas fa-chart-line' }
             ],
             'historico': [
                 { text: 'Registros', path: 'modulos/historico/registros/registros.html', icon: 'fas fa-history' },
@@ -341,9 +345,9 @@
                 { text: 'Utilidades', path: 'modulos/herramientas/utilidades/utilidades.html', icon: 'fas fa-wrench' }
             ],
             'importacion': [
-                { text: 'Archivos', path: 'modulos/importacion/archivos/archivos.html', icon: 'fas fa-file-import' },
-                { text: 'Validación', path: 'modulos/importacion/validacion/validacion.html', icon: 'fas fa-check-circle' },
-                { text: 'Procesar', path: 'modulos/importacion/procesar/procesar.html', icon: 'fas fa-play' }
+                { text: 'Reportes', path: 'modulos/importacion/reportes/reportes.html', icon: 'fas fa-notes-medical' },
+                { text: 'órdenes de compra', path: 'modulos/importacion/ordenes/ordenes.html', icon: 'fas fa-file-medical' },
+                { text: 'Guías Medtronic', path: 'modulos/importacion/medtronic/medtronic.html', icon: 'fas fa-clipboard-list' }
             ],
             'apuntes': [
                 { text: 'Notas', path: 'modulos/apuntes/notas/notas.html', icon: 'fas fa-sticky-note' },
