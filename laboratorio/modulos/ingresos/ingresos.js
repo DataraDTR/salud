@@ -1,4 +1,4 @@
-const { initializeApp, getAuth, onAuthStateChanged, setPersistence, browserSessionPersistence, getFirestore, collection, getDocs, query, orderBy, getDoc } = window.firebaseModules;
+const { initializeApp, getAuth, onAuthStateChanged, setPersistence, browserSessionPersistence, getFirestore, collection, getDocs, query, orderBy } = window.firebaseModules;
 
 const firebaseConfig = {
     apiKey: "AIzaSyD6JY7FaRqjZoN6OzbFHoIXxd-IJL3H-Ek",
@@ -165,18 +165,7 @@ document.addEventListener('DOMContentLoaded', () => {
             window.location.replace('../index.html');
             return;
         }
-        try {
-            const userDocRef = doc(db, 'users', user.uid);
-            const userDoc = await getDoc(userDocRef);
-            if (userDoc.exists()) {
-                window.currentUserData = userDoc.data();
-            } else {
-                window.currentUserData = { fullName: user.displayName || 'Usuario Invitado', username: user.email || 'invitado' };
-            }
-        } catch (error) {
-            window.currentUserData = { fullName: 'Usuario Invitado', username: 'invitado' };
-            showToast('Error al cargar datos del usuario.', 'error');
-        }
+        window.currentUserData = { fullName: user.displayName || 'Usuario Invitado', username: user.email || 'invitado' };
         await loadIngresos();
         populateAnoSelect(selectAno);
         selectAno.value = selectedAno;
