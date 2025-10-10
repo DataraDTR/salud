@@ -1,6 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
 import { getAuth, onAuthStateChanged, reauthenticateWithCredential, EmailAuthProvider, updatePassword } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
-import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyD6JY7FaRqjZoN6OzbFHoIXxd-IJL3H-Ek",
@@ -14,7 +13,6 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
-const db = getFirestore(app);
 
 const form = document.getElementById('changePasswordForm');
 const message = document.getElementById('message');
@@ -87,18 +85,12 @@ document.querySelectorAll('.toggle-password').forEach(toggle => {
     });
 });
 
-onAuthStateChanged(auth, async (user) => {
+onAuthStateChanged(auth, (user) => {
     if (!user) {
         showMessage('Debes estar autenticado para cambiar la contraseña.', 'error');
         setTimeout(() => {
             window.location.href = '../../../../index.html';
         }, 2000);
-    } else {
-        // Verificar si es el primer inicio de sesión para mostrar un mensaje específico
-        const userDoc = await getDoc(doc(db, 'users', user.uid));
-        if (userDoc.exists() && userDoc.data().firstLogin) {
-            showMessage('Por favor, establece tu nueva contraseña.', 'info');
-        }
     }
 });
 
@@ -139,11 +131,6 @@ form.addEventListener('submit', async (e) => {
         await reauthenticateWithCredential(user, credential);
 
         await updatePassword(user, newPassword);
-
-        // Actualizar el indicador de primer inicio de sesión en Firestore
-        await updateDoc(doc(db, 'users', user.uid), {
-            firstLogin: false
-        });
 
         showMessage('Contraseña cambiada exitosamente.', 'success');
         form.reset();

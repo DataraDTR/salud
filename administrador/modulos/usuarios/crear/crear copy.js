@@ -1,3 +1,4 @@
+// Import the functions you need from the SDKs you need
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
 import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
 import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
@@ -70,11 +71,6 @@ form.addEventListener('submit', async (e) => {
     const password = document.getElementById('crear-password').value;
     const repeatPassword = document.getElementById('crear-repeatPassword').value;
 
-    if (!fullName || !username || !birthDate || !email || !sex || !module || !category || !password || !repeatPassword) {
-        showMessage('Por favor, complete todos los campos.', 'error');
-        return;
-    }
-
     if (password !== repeatPassword) {
         showMessage('Las contraseñas no coinciden.', 'error');
         return;
@@ -94,7 +90,6 @@ form.addEventListener('submit', async (e) => {
             sex: sex,
             module: module,
             category: category,
-            firstLogin: true, // Indicar que es el primer inicio de sesión
             createdAt: new Date()
         });
 
@@ -103,13 +98,7 @@ form.addEventListener('submit', async (e) => {
         updateCard(); // Resetear la tarjeta también
     } catch (error) {
         console.error('Error:', error);
-        if (error.code === 'auth/email-already-in-use') {
-            showMessage('El correo electrónico ya está en uso.', 'error');
-        } else if (error.code === 'auth/invalid-email') {
-            showMessage('El correo electrónico no es válido.', 'error');
-        } else {
-            showMessage('Error al crear usuario: ' + error.message, 'error');
-        }
+        showMessage('Error al crear usuario: ' + error.message, 'error');
     }
 });
 

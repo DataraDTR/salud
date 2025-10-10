@@ -153,7 +153,7 @@
                 <input type="submit" value="Ingresar" class="btn-conectar" id="loginBtn">
             </div>
             <div class="change-link">
-                <a id="changePasswordLink" href="#">Cambiar Clave</a>
+                <a href="#">Cambiar Clave</a>
             </div>
         </form>
         <div id="message"></div>
@@ -162,7 +162,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, setPersistence, browserSessionPersistence } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
-        import { getFirestore, collection, query, where, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+        import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyD6JY7FaRqjZoN6OzbFHoIXxd-IJL3H-Ek",
@@ -183,25 +183,11 @@
         const form = document.getElementById('loginForm');
         const message = document.getElementById('message');
         const loginBtn = document.getElementById('loginBtn');
-        const changePasswordLink = document.getElementById('changePasswordLink');
 
-        onAuthStateChanged(auth, async (user) => {
+        onAuthStateChanged(auth, (user) => {
             if (user) {
-                const userDoc = await getDoc(doc(db, 'users', user.uid));
-                if (userDoc.exists()) {
-                    const userData = userDoc.data();
-                    const category = userData.category;
-                    // Verificar si es el primer inicio de sesión
-                    if (userData.firstLogin) {
-                        // Redirigir a la página de cambio de contraseña
-                        window.location.href = `${category.toLowerCase()}/menu.html#contrasena`;
-                    } else {
-                        // Redirigir al menú principal
-                        window.location.href = `${category.toLowerCase()}/menu.html`;
-                    }
-                    // Actualizar el enlace de "Cambiar Clave"
-                    changePasswordLink.href = `${category.toLowerCase()}/menu.html#contrasena`;
-                }
+                form.reset();
+                message.style.display = 'none';
             }
         });
 
@@ -233,18 +219,25 @@
                 const userDoc = querySnapshot.docs[0];
                 const userData = userDoc.data();
                 const email = userData.email;
+                const category = userData.category;
 
-                await signInWithEmailAndPassword(auth, email, password);
+                const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                const user = userCredential.user;
 
-                // La redirección se maneja en onAuthStateChanged
-                showMessage('Credenciales correctas. Redirigiendo...', 'success');
-                form.reset();
+                if (user) {
+                    form.reset();
+                    showMessage('Credenciales correctas. Redirigiendo...', 'success');
+                    setTimeout(() => {
+                        const redirectPath = `${category.toLowerCase()}/menu.html`;
+                        window.location.href = redirectPath;
+                    }, 1500);
+                }
             } catch (error) {
                 console.error('Error:', error);
-                if (error.code === 'auth/invalid-credential') {
-                    showMessage('Usuario o contraseña incorrectos.', 'error');
-                } else if (error.code === 'auth/too-many-requests') {
-                    showMessage('Demasiados intentos. Intente de nuevo más tarde.', 'error');
+                if (error.code === 'auth/wrong-password') {
+                    showMessage('Contraseña incorrecta.', 'error');
+                } else if (error.code === 'auth/user-not-found') {
+                    showMessage('Usuario no encontrado.', 'error');
                 } else {
                     showMessage('Error al iniciar sesión: ' + error.message, 'error');
                 }
@@ -256,16 +249,14 @@
             message.textContent = text;
             message.className = type;
             message.style.display = 'block';
-            if (type !== 'loading') {
-                setTimeout(() => {
-                    message.style.display = 'none';
-                }, 5000);
-            }
         }
 
         function resetLoginState() {
             loginBtn.disabled = false;
             loginBtn.value = 'Ingresar';
+            setTimeout(() => {
+                message.style.display = 'none';
+            }, 5000);
         }
     </script>
 </body>
