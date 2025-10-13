@@ -260,16 +260,16 @@ html, body {
     background-color: #f8f9fa;
 }
 
-.referencias-table th:nth-child(1), .referencias-table td:nth-child(1) { width: 100px; min-width: 20px; max-width: 500px; }
-.referencias-table th:nth-child(2), .referencias-table td:nth-child(2) { width: 130px; min-width: 20px; max-width: 500px; }
-.referencias-table th:nth-child(3), .referencias-table td:nth-child(3) { width: 2000px; min-width: 20px; max-width: 500px; }
-.referencias-table th:nth-child(4), .referencias-table td:nth-child(4) { width: 80px; min-width: 20px; max-width: 500px; }
-.referencias-table th:nth-child(5), .referencias-table td:nth-child(5) { width: 80px; min-width: 20px; max-width: 500px; }
-.referencias-table th:nth-child(6), .referencias-table td:nth-child(6) { width: 150px; min-width: 20px; max-width: 500px; }
-.referencias-table th:nth-child(7), .referencias-table td:nth-child(7) { width: 250px; min-width: 20px; max-width: 500px; }
-.referencias-table th:nth-child(8), .referencias-table td:nth-child(8) { width: 120px; min-width: 20px; max-width: 500px; }
-.referencias-table th:nth-child(9), .referencias-table td:nth-child(9) { width: 120px; min-width: 20px; max-width: 500px; }
-.referencias-table th:nth-child(10), .referencias-table td:nth-child(10) { width: 80px; min-width: 20px; max-width: 500px; }
+.referencias-table th:nth-child(1), .referencias-table td:nth-child(1) { width: 100px; min-width: 20px; max-width: 2000px; }
+.referencias-table th:nth-child(2), .referencias-table td:nth-child(2) { width: 130px; min-width: 20px; max-width: 2000px; }
+.referencias-table th:nth-child(3), .referencias-table td:nth-child(3) { width: 2000px; min-width: 20px; max-width: 2000px; }
+.referencias-table th:nth-child(4), .referencias-table td:nth-child(4) { width: 80px; min-width: 20px; max-width: 2000px; }
+.referencias-table th:nth-child(5), .referencias-table td:nth-child(5) { width: 80px; min-width: 20px; max-width: 2000px; }
+.referencias-table th:nth-child(6), .referencias-table td:nth-child(6) { width: 150px; min-width: 20px; max-width: 2000px; }
+.referencias-table th:nth-child(7), .referencias-table td:nth-child(7) { width: 250px; min-width: 20px; max-width: 2000px; }
+.referencias-table th:nth-child(8), .referencias-table td:nth-child(8) { width: 120px; min-width: 20px; max-width: 2000px; }
+.referencias-table th:nth-child(9), .referencias-table td:nth-child(9) { width: 120px; min-width: 20px; max-width: 2000px; }
+.referencias-table th:nth-child(10), .referencias-table td:nth-child(10) { width: 80px; min-width: 20px; max-width: 2000px; }
 
 .referencias-actions {
     display: flex;
