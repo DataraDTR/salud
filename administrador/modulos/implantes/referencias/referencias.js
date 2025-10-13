@@ -27,6 +27,7 @@ let searchDetalles = '';
 let searchProveedor = '';
 let searchTipo = '';
 let searchAtributo = '';
+let mostrarPendientes = false;
 let proveedores = [];
 
 function formatNumberWithThousandsSeparator(number) {
@@ -38,6 +39,18 @@ function formatNumberWithThousandsSeparator(number) {
 async function getReferenciaByUniqueKey(referencia, excludeId = null) {
     if (!referencia) return null;
     const q = query(collection(db, "referencias_implantes"), where("referencia", "==", referencia.trim().toUpperCase()));
+    const querySnapshot = await getDocs(q);
+    if (!querySnapshot.empty) {
+        const doc = querySnapshot.docs[0];
+        if (excludeId && doc.id === excludeId) return null;
+        return { id: doc.id, ...doc.data() };
+    }
+    return null;
+}
+
+async function getCodigoByUniqueKey(codigo, excludeId = null) {
+    if (!codigo || codigo === 'PENDIENTE' || codigo === '0' || codigo === '') return null;
+    const q = query(collection(db, "referencias_implantes"), where("codigo", "==", codigo.trim().toUpperCase()));
     const querySnapshot = await getDocs(q);
     if (!querySnapshot.empty) {
         const doc = querySnapshot.docs[0];
@@ -240,6 +253,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const buscarProveedorInput = document.getElementById('buscarProveedor');
     const buscarTipoInput = document.getElementById('buscarTipo');
     const buscarAtributoInput = document.getElementById('buscarAtributo');
+    const mostrarPendientesCheckbox = document.getElementById('mostrarPendientes');
     const actionsBtn = document.getElementById('actionsBtn');
     const actionsMenu = document.getElementById('actionsMenu');
     const downloadTemplate = document.getElementById('downloadTemplate');
@@ -438,7 +452,7 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         if (!currentEditId) return;
 
-        const processedRow = {
+        let processedRow = {
             referencia: document.getElementById('editReferencia').value.trim().toUpperCase(),
             detalles: document.getElementById('editDetalles').value.trim().toUpperCase(),
             precioUnitario: document.getElementById('editPrecioUnitario').value.replace(/[^\d]/g, ''),
@@ -450,13 +464,23 @@ document.addEventListener('DOMContentLoaded', () => {
             fullName: window.currentUserData.fullName
         };
 
+        if (processedRow.codigo === '' || processedRow.codigo === '0') {
+            processedRow.codigo = 'PENDIENTE';
+        }
+
         if (processedRow.referencia) {
             showLoading();
             try {
-                const existing = await getReferenciaByUniqueKey(processedRow.referencia, currentEditId);
-                if (existing) {
+                const existingRef = await getReferenciaByUniqueKey(processedRow.referencia, currentEditId);
+                if (existingRef) {
                     hideLoading();
                     showToast('La referencia ya existe.', 'error');
+                    return;
+                }
+                const existingCod = await getCodigoByUniqueKey(processedRow.codigo, currentEditId);
+                if (existingCod) {
+                    hideLoading();
+                    showToast('El código ya existe.', 'error');
                     return;
                 }
                 await updateDoc(doc(db, "referencias_implantes", currentEditId), {
@@ -558,14 +582,22 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    if (mostrarPendientesCheckbox) {
+        mostrarPendientesCheckbox.addEventListener('change', (e) => {
+            mostrarPendientes = e.target.checked;
+            currentPage = 1;
+            renderTable();
+        });
+    }
+
     if (ingresarNewCodeBtn) {
         ingresarNewCodeBtn.addEventListener('click', async (e) => {
             e.preventDefault();
-            const processedRow = {
+            let processedRow = {
                 referencia: referenciaInput.value.trim().toUpperCase(),
                 detalles: detallesInput.value.trim().toUpperCase(),
                 precioUnitario: precioUnitarioInput.value.replace(/[^\d]/g, ''),
-                codigo: '',
+                codigo: 'PENDIENTE',
                 proveedor: proveedorInput.value.trim().toUpperCase(),
                 descripcion: descripcionInput.value.trim().toUpperCase(),
                 tipo: tipoInput.value,
@@ -576,8 +608,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (processedRow.referencia && processedRow.descripcion) {
                 showLoading();
                 try {
-                    const existing = await getReferenciaByUniqueKey(processedRow.referencia);
-                    if (existing) {
+                    const existingRef = await getReferenciaByUniqueKey(processedRow.referencia);
+                    if (existingRef) {
                         hideLoading();
                         showToast('La referencia ya existe.', 'error');
                         return;
@@ -611,7 +643,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (ingresarExistingCodeBtn) {
         ingresarExistingCodeBtn.addEventListener('click', async (e) => {
             e.preventDefault();
-            const processedRow = {
+            let processedRow = {
                 referencia: existReferenciaInput.value.trim().toUpperCase(),
                 detalles: existDetallesInput.value.trim().toUpperCase(),
                 precioUnitario: existPrecioUnitarioInput.value.replace(/[^\d]/g, ''),
@@ -623,13 +655,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 fullName: window.currentUserData.fullName
             };
 
+            if (processedRow.codigo === '' || processedRow.codigo === '0') {
+                processedRow.codigo = 'PENDIENTE';
+            }
+
             if (processedRow.referencia && processedRow.descripcion) {
                 showLoading();
                 try {
-                    const existing = await getReferenciaByUniqueKey(processedRow.referencia);
-                    if (existing) {
+                    const existingRef = await getReferenciaByUniqueKey(processedRow.referencia);
+                    if (existingRef) {
                         hideLoading();
                         showToast('La referencia ya existe.', 'error');
+                        return;
+                    }
+                    const existingCod = await getCodigoByUniqueKey(processedRow.codigo);
+                    if (existingCod) {
+                        hideLoading();
+                        showToast('El código ya existe.', 'error');
                         return;
                     }
                     const docRef = await addDoc(collection(db, "referencias_implantes"), {
@@ -701,7 +743,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function getFilteredReferencias() {
-        return referencias.filter(referencia =>
+        let filtered = referencias.filter(referencia =>
             referencia.referencia.toUpperCase().includes(searchReferencia) &&
             (referencia.codigo || '').toUpperCase().includes(searchCodigo) &&
             referencia.descripcion.toUpperCase().includes(searchDescripcion) &&
@@ -709,7 +751,11 @@ document.addEventListener('DOMContentLoaded', () => {
             (referencia.proveedor || '').toUpperCase().includes(searchProveedor) &&
             (searchTipo === '' || referencia.tipo === searchTipo) &&
             (searchAtributo === '' || referencia.atributo === searchAtributo)
-        ).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        );
+        if (mostrarPendientes) {
+            filtered = filtered.filter(referencia => referencia.codigo === 'PENDIENTE');
+        }
+        return filtered.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     }
 
     function renderTable() {
@@ -915,7 +961,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 let processedRows = 0;
 
                 for (const row of jsonData) {
-                    const processedRow = {
+                    let processedRow = {
                         referencia: row.referencia ? String(row.referencia).trim().toUpperCase() : '',
                         detalles: row.detalles ? String(row.detalles).trim().toUpperCase() : '',
                         precioUnitario: row.precioUnitario ? String(row.precioUnitario).replace(/[^\d]/g, '') : '',
@@ -927,15 +973,20 @@ document.addEventListener('DOMContentLoaded', () => {
                         fullName: window.currentUserData.fullName
                     };
 
+                    if (processedRow.codigo === '' || processedRow.codigo === '0') {
+                        processedRow.codigo = 'PENDIENTE';
+                    }
+
                     if (processedRow.referencia && processedRow.descripcion) {
-                        const existing = await getReferenciaByUniqueKey(processedRow.referencia);
-                        if (!existing) {
-                            const docRef = await addDoc(collection(db, "referencias_implantes"), {
-                                ...processedRow,
-                                createdAt: new Date()
-                            });
-                            await logAction(docRef.id, 'create', null, processedRow);
-                        }
+                        const existingRef = await getReferenciaByUniqueKey(processedRow.referencia);
+                        if (existingRef) continue;
+                        const existingCod = await getCodigoByUniqueKey(processedRow.codigo);
+                        if (existingCod) continue;
+                        const docRef = await addDoc(collection(db, "referencias_implantes"), {
+                            ...processedRow,
+                            createdAt: new Date()
+                        });
+                        await logAction(docRef.id, 'create', null, processedRow);
                     }
                     processedRows++;
                     showImportProgress((processedRows / totalRows) * 100);
