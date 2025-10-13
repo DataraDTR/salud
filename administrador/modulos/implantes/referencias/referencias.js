@@ -148,11 +148,9 @@ function setupColumnResize() {
     const headers = document.querySelectorAll('.referencias-table th');
 
     headers.forEach((header, index) => {
-        // Remove existing resize handles
         const existingHandle = header.querySelector('.resize-handle');
         if (existingHandle) existingHandle.remove();
 
-        // Create resize handle
         const resizeHandle = document.createElement('div');
         resizeHandle.className = 'resize-handle';
         header.appendChild(resizeHandle);
@@ -173,9 +171,8 @@ function setupColumnResize() {
             if (!isResizing) return;
             const clientX = e.pageX || (e.touches && e.touches[0].pageX);
             if (!clientX) return;
-            const newWidth = Math.max(20, startWidth + (clientX - startX)); // Minimum width 20px
+            const newWidth = Math.max(20, startWidth + (clientX - startX));
 
-            // Update only the selected column
             header.style.width = `${newWidth}px`;
             header.style.minWidth = `${newWidth}px`;
             header.style.maxWidth = `${newWidth}px`;
@@ -197,7 +194,6 @@ function setupColumnResize() {
             }
         };
 
-        // Add touch and mouse events
         resizeHandle.addEventListener('mousedown', startResize);
         resizeHandle.addEventListener('touchstart', startResize, { passive: false });
         document.addEventListener('mousemove', resize);
