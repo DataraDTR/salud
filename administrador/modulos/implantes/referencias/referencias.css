@@ -66,7 +66,7 @@ html, body {
 #referencia, #detalles, #precioUnitario, #proveedor, #descripcion, #tipo, #atributo,
 #existReferencia, #existDetalles, #existPrecioUnitario, #existCodigo, #existProveedor, #existDescripcion, #existTipo, #existAtributo,
 #buscarReferencia, #buscarCodigo, #buscarDescripcion, #buscarDetalles, #buscarProveedor, #buscarTipo, #buscarAtributo,
-#editReferencia, #editDetalles, #editPrecioUnitario, #editCodigo, #editProveedor, #editDescripcion, #editTipo, #editAtributo {
+#editReferencia, #editDetalles, #editPrecioUnitario, #editCodigo, #editProveedor, #editDescripcion, #editTipo, #editAtributo, #editEstado {
     width: 100%;
     padding: 8px;
     border: 1px solid #ddd;
@@ -79,7 +79,7 @@ html, body {
 #referencia:focus, #detalles:focus, #precioUnitario:focus, #proveedor:focus, #descripcion:focus, #tipo:focus, #atributo:focus,
 #existReferencia:focus, #existDetalles:focus, #existPrecioUnitario:focus, #existCodigo:focus, #existProveedor:focus, #existDescripcion:focus, #existTipo:focus, #existAtributo:focus,
 #buscarReferencia:focus, #buscarCodigo:focus, #buscarDescripcion:focus, #buscarDetalles:focus, #buscarProveedor:focus, #buscarTipo:focus, #buscarAtributo:focus,
-#editReferencia:focus, #editDetalles:focus, #editPrecioUnitario:focus, #editCodigo:focus, #editProveedor:focus, #editDescripcion:focus, #editTipo:focus, #editAtributo:focus {
+#editReferencia:focus, #editDetalles:focus, #editPrecioUnitario:focus, #editCodigo:focus, #editProveedor:focus, #editDescripcion:focus, #editTipo:focus, #editAtributo:focus, #editEstado:focus {
     box-shadow: 0 0 12px rgba(0, 123, 255, 0.5);
     outline: none;
 }
@@ -269,6 +269,7 @@ html, body {
 .referencias-table th:nth-child(7), .referencias-table td:nth-child(7) { width: 200px; min-width: 20px; max-width: 500px; }
 .referencias-table th:nth-child(8), .referencias-table td:nth-child(8) { width: 120px; min-width: 20px; max-width: 500px; }
 .referencias-table th:nth-child(9), .referencias-table td:nth-child(9) { width: 120px; min-width: 20px; max-width: 500px; }
+.referencias-table th:nth-child(10), .referencias-table td:nth-child(10) { width: 80px; min-width: 20px; max-width: 500px; }
 
 .referencias-actions {
     display: flex;

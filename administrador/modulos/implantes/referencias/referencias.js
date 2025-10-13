@@ -301,7 +301,7 @@ document.addEventListener('DOMContentLoaded', () => {
     [referenciaInput, detallesInput, proveedorInput, descripcionInput, tipoInput, atributoInput,
      existReferenciaInput, existDetallesInput, existCodigoInput, existProveedorInput, existDescripcionInput, existTipoInput, existAtributoInput,
      document.getElementById('editReferencia'), document.getElementById('editDetalles'), document.getElementById('editCodigo'),
-     document.getElementById('editProveedor'), document.getElementById('editDescripcion'), document.getElementById('editTipo'), document.getElementById('editAtributo')]
+     document.getElementById('editProveedor'), document.getElementById('editDescripcion'), document.getElementById('editTipo'), document.getElementById('editAtributo'), document.getElementById('editEstado')]
         .forEach(input => input && enforceUpperCase(input));
 
     function updateDescripcion() {
@@ -375,6 +375,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('editDescripcion').value = referencia.descripcion || '';
         document.getElementById('editTipo').value = referencia.tipo || 'IMPLANTES';
         document.getElementById('editAtributo').value = referencia.atributo || 'COTIZACION';
+        document.getElementById('editEstado').value = referencia.estado || 'ACTIVO';
         editModal.style.display = 'block';
     };
 
@@ -461,6 +462,7 @@ document.addEventListener('DOMContentLoaded', () => {
             descripcion: document.getElementById('editDescripcion').value.trim().toUpperCase(),
             tipo: document.getElementById('editTipo').value,
             atributo: document.getElementById('editAtributo').value,
+            estado: document.getElementById('editEstado').value,
             fullName: window.currentUserData.fullName
         };
 
@@ -602,6 +604,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 descripcion: descripcionInput.value.trim().toUpperCase(),
                 tipo: tipoInput.value,
                 atributo: atributoInput.value,
+                estado: 'ACTIVO',
                 fullName: window.currentUserData.fullName
             };
 
@@ -652,6 +655,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 descripcion: existDescripcionInput.value.trim().toUpperCase(),
                 tipo: existTipoInput.value,
                 atributo: existAtributoInput.value,
+                estado: 'ACTIVO',
                 fullName: window.currentUserData.fullName
             };
 
@@ -767,7 +771,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (referenciasBody) {
             referenciasBody.innerHTML = '';
             if (pageReferencias.length === 0) {
-                referenciasBody.innerHTML = '<tr><td colspan="9">No hay registros para mostrar.</td></tr>';
+                referenciasBody.innerHTML = '<tr><td colspan="10">No hay registros para mostrar.</td></tr>';
             } else {
                 pageReferencias.forEach(referencia => {
                     const row = document.createElement('tr');
@@ -785,6 +789,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <td>${referencia.descripcion || ''}</td>
                         <td>${referencia.tipo || ''}</td>
                         <td>${referencia.atributo || ''}</td>
+                        <td>${referencia.estado || 'ACTIVO'}</td>
                     `;
                     referenciasBody.appendChild(row);
                 });
@@ -895,7 +900,8 @@ document.addEventListener('DOMContentLoaded', () => {
             proveedor: '',
             descripcion: '',
             tipo: 'IMPLANTES',
-            atributo: 'COTIZACION'
+            atributo: 'COTIZACION',
+            estado: 'ACTIVO'
         }];
         const ws = XLSX.utils.json_to_sheet(templateData);
         const wb = XLSX.utils.book_new();
@@ -912,64 +918,79 @@ document.addEventListener('DOMContentLoaded', () => {
 
     downloadAll.addEventListener('click', (e) => {
         e.preventDefault();
-        exportToExcel(referencias.map(r => ({
-            referencia: r.referencia,
-            detalles: r.detalles,
-            precioUnitario: formatNumberWithThousandsSeparator(r.precioUnitario),
-            codigo: r.codigo,
-            proveedor: r.proveedor,
-            descripcion: r.descripcion,
-            tipo: r.tipo,
-            atributo: r.atributo,
-            fullName: r.fullName
-        })), 'todas_referencias');
+        const filteredReferencias = getFilteredReferencias();
+        const data = filteredReferencias.map(ref => ({
+            Referencia: ref.referencia || '',
+            Detalles: ref.detalles || '',
+            'Precio Unitario': ref.precioUnitario ? formatNumberWithThousandsSeparator(ref.precioUnitario) : '',
+            Código: ref.codigo || '',
+            Proveedor: ref.proveedor || '',
+            Descripción: ref.descripcion || '',
+            Tipo: ref.tipo || '',
+            Atributo: ref.atributo || '',
+            Estado: ref.estado || 'ACTIVO'
+        }));
+        const ws = XLSX.utils.json_to_sheet(data);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Referencias");
+        XLSX.writeFile(wb, 'referencias_todas.xlsx');
         actionsMenu.style.display = 'none';
     });
 
     downloadPage.addEventListener('click', (e) => {
         e.preventDefault();
-        const filtered = getFilteredReferencias();
+        const filteredReferencias = getFilteredReferencias();
         const start = (currentPage - 1) * PAGE_SIZE;
         const end = start + PAGE_SIZE;
-        const pageData = filtered.slice(start, end).map(r => ({
-            referencia: r.referencia,
-            detalles: r.detalles,
-            precioUnitario: formatNumberWithThousandsSeparator(r.precioUnitario),
-            codigo: r.codigo,
-            proveedor: r.proveedor,
-            descripcion: r.descripcion,
-            tipo: r.tipo,
-            atributo: r.atributo,
-            fullName: r.fullName
+        const pageReferencias = filteredReferencias.slice(start, end);
+        const data = pageReferencias.map(ref => ({
+            Referencia: ref.referencia || '',
+            Detalles: ref.detalles || '',
+            'Precio Unitario': ref.precioUnitario ? formatNumberWithThousandsSeparator(ref.precioUnitario) : '',
+            Código: ref.codigo || '',
+            Proveedor: ref.proveedor || '',
+            Descripción: ref.descripcion || '',
+            Tipo: ref.tipo || '',
+            Atributo: ref.atributo || '',
+            Estado: ref.estado || 'ACTIVO'
         }));
-        exportToExcel(pageData, `referencias_pagina_${currentPage}`);
+        const ws = XLSX.utils.json_to_sheet(data);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Referencias");
+        XLSX.writeFile(wb, `referencias_pagina_${currentPage}.xlsx`);
         actionsMenu.style.display = 'none';
     });
 
-    async function importFromExcel(file) {
+    fileUpload.addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
         showLoading();
         try {
             const reader = new FileReader();
-            reader.onload = async (e) => {
-                const data = new Uint8Array(e.target.result);
+            reader.onload = async (event) => {
+                const data = new Uint8Array(event.target.result);
                 const workbook = XLSX.read(data, { type: 'array' });
                 const sheetName = workbook.SheetNames[0];
                 const sheet = workbook.Sheets[sheetName];
                 const jsonData = XLSX.utils.sheet_to_json(sheet);
 
+                let successCount = 0;
+                let errorCount = 0;
                 const totalRows = jsonData.length;
-                let processedRows = 0;
 
-                for (const row of jsonData) {
+                for (let i = 0; i < totalRows; i++) {
+                    const row = jsonData[i];
                     let processedRow = {
-                        referencia: row.referencia ? String(row.referencia).trim().toUpperCase() : '',
-                        detalles: row.detalles ? String(row.detalles).trim().toUpperCase() : '',
-                        precioUnitario: row.precioUnitario ? String(row.precioUnitario).replace(/[^\d]/g, '') : '',
-                        codigo: row.codigo ? String(row.codigo).trim().toUpperCase() : '',
-                        proveedor: row.proveedor ? String(row.proveedor).trim().toUpperCase() : '',
-                        descripcion: row.descripcion ? String(row.descripcion).trim().toUpperCase() : '',
-                        tipo: row.tipo ? String(row.tipo).trim().toUpperCase() : 'IMPLANTES',
-                        atributo: row.atributo ? String(row.atributo).trim().toUpperCase() : 'COTIZACION',
+                        referencia: row.Referencia ? String(row.Referencia).trim().toUpperCase() : '',
+                        detalles: row.Detalles ? String(row.Detalles).trim().toUpperCase() : '',
+                        precioUnitario: row['Precio Unitario'] ? String(row['Precio Unitario']).replace(/[^\d]/g, '') : '',
+                        codigo: row.Código ? String(row.Código).trim().toUpperCase() : 'PENDIENTE',
+                        proveedor: row.Proveedor ? String(row.Proveedor).trim().toUpperCase() : '',
+                        descripcion: row.Descripción ? String(row.Descripción).trim().toUpperCase() : '',
+                        tipo: row.Tipo ? String(row.Tipo).trim().toUpperCase() : 'IMPLANTES',
+                        atributo: row.Atributo ? String(row.Atributo).trim().toUpperCase() : 'COTIZACION',
+                        estado: 'ACTIVO',
                         fullName: window.currentUserData.fullName
                     };
 
@@ -977,45 +998,54 @@ document.addEventListener('DOMContentLoaded', () => {
                         processedRow.codigo = 'PENDIENTE';
                     }
 
-                    if (processedRow.referencia && processedRow.descripcion) {
-                        const existingRef = await getReferenciaByUniqueKey(processedRow.referencia);
-                        if (existingRef) continue;
-                        const existingCod = await getCodigoByUniqueKey(processedRow.codigo);
-                        if (existingCod) continue;
-                        const docRef = await addDoc(collection(db, "referencias_implantes"), {
-                            ...processedRow,
-                            createdAt: new Date()
-                        });
-                        await logAction(docRef.id, 'create', null, processedRow);
+                    if (!['IMPLANTES', 'INSUMO'].includes(processedRow.tipo)) {
+                        processedRow.tipo = 'IMPLANTES';
                     }
-                    processedRows++;
-                    showImportProgress((processedRows / totalRows) * 100);
+
+                    if (!['COTIZACION', 'CONSIGNACION'].includes(processedRow.atributo)) {
+                        processedRow.atributo = 'COTIZACION';
+                    }
+
+                    if (processedRow.referencia && processedRow.descripcion) {
+                        try {
+                            const existingRef = await getReferenciaByUniqueKey(processedRow.referencia);
+                            if (existingRef) {
+                                errorCount++;
+                                continue;
+                            }
+                            const existingCod = await getCodigoByUniqueKey(processedRow.codigo);
+                            if (existingCod) {
+                                errorCount++;
+                                continue;
+                            }
+                            const docRef = await addDoc(collection(db, "referencias_implantes"), {
+                                ...processedRow,
+                                createdAt: new Date()
+                            });
+                            await logAction(docRef.id, 'create', null, processedRow);
+                            successCount++;
+                        } catch (error) {
+                            errorCount++;
+                        }
+                    } else {
+                        errorCount++;
+                    }
+
+                    const progress = ((i + 1) / totalRows) * 100;
+                    showImportProgress(progress);
                 }
 
-                hideImportProgress();
                 hideLoading();
-                showToast('Importación completada exitosamente', 'success');
+                hideImportProgress();
+                showToast(`Importación completada: ${successCount} registros exitosos, ${errorCount} errores`, successCount > 0 ? 'success' : 'error');
+                fileUpload.value = '';
                 await loadReferencias();
             };
             reader.readAsArrayBuffer(file);
         } catch (error) {
-            hideImportProgress();
             hideLoading();
+            hideImportProgress();
             showToast('Error al importar el archivo: ' + error.message, 'error');
-        }
-    }
-
-    function exportToExcel(data, filename) {
-        const ws = XLSX.utils.json_to_sheet(data);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Referencias");
-        XLSX.writeFile(wb, `${filename}.xlsx`);
-    }
-
-    fileUpload.addEventListener('change', async (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            await importFromExcel(file);
             fileUpload.value = '';
         }
     });

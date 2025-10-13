@@ -55,7 +55,7 @@
                 <label for="tipo" class="referencias-label">Tipo:</label>
                 <select id="tipo" autocomplete="off">
                     <option value="IMPLANTES">IMPLANTES</option>
-                    <option value="CONSIGNACION">CONSIGNACION</option>
+                    <option value="INSUMO">INSUMO</option>
                 </select>
             </div>
             <div class="referencias-form-group">
@@ -101,7 +101,7 @@
                 <label for="existTipo" class="referencias-label">Tipo:</label>
                 <select id="existTipo" autocomplete="off">
                     <option value="IMPLANTES">IMPLANTES</option>
-                    <option value="CONSIGNACION">CONSIGNACION</option>
+                    <option value="INSUMO">INSUMO</option>
                 </select>
             </div>
             <div class="referencias-form-group">
@@ -140,7 +140,7 @@
                 <select id="buscarTipo" autocomplete="off">
                     <option value="">Todos</option>
                     <option value="IMPLANTES">IMPLANTES</option>
-                    <option value="CONSIGNACION">CONSIGNACION</option>
+                    <option value="INSUMO">INSUMO</option>
                 </select>
             </div>
             <div class="referencias-form-group">
@@ -179,6 +179,7 @@
                         <th>Descripción</th>
                         <th>Tipo</th>
                         <th>Atributo</th>
+                        <th>Estado</th>
                     </tr>
                 </thead>
                 <tbody id="referenciasBody">
@@ -249,7 +250,7 @@
                         <label for="editTipo">Tipo:</label>
                         <select id="editTipo" autocomplete="off">
                             <option value="IMPLANTES">IMPLANTES</option>
-                            <option value="CONSIGNACION">CONSIGNACION</option>
+                            <option value="INSUMO">INSUMO</option>
                         </select>
                     </div>
                     <div class="modal-form-group">
@@ -257,6 +258,13 @@
                         <select id="editAtributo" autocomplete="off">
                             <option value="COTIZACION">COTIZACION</option>
                             <option value="CONSIGNACION">CONSIGNACION</option>
+                        </select>
+                    </div>
+                    <div class="modal-form-group">
+                        <label for="editEstado">Estado:</label>
+                        <select id="editEstado" autocomplete="off">
+                            <option value="ACTIVO">ACTIVO</option>
+                            <option value="INACTIVO">INACTIVO</option>
                         </select>
                     </div>
                     <div class="modal-buttons">
