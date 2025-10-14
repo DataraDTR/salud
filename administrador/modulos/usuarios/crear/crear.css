@@ -6,7 +6,7 @@ body {
     height: 100vh;
     background: #f0f2f5;
     font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, sans-serif;
-    overflow-x: hidden; /* Evita scroll horizontal en el body */
+    overflow-x: hidden; /
 }
 
 #outer-container-crear {
@@ -16,8 +16,8 @@ body {
     padding: 10px;
     background: #f0f2f5;
     overflow-y: auto;
-    overflow-x: hidden; /* Evita scroll horizontal en el contenedor principal */
-    width: 100%; /* Asegura que ocupe todo el ancho disponible */
+    overflow-x: hidden; 
+    width: 100%; 
 }
 
 #content-crear-usuario {
@@ -31,7 +31,7 @@ body {
     flex: 1;
     display: flex;
     flex-direction: column;
-    overflow-x: hidden; /* Evita scroll horizontal en el contenido */
+    overflow-x: hidden;
 }
 
 #content-crear-usuario h1 {
@@ -71,9 +71,9 @@ body {
 }
 
 .btn-crear {
-    grid-column: 1 / -1; /* El botón ocupa las 4 columnas */
-    width: auto; /* Ancho automático para que no sea tan ancho */
-    max-width: 250px; /* Límite máximo de ancho */
+    grid-column: 1 / -1; 
+    width: auto; 
+    max-width: 250px; 
     padding: 12px 24px;
     background-color: #3A5795;
     color: white;
@@ -82,9 +82,9 @@ body {
     cursor: pointer;
     font-size: 16px;
     font-weight: bold;
-    margin: 10px auto 0; /* Centrado horizontal y margen superior */
-    justify-self: center; /* Centrado en la grid */
-    grid-row: 4; /* En la cuarta fila, después de todos los campos */
+    margin: 10px auto 0; 
+    justify-self: center; 
+    grid-row: 4; 
 }
 
 .btn-crear:hover {
@@ -101,10 +101,10 @@ body {
     flex-direction: column;
     align-items: center;
     box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    max-width: 600px; /* Ancho máximo reducido para la tarjeta */
-    width: 100%; /* Ocupa el ancho disponible pero limitado */
+    max-width: 600px; 
+    width: 100%; 
     margin-left: auto;
-    margin-right: auto; /* Centrado */
+    margin-right: auto; 
 }
 
 .card-header {
@@ -119,7 +119,6 @@ body {
 .company-icon {
     width: 40px;
     height: 40px;
-    border-radius: 50%;
 }
 
 .card-header h2 {
@@ -207,6 +206,6 @@ body {
     }
 
     #credential-card {
-        max-width: 100%; /* En móviles, ocupa todo el ancho disponible */
+        max-width: 100%;
     }
 }
