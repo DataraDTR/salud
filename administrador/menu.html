@@ -90,14 +90,12 @@
         }
 
         .sidebar h2 {
-            margin: 0 auto 5px auto;
+            margin: 0; /* Elimina el margen original para evitar conflictos */
             color: #3A5795;
             font-weight: bold;
             font-size: 16px;
             border-bottom: 1px solid #ddd;
             padding-bottom: 5px;
-            text-align: center;
-            width: 100%;
         }
 
         .sidebar a {
@@ -279,6 +277,8 @@
             align-items: center;
             gap: 10px; /* Espacio entre el logo y el título */
             margin: 0 auto 5px auto; /* Mantiene el margen original del h2 */
+            width: 100%; /* Ocupa todo el ancho disponible */
+            text-align: center; /* Centra el contenido */
         }
 
         .logo {
@@ -287,9 +287,6 @@
             object-fit: contain; /* Escala la imagen sin distorsión */
         }
 
-        .sidebar h2 {
-            margin: 0; /* Elimina el margen original para evitar conflictos */
-        }
     </style>
 </head>
 <body>
@@ -306,8 +303,10 @@
 
     <div class="layout">
         <div class="sidebar">
-            <img src="../img/logo-administrador/android-chrome-192x192.png" alt="Datara Salud Logo" class="logo">
-            <h2>Datara Salud</h2>
+            <div class="logo-title">
+                <img src="../img/logo-administrador/android-chrome-192x192.png" alt="Datara Salud Logo" class="logo">
+                <h2>Datara Salud</h2>
+            </div>
             <div class="main-menu">
                 <a href="#" data-submenu="implantes"><i class="fas fa-tooth"></i> <span class="menu-text">Implantes</span></a>
                 <a href="#" data-submenu="consignacion"><i class="fas fa-box"></i> <span class="menu-text">Consignación</span></a>
