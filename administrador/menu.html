@@ -573,6 +573,24 @@
             document.querySelector('.content').innerHTML = '';
             document.querySelector('.content').appendChild(iframe);
         }
+
+        document.querySelector('.logo-title').addEventListener('click', function() {
+            const content = document.querySelector('.content');
+            content.innerHTML = `
+                <div class="card">
+                    <h3>Estadísticas</h3>
+                    <p>CPU: 15% | Memoria: 3.2GB | Almacenamiento: 120GB</p>
+                </div>
+                <div class="card">
+                    <h3>Actividad Reciente</h3>
+                    <ul>
+                        <li>Archivo subido: Informe.pdf</li>
+                        <li>Usuario creado: juan@example.com</li>
+                        <li>Actualización del sistema realizada</li>
+                    </ul>
+                </div>
+            `;
+        });
     </script>
 </body>
 </html>
