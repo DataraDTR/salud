@@ -90,9 +90,9 @@ body {
 }
 
 .user-card.editing {
-    max-height: none; /* Permite expansión durante edición */
+    max-height: none; 
     overflow: visible;
-    height: auto; /* Ajusta altura automáticamente */
+    height: auto;
 }
 
 .card-header {
@@ -208,7 +208,7 @@ body {
     font-size: 11px;
     box-sizing: border-box;
     margin-top: 2px;
-    display: none; /* Oculto por defecto */
+    display: none; 
 }
 
 .edit-input select {
@@ -216,10 +216,9 @@ body {
 }
 
 .display-text {
-    display: block; /* Visible por defecto */
+    display: block; 
 }
 
-/* Labels durante edición */
 .editing .label {
     font-weight: bold;
     color: #333;
@@ -228,7 +227,6 @@ body {
     display: block;
 }
 
-/* No hay mensaje en esta página, pero por consistencia */
 #message-lista {
     margin-top: 10px;
     padding: 10px;
@@ -250,7 +248,6 @@ body {
     border: 1px solid #c3e6cb;
 }
 
-/* Responsivo para pantallas pequeñas */
 @media (max-width: 768px) {
     .users-grid {
         grid-template-columns: 1fr;

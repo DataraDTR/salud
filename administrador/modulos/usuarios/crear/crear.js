@@ -32,7 +32,7 @@ function updateCard() {
     const username = document.getElementById('crear-username').value || 'Usuario';
     const birthDate = document.getElementById('crear-birthDate').value || 'Fecha de Nacimiento';
     const email = document.getElementById('crear-email').value || 'Correo Electrónico';
-    const sex = document.getElementById('crear-sex').value || 'otro'; // Default a 'otro'
+    const sex = document.getElementById('crear-sex').value || 'otro'; 
     const module = document.getElementById('crear-module').value || 'Módulo';
     const category = document.getElementById('crear-category').value || 'Categoría';
 
@@ -43,7 +43,6 @@ function updateCard() {
     };
     document.getElementById('user-icon').src = iconMap[sex] || '../../../../img/user-n/favicon.ico';
 
-    // Actualizar textos en la tarjeta
     document.getElementById('card-fullName').textContent = fullName;
     document.getElementById('card-username').textContent = username;
     document.getElementById('card-email').textContent = email;

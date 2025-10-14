@@ -119,19 +119,18 @@ async function loadUsers(searchTerm = '') {
 function renderUserCard(user) {
     const card = document.createElement('div');
     card.className = 'user-card';
-    card.dataset.userId = user.id; // Para identificar al usuario
+    card.dataset.userId = user.id; 
 
-    // Icono basado en sexo
     const iconMap = {
-        'masculino': '../../../../img/icono-hombre.png',
-        'femenino': '../../../../img/icono-mujer.png',
-        'otro': '../../../../img/icono-otro.png'
+        'masculino': '../../../../img/user-h/favicon.ico',
+        'femenino': '../../../../img/user-m/favicon.ico',
+        'otro': '../../../../img/user-n/favicon.ico'
     };
-    const userIconSrc = iconMap[user.sex] || '../../../../img/icono-otro.png';
+    const userIconSrc = iconMap[user.sex] || '../../../../img/user-n/favicon.ico';
 
     card.innerHTML = `
         <div class="card-header">
-            <img src="../../../../img/midatara_logo_texto.png" alt="Datara-Salud" class="company-icon">
+            <img src="../../../../img/logo-principal/favicon.ico" alt="Datara-Salud" class="company-icon">
             <h2>Datara-Salud</h2>
         </div>
         <div class="card-body">
@@ -176,7 +175,6 @@ function renderUserCard(user) {
         </div>
     `;
 
-    // Event listener para el botón editar
     const editBtn = card.querySelector('.edit-btn');
     const saveBtn = card.querySelector('.save-btn');
     const cancelBtn = card.querySelector('.cancel-btn');
@@ -190,7 +188,6 @@ function renderUserCard(user) {
     usersList.appendChild(card);
 }
 
-// Entrar en modo edición
 function enterEditMode(card, user) {
     card.classList.add('editing');
     const editableFields = card.querySelectorAll('.editable-field');
@@ -208,7 +205,6 @@ function enterEditMode(card, user) {
     });
 }
 
-// Guardar ediciones
 async function saveEdits(card) {
     const updates = {};
     const editableFields = card.querySelectorAll('.editable-field .edit-input');
@@ -225,14 +221,13 @@ async function saveEdits(card) {
         const saveCancel = card.querySelector('.save-cancel-buttons');
         editBtn.style.display = 'block';
         saveCancel.style.display = 'none';
-        loadUsers(searchInput.value); // Recargar para actualizar
+        loadUsers(searchInput.value); 
     } catch (error) {
         console.error('Error al actualizar usuario:', error);
         alert('Error al actualizar usuario.');
     }
 }
 
-// Cancelar edición
 function cancelEdit(card, user) {
     card.classList.remove('editing');
     const editableFields = card.querySelectorAll('.editable-field');
@@ -255,7 +250,6 @@ function cancelEdit(card, user) {
     });
 }
 
-// Función auxiliar para obtener labels
 function getLabel(fieldName) {
     const labels = {
         'username': 'Usuario',
@@ -268,11 +262,9 @@ function getLabel(fieldName) {
     return labels[fieldName] || fieldName;
 }
 
-// Event listener para búsqueda en tiempo real
 searchInput.addEventListener('input', (e) => {
     const searchTerm = e.target.value;
     loadUsers(searchTerm);
 });
 
-// Cargar usuarios iniciales
 loadUsers();
