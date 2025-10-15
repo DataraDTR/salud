@@ -16,7 +16,7 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 
 setPersistence(auth, browserSessionPersistence);
-db.settings({ cacheSizeBytes: firebase.firestore.CACHE_SIZE_UNLIMITED, merge: true });
+db.settings({ cacheSizeBytes: -1, merge: true });
 
 let referencias = [];
 let currentPage = 1;
