@@ -59,10 +59,6 @@
                 </div>
             </div>
             <div class="mantenedor-form-group">
-                <label for="cantidad" class="mantenedor-label">Cantidad:</label>
-                <input type="number" id="cantidad" min="0" autocomplete="off">
-            </div>
-            <div class="mantenedor-form-group">
                 <label for="codigo" class="mantenedor-label">Código:</label>
                 <input type="text" id="codigo" readonly autocomplete="off">
             </div>
@@ -89,10 +85,6 @@
             <div class="mantenedor-form-group">
                 <label for="buscarDescripcion" class="mantenedor-label">Buscar Descripción:</label>
                 <input type="text" id="buscarDescripcion" placeholder="Buscar por descripción" autocomplete="off">
-            </div>
-            <div class="mantenedor-form-group">
-                <label for="buscarCantidad" class="mantenedor-label">Buscar Cantidad:</label>
-                <input type="number" id="buscarCantidad" placeholder="Buscar por cantidad" min="0" autocomplete="off">
             </div>
             <div class="mantenedor-form-group">
                 <label for="buscarProveedor" class="mantenedor-label">Buscar Proveedor:</label>
@@ -133,7 +125,6 @@
                         <th>Acciones</th>
                         <th>Referencia</th>
                         <th>Descripción</th>
-                        <th>Cantidad</th>
                         <th>Código</th>
                         <th>Proveedor</th>
                         <th>Tipo</th>
@@ -193,10 +184,6 @@
                         </div>
                     </div>
                     <div class="modal-form-group">
-                        <label for="editCantidad">Cantidad:</label>
-                        <input type="number" id="editCantidad" min="0" required autocomplete="off">
-                    </div>
-                    <div class="modal-form-group">
                         <label for="editCodigo">Código:</label>
                         <input type="text" id="editCodigo" readonly autocomplete="off">
                     </div>
@@ -241,6 +228,32 @@
                 <div class="modal-buttons">
                     <button type="button" class="modal-btn modal-btn-secondary" id="closeHistoryBtn">Cerrar</button>
                 </div>
+            </div>
+        </div>
+
+        <div id="addSubRowModal" class="modal">
+            <div class="modal-content">
+                <span class="close" id="closeAddSubRowModal">&times;</span>
+                <h2>Agregar Subfila</h2>
+                <form id="addSubRowForm">
+                    <input type="hidden" id="addSubRowMainId" autocomplete="off">
+                    <div class="modal-form-group">
+                        <label for="addSubRowLote">Lote:</label>
+                        <input type="text" id="addSubRowLote" required autocomplete="off">
+                    </div>
+                    <div class="modal-form-group">
+                        <label for="addSubRowFechaVencimiento">Fecha de Vencimiento:</label>
+                        <input type="date" id="addSubRowFechaVencimiento" required autocomplete="off">
+                    </div>
+                    <div class="modal-form-group">
+                        <label for="addSubRowCantidad">Cantidad:</label>
+                        <input type="number" id="addSubRowCantidad" min="0" required autocomplete="off">
+                    </div>
+                    <div class="modal-buttons">
+                        <button type="button" class="modal-btn modal-btn-secondary" id="cancelAddSubRow">Cancelar</button>
+                        <button type="submit" class="modal-btn modal-btn-primary">Guardar</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>

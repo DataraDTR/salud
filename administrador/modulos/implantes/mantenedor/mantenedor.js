@@ -23,12 +23,12 @@ let lastVisible = null;
 let firstVisible = null;
 let searchReferencia = '';
 let searchDescripcion = '';
-let searchCantidad = '';
 let searchProveedor = '';
 let searchTipo = '';
 let searchAtributo = '';
 let references = [];
 let totalRecords = 0;
+let visibleSubRows = {};
 
 async function loadReferences() {
     try {
@@ -40,6 +40,21 @@ async function loadReferences() {
         references.sort((a, b) => a.referencia.localeCompare(b.referencia));
     } catch (error) {
         showToast('Error al cargar referencias: ' + error.message, 'error');
+    }
+}
+
+async function loadSubRows(mainId) {
+    try {
+        const q = query(collection(db, "mantenedor_implantes_subrows"), where("mainId", "==", mainId), orderBy("createdAt", "desc"));
+        const querySnapshot = await getDocs(q);
+        let subRows = [];
+        querySnapshot.forEach((doc) => {
+            subRows.push({ id: doc.id, ...doc.data() });
+        });
+        return subRows;
+    } catch (error) {
+        showToast('Error al cargar subfilas: ' + error.message, 'error');
+        return [];
     }
 }
 
@@ -118,6 +133,21 @@ async function logAction(mantenedorId, action, oldData = null, newData = null) {
     if (!window.currentUserData) return;
     await addDoc(collection(db, "mantenedor_implantes_historial"), {
         mantenedorId,
+        action,
+        timestamp: new Date(),
+        userId: auth.currentUser ? auth.currentUser.uid : null,
+        userFullName: window.currentUserData.fullName || 'Usuario Invitado',
+        username: window.currentUserData.username || 'invitado',
+        oldData,
+        newData
+    });
+}
+
+async function logSubRowAction(subRowId, mainId, action, oldData = null, newData = null) {
+    if (!window.currentUserData) return;
+    await addDoc(collection(db, "mantenedor_implantes_subrows_historial"), {
+        subRowId,
+        mainId,
         action,
         timestamp: new Date(),
         userId: auth.currentUser ? auth.currentUser.uid : null,
@@ -230,7 +260,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const paginationInfo = document.getElementById('paginationInfo');
     const referenciaInput = document.getElementById('referencia');
     const descripcionInput = document.getElementById('descripcion');
-    const cantidadInput = document.getElementById('cantidad');
     const codigoInput = document.getElementById('codigo');
     const proveedorInput = document.getElementById('proveedor');
     const tipoInput = document.getElementById('tipo');
@@ -238,7 +267,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const ingresarBtn = document.getElementById('ingresarBtn');
     const buscarReferenciaInput = document.getElementById('buscarReferencia');
     const buscarDescripcionInput = document.getElementById('buscarDescripcion');
-    const buscarCantidadInput = document.getElementById('buscarCantidad');
     const buscarProveedorInput = document.getElementById('buscarProveedor');
     const buscarTipoInput = document.getElementById('buscarTipo');
     const buscarAtributoInput = document.getElementById('buscarAtributo');
@@ -252,6 +280,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const editModal = document.getElementById('editModal');
     const deleteModal = document.getElementById('deleteModal');
     const historyModal = document.getElementById('historyModal');
+    const addSubRowModal = document.getElementById('addSubRowModal');
     const closeEditModal = document.getElementById('closeEditModal');
     const cancelEdit = document.getElementById('cancelEdit');
     const editForm = document.getElementById('editForm');
@@ -263,21 +292,27 @@ document.addEventListener('DOMContentLoaded', () => {
     const closeHistoryBtn = document.getElementById('closeHistoryBtn');
     const historyTitle = document.getElementById('historyTitle');
     const historyContent = document.getElementById('historyContent');
+    const closeAddSubRowModal = document.getElementById('closeAddSubRowModal');
+    const cancelAddSubRow = document.getElementById('cancelAddSubRow');
+    const addSubRowForm = document.getElementById('addSubRowForm');
 
     let currentEditId = null;
     let currentEditOldData = null;
     let currentDeleteId = null;
     let currentDeleteReferencia = null;
+    let currentAddSubRowMainId = null;
 
     function enforceUpperCase(input) {
+        if (!input) return;
         input.addEventListener('input', (e) => {
             e.target.value = e.target.value.toUpperCase();
         });
     }
 
     [referenciaInput, descripcionInput,
-        document.getElementById('editReferencia'), document.getElementById('editDescripcion')]
-        .forEach(input => input && enforceUpperCase(input));
+        document.getElementById('editReferencia'), document.getElementById('editDescripcion'),
+        document.getElementById('addSubRowLote')]
+        .forEach(input => enforceUpperCase(input));
 
     window.showLoading = function () {
         if (loading) loading.classList.add('show');
@@ -309,7 +344,6 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('editId').value = id;
         document.getElementById('editReferencia').value = data.referencia || '';
         document.getElementById('editDescripcion').value = data.descripcion || '';
-        document.getElementById('editCantidad').value = data.cantidad || 0;
         document.getElementById('editCodigo').value = data.codigo || '';
         document.getElementById('editProveedor').value = data.proveedor || '';
         document.getElementById('editTipo').value = data.tipo || '';
@@ -317,27 +351,12 @@ document.addEventListener('DOMContentLoaded', () => {
         editModal.style.display = 'block';
     };
 
-    function closeEditModalHandler() {
-        editModal.style.display = 'none';
-        currentEditId = null;
-        currentEditOldData = null;
-        editForm.reset();
-        document.getElementById('editReferenciaList').classList.remove('show');
-        document.getElementById('editDescripcionList').classList.remove('show');
-    }
-
     window.openDeleteModal = function (id, referencia) {
         currentDeleteId = id;
         currentDeleteReferencia = referencia;
         deleteText.textContent = `¿Desea eliminar el registro "${referencia}"?`;
         deleteModal.style.display = 'block';
     };
-
-    function closeDeleteModalHandler() {
-        deleteModal.style.display = 'none';
-        currentDeleteId = null;
-        currentDeleteReferencia = null;
-    }
 
     window.openHistoryModal = function (id, referencia) {
         historyTitle.textContent = `HISTORIAL REGISTRO ${referencia}`;
@@ -365,9 +384,45 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
+    window.openAddSubRowModal = function (mainId, referencia) {
+        currentAddSubRowMainId = mainId;
+        document.getElementById('addSubRowMainId').value = mainId;
+        document.getElementById('addSubRowLote').value = '';
+        document.getElementById('addSubRowFechaVencimiento').value = '';
+        document.getElementById('addSubRowCantidad').value = '';
+        addSubRowModal.style.display = 'block';
+    };
+
+    window.toggleSubRows = async function (mainId, referencia) {
+        const isVisible = visibleSubRows[mainId] || false;
+        visibleSubRows[mainId] = !isVisible;
+        await renderTable();
+    };
+
+    function closeEditModalHandler() {
+        editModal.style.display = 'none';
+        currentEditId = null;
+        currentEditOldData = null;
+        editForm.reset();
+        document.getElementById('editReferenciaList').classList.remove('show');
+        document.getElementById('editDescripcionList').classList.remove('show');
+    }
+
+    function closeDeleteModalHandler() {
+        deleteModal.style.display = 'none';
+        currentDeleteId = null;
+        currentDeleteReferencia = null;
+    }
+
     function closeHistoryModalHandler() {
         historyModal.style.display = 'none';
         historyContent.innerHTML = '';
+    }
+
+    function closeAddSubRowModalHandler() {
+        addSubRowModal.style.display = 'none';
+        currentAddSubRowMainId = null;
+        addSubRowForm.reset();
     }
 
     closeEditModal.addEventListener('click', closeEditModalHandler);
@@ -388,13 +443,18 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.target === historyModal) closeHistoryModalHandler();
     });
 
+    closeAddSubRowModal.addEventListener('click', closeAddSubRowModalHandler);
+    cancelAddSubRow.addEventListener('click', closeAddSubRowModalHandler);
+    window.addEventListener('click', (e) => {
+        if (e.target === addSubRowModal) closeAddSubRowModalHandler();
+    });
+
     editForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         if (!currentEditId) return;
 
         const referencia = document.getElementById('editReferencia').value.trim().toUpperCase();
         const descripcion = document.getElementById('editDescripcion').value.trim().toUpperCase();
-        const cantidad = document.getElementById('editCantidad').value;
 
         const selectedRef = references.find(ref => ref.referencia === referencia && ref.descripcion === descripcion);
         if (!selectedRef) {
@@ -405,7 +465,6 @@ document.addEventListener('DOMContentLoaded', () => {
         let processedRow = {
             referencia,
             descripcion,
-            cantidad: parseInt(cantidad) || 0,
             codigo: selectedRef.codigo || '',
             proveedor: selectedRef.proveedor || '',
             tipo: selectedRef.tipo || 'IMPLANTES',
@@ -439,6 +498,12 @@ document.addEventListener('DOMContentLoaded', () => {
             if (mantenedorDoc.exists()) {
                 const mantenedorData = mantenedorDoc.data();
                 await logAction(currentDeleteId, 'delete', mantenedorData);
+                const subRowsQuery = query(collection(db, "mantenedor_implantes_subrows"), where("mainId", "==", currentDeleteId));
+                const subRowsSnapshot = await getDocs(subRowsQuery);
+                for (const subRowDoc of subRowsSnapshot.docs) {
+                    await logSubRowAction(subRowDoc.id, currentDeleteId, 'delete', subRowDoc.data());
+                    await deleteDoc(doc(db, "mantenedor_implantes_subrows", subRowDoc.id));
+                }
                 await deleteDoc(doc(db, "mantenedor_implantes", currentDeleteId));
                 hideLoading();
                 showToast(`Registro ${currentDeleteReferencia} eliminado exitosamente`, 'success');
@@ -452,6 +517,43 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             hideLoading();
             showToast('Error al eliminar el registro: ' + error.message, 'error');
+        }
+    });
+
+    addSubRowForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        if (!currentAddSubRowMainId) return;
+
+        const lote = document.getElementById('addSubRowLote').value.trim().toUpperCase();
+        const fechaVencimiento = document.getElementById('addSubRowFechaVencimiento').value;
+        const cantidad = document.getElementById('addSubRowCantidad').value;
+
+        if (!lote || !fechaVencimiento || !cantidad) {
+            showToast('Lote, fecha de vencimiento y cantidad son obligatorios.', 'error');
+            return;
+        }
+
+        let processedSubRow = {
+            mainId: currentAddSubRowMainId,
+            lote,
+            fechaVencimiento,
+            cantidad: parseInt(cantidad) || 0,
+            fullName: window.currentUserData.fullName,
+            createdAt: new Date()
+        };
+
+        showLoading();
+        try {
+            const docRef = await addDoc(collection(db, "mantenedor_implantes_subrows"), processedSubRow);
+            await logSubRowAction(docRef.id, currentAddSubRowMainId, 'create', null, processedSubRow);
+            hideLoading();
+            showToast(`Subfila para lote ${lote} registrada exitosamente`, 'success');
+            closeAddSubRowModalHandler();
+            visibleSubRows[currentAddSubRowMainId] = true;
+            await loadMantenedor();
+        } catch (error) {
+            hideLoading();
+            showToast('Error al registrar la subfila: ' + error.message, 'error');
         }
     });
 
@@ -470,16 +572,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (buscarDescripcionInput) {
         buscarDescripcionInput.addEventListener('input', (e) => {
             searchDescripcion = e.target.value.trim().toUpperCase();
-            currentPage = 1;
-            lastVisible = null;
-            firstVisible = null;
-            debouncedLoadMantenedor();
-        });
-    }
-
-    if (buscarCantidadInput) {
-        buscarCantidadInput.addEventListener('input', (e) => {
-            searchCantidad = e.target.value.trim();
             currentPage = 1;
             lastVisible = null;
             firstVisible = null;
@@ -522,10 +614,9 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             const referencia = referenciaInput.value.trim().toUpperCase();
             const descripcion = descripcionInput.value.trim().toUpperCase();
-            const cantidad = cantidadInput.value;
 
-            if (!referencia || !descripcion || !cantidad) {
-                showToast('Referencia, descripción y cantidad son obligatorios.', 'error');
+            if (!referencia || !descripcion) {
+                showToast('Referencia y descripción son obligatorios.', 'error');
                 return;
             }
 
@@ -538,7 +629,6 @@ document.addEventListener('DOMContentLoaded', () => {
             let processedRow = {
                 referencia,
                 descripcion,
-                cantidad: parseInt(cantidad) || 0,
                 codigo: selectedRef.codigo || '',
                 proveedor: selectedRef.proveedor || '',
                 tipo: selectedRef.tipo || 'IMPLANTES',
@@ -557,7 +647,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 showToast(`Registro ${processedRow.referencia} registrado exitosamente`, 'success');
                 referenciaInput.value = '';
                 descripcionInput.value = '';
-                cantidadInput.value = '';
                 codigoInput.value = '';
                 proveedorInput.value = '';
                 tipoInput.value = '';
@@ -585,9 +674,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (searchDescripcion) {
                 conditions.push(where("descripcion", ">=", searchDescripcion));
                 conditions.push(where("descripcion", "<=", searchDescripcion + '\uf8ff'));
-            }
-            if (searchCantidad) {
-                conditions.push(where("cantidad", "==", parseInt(searchCantidad)));
             }
             if (searchProveedor) {
                 conditions.push(where("proveedor", ">=", searchProveedor));
@@ -632,8 +718,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     where("descripcion", ">=", searchDescripcion),
                     where("descripcion", "<=", searchDescripcion + '\uf8ff')
                 );
-            } else if (searchCantidad) {
-                countQuery = query(countQuery, where("cantidad", "==", parseInt(searchCantidad)));
             } else if (searchProveedor) {
                 countQuery = query(countQuery,
                     where("proveedor", ">=", searchProveedor),
@@ -656,30 +740,50 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function renderTable() {
+    async function renderTable() {
         if (mantenedorBody) {
             mantenedorBody.innerHTML = '';
             if (mantenedor.length === 0) {
-                mantenedorBody.innerHTML = '<tr><td colspan="8">No hay registros para mostrar.</td></tr>';
+                mantenedorBody.innerHTML = '<tr><td colspan="7">No hay registros para mostrar.</td></tr>';
             } else {
-                mantenedor.forEach(ref => {
+                for (const ref of mantenedor) {
                     const row = document.createElement('tr');
+                    const isSubRowsVisible = visibleSubRows[ref.id] || false;
                     row.innerHTML = `
                         <td class="mantenedor-actions">
+                            <button title="Ver Subfilas" class="mantenedor-btn-toggle-subrows" onclick="toggleSubRows('${ref.id}', '${ref.referencia}')"><i class="fas ${isSubRowsVisible ? 'fa-chevron-up' : 'fa-chevron-down'}"></i></button>
+                            <button title="Agregar Subfila" class="mantenedor-btn-add-subrow" onclick="openAddSubRowModal('${ref.id}', '${ref.referencia}')"><i class="fas fa-plus"></i></button>
                             <button title="Editar" class="mantenedor-btn-edit" onclick="openEditModal('${ref.id}', ${JSON.stringify(ref).replace(/"/g, '&quot;')})"><i class="fas fa-edit"></i></button>
                             <button title="Eliminar" class="mantenedor-btn-delete" onclick="openDeleteModal('${ref.id}', '${ref.referencia}')"><i class="fas fa-trash"></i></button>
                             <button title="Ver Historial" class="mantenedor-btn-history" onclick="openHistoryModal('${ref.id}', '${ref.referencia}')"><i class="fas fa-history"></i></button>
                         </td>
                         <td>${ref.referencia || ''}</td>
                         <td>${ref.descripcion || ''}</td>
-                        <td>${ref.cantidad || 0}</td>
                         <td>${ref.codigo || ''}</td>
                         <td>${ref.proveedor || ''}</td>
                         <td>${ref.tipo || ''}</td>
                         <td>${ref.atributo || ''}</td>
                     `;
                     mantenedorBody.appendChild(row);
-                });
+
+                    if (isSubRowsVisible) {
+                        const subRows = await loadSubRows(ref.id);
+                        for (const subRow of subRows) {
+                            const subRowElement = document.createElement('tr');
+                            subRowElement.className = 'mantenedor-subrow';
+                            subRowElement.innerHTML = `
+                                <td></td>
+                                <td>Lote: ${subRow.lote || ''}</td>
+                                <td>Fecha Venc.: ${subRow.fechaVencimiento || ''}</td>
+                                <td>Cant.: ${subRow.cantidad || 0}</td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                            `;
+                            mantenedorBody.appendChild(subRowElement);
+                        }
+                    }
+                }
             }
         }
 
@@ -782,7 +886,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const templateData = [{
             referencia: '',
             descripcion: '',
-            cantidad: '',
             codigo: '',
             proveedor: '',
             tipo: 'IMPLANTES',
@@ -814,7 +917,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = allMantenedor.map(ref => ({
                 Referencia: ref.referencia || '',
                 Descripción: ref.descripcion || '',
-                Cantidad: ref.cantidad || 0,
                 Código: ref.codigo || '',
                 Proveedor: ref.proveedor || '',
                 Tipo: ref.tipo || '',
@@ -837,7 +939,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const data = mantenedor.map(ref => ({
             Referencia: ref.referencia || '',
             Descripción: ref.descripcion || '',
-            Cantidad: ref.cantidad || 0,
             Código: ref.codigo || '',
             Proveedor: ref.proveedor || '',
             Tipo: ref.tipo || '',
@@ -874,11 +975,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     let processedRow = {
                         referencia: row[0] ? String(row[0]).trim().toUpperCase() : '',
                         descripcion: row[1] ? String(row[1]).trim().toUpperCase() : '',
-                        cantidad: row[2] ? parseInt(row[2]) : 0,
-                        codigo: row[3] ? String(row[3]).trim().toUpperCase() : '',
-                        proveedor: row[4] ? String(row[4]).trim().toUpperCase() : '',
-                        tipo: row[5] ? String(row[5]).trim().toUpperCase() : 'IMPLANTES',
-                        atributo: row[6] ? String(row[6]).trim().toUpperCase() : 'COTIZACION',
+                        codigo: row[2] ? String(row[2]).trim().toUpperCase() : '',
+                        proveedor: row[3] ? String(row[3]).trim().toUpperCase() : '',
+                        tipo: row[4] ? String(row[4]).trim().toUpperCase() : 'IMPLANTES',
+                        atributo: row[5] ? String(row[5]).trim().toUpperCase() : 'COTIZACION',
                         fullName: window.currentUserData.fullName
                     };
 
@@ -890,7 +990,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         processedRow.atributo = 'COTIZACION';
                     }
 
-                    if (processedRow.referencia && processedRow.descripcion && processedRow.cantidad) {
+                    if (processedRow.referencia && processedRow.descripcion) {
                         const selectedRef = references.find(ref => ref.referencia === processedRow.referencia && ref.descripcion === processedRow.descripcion);
                         if (!selectedRef) {
                             errorCount++;
@@ -924,61 +1024,4 @@ document.addEventListener('DOMContentLoaded', () => {
                 fileUpload.value = '';
                 await loadMantenedor();
             };
-            reader.readAsArrayBuffer(file);
-        } catch (error) {
-            hideLoading();
-            hideImportProgress();
-            showToast('Error al importar el archivo: ' + error.message, 'error');
-            fileUpload.value = '';
-        }
-    });
-
-    onAuthStateChanged(auth, async (user) => {
-        if (!user) {
-            window.location.replace('../index.html');
-            return;
-        }
-        try {
-            const userDocRef = doc(db, 'users', user.uid);
-            const userDoc = await getDoc(userDocRef);
-            if (userDoc.exists()) {
-                window.currentUserData = userDoc.data();
-            } else {
-                window.currentUserData = { fullName: user.displayName || 'Usuario Invitado', username: user.email || 'invitado' };
-            }
-            await loadReferences();
-            setupAutocomplete('referencia', 'referenciaIcon', 'referenciaList', references, 'referencia', (selected) => {
-                descripcionInput.value = selected.descripcion || '';
-                codigoInput.value = selected.codigo || '';
-                proveedorInput.value = selected.proveedor || '';
-                tipoInput.value = selected.tipo || 'IMPLANTES';
-                atributoInput.value = selected.atributo || 'COTIZACION';
-            });
-            setupAutocomplete('descripcion', 'descripcionIcon', 'descripcionList', references, 'descripcion', (selected) => {
-                referenciaInput.value = selected.referencia || '';
-                codigoInput.value = selected.codigo || '';
-                proveedorInput.value = selected.proveedor || '';
-                tipoInput.value = selected.tipo || 'IMPLANTES';
-                atributoInput.value = selected.atributo || 'COTIZACION';
-            });
-            setupAutocomplete('editReferencia', 'editReferenciaIcon', 'editReferenciaList', references, 'referencia', (selected) => {
-                document.getElementById('editDescripcion').value = selected.descripcion || '';
-                document.getElementById('editCodigo').value = selected.codigo || '';
-                document.getElementById('editProveedor').value = selected.proveedor || '';
-                document.getElementById('editTipo').value = selected.tipo || 'IMPLANTES';
-                document.getElementById('editAtributo').value = selected.atributo || 'COTIZACION';
-            });
-            setupAutocomplete('editDescripcion', 'editDescripcionIcon', 'editDescripcionList', references, 'descripcion', (selected) => {
-                document.getElementById('editReferencia').value = selected.referencia || '';
-                document.getElementById('editCodigo').value = selected.codigo || '';
-                document.getElementById('editProveedor').value = selected.proveedor || '';
-                document.getElementById('editTipo').value = selected.tipo || 'IMPLANTES';
-                document.getElementById('editAtributo').value = selected.atributo || 'COTIZACION';
-            });
-            await loadMantenedor();
-        } catch (error) {
-            window.currentUserData = { fullName: 'Usuario Invitado', username: 'invitado' };
-            showToast('Error al cargar datos del usuario.', 'error');
-        }
-    });
-});
+            reader.readAsArray

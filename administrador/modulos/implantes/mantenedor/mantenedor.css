@@ -54,9 +54,10 @@ html, body {
     white-space: nowrap;
 }
 
-#referencia, #descripcion, #cantidad, #codigo, #proveedor, #tipo, #atributo,
-#buscarReferencia, #buscarDescripcion, #buscarCantidad, #buscarProveedor, #buscarTipo, #buscarAtributo,
-#editReferencia, #editDescripcion, #editCantidad, #editCodigo, #editProveedor, #editTipo, #editAtributo {
+#referencia, #descripcion, #codigo, #proveedor, #tipo, #atributo,
+#buscarReferencia, #buscarDescripcion, #buscarProveedor, #buscarTipo, #buscarAtributo,
+#editReferencia, #editDescripcion, #editCodigo, #editProveedor, #editTipo, #editAtributo,
+#addSubRowLote, #addSubRowFechaVencimiento, #addSubRowCantidad {
     width: 100%;
     padding: 8px;
     border: 1px solid #ddd;
@@ -66,9 +67,10 @@ html, body {
     text-transform: uppercase;
 }
 
-#referencia:focus, #descripcion:focus, #cantidad:focus, #codigo:focus, #proveedor:focus, #tipo:focus, #atributo:focus,
-#buscarReferencia:focus, #buscarDescripcion:focus, #buscarCantidad:focus, #buscarProveedor:focus, #buscarTipo:focus, #buscarAtributo:focus,
-#editReferencia:focus, #editDescripcion:focus, #editCantidad:focus, #editCodigo:focus, #editProveedor:focus, #editTipo:focus, #editAtributo:focus {
+#referencia:focus, #descripcion:focus, #codigo:focus, #proveedor:focus, #tipo:focus, #atributo:focus,
+#buscarReferencia:focus, #buscarDescripcion:focus, #buscarProveedor:focus, #buscarTipo:focus, #buscarAtributo:focus,
+#editReferencia:focus, #editDescripcion:focus, #editCodigo:focus, #editProveedor:focus, #editTipo:focus, #editAtributo:focus,
+#addSubRowLote:focus, #addSubRowFechaVencimiento:focus, #addSubRowCantidad:focus {
     box-shadow: 0 0 12px rgba(0, 123, 255, 0.5);
     outline: none;
 }
@@ -251,14 +253,21 @@ html, body {
     background-color: #f8f9fa;
 }
 
-.mantenedor-table th:nth-child(1), .mantenedor-table td:nth-child(1) { width: 100px; min-width: 20px; max-width: 2000px; }
+.mantenedor-table th:nth-child(1), .mantenedor-table td:nth-child(1) { width: 120px; min-width: 20px; max-width: 2000px; }
 .mantenedor-table th:nth-child(2), .mantenedor-table td:nth-child(2) { width: 130px; min-width: 20px; max-width: 2000px; }
 .mantenedor-table th:nth-child(3), .mantenedor-table td:nth-child(3) { width: 250px; min-width: 20px; max-width: 2000px; }
 .mantenedor-table th:nth-child(4), .mantenedor-table td:nth-child(4) { width: 80px; min-width: 20px; max-width: 2000px; }
-.mantenedor-table th:nth-child(5), .mantenedor-table td:nth-child(5) { width: 80px; min-width: 20px; max-width: 2000px; }
-.mantenedor-table th:nth-child(6), .mantenedor-table td:nth-child(6) { width: 150px; min-width: 20px; max-width: 2000px; }
+.mantenedor-table th:nth-child(5), .mantenedor-table td:nth-child(5) { width: 150px; min-width: 20px; max-width: 2000px; }
+.mantenedor-table th:nth-child(6), .mantenedor-table td:nth-child(6) { width: 120px; min-width: 20px; max-width: 2000px; }
 .mantenedor-table th:nth-child(7), .mantenedor-table td:nth-child(7) { width: 120px; min-width: 20px; max-width: 2000px; }
-.mantenedor-table th:nth-child(8), .mantenedor-table td:nth-child(8) { width: 120px; min-width: 20px; max-width: 2000px; }
+
+.mantenedor-subrow {
+    background-color: #f9f9f9;
+}
+
+.mantenedor-subrow td {
+    padding-left: 20px;
+}
 
 .mantenedor-actions {
     display: flex;
@@ -303,6 +312,24 @@ html, body {
 
 .mantenedor-btn-history:hover {
     background-color: #138496;
+}
+
+.mantenedor-btn-add-subrow {
+    background-color: #28a745;
+    color: white;
+}
+
+.mantenedor-btn-add-subrow:hover {
+    background-color: #218838;
+}
+
+.mantenedor-btn-toggle-subrows {
+    background-color: #6c757d;
+    color: white;
+}
+
+.mantenedor-btn-toggle-subrows:hover {
+    background-color: #5a6268;
 }
 
 .mantenedor-pagination {
