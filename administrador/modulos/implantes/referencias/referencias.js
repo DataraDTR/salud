@@ -248,38 +248,6 @@ function showToast(text, type = 'success') {
     }, 5000);
 }
 
-function validateForm(processedRow) {
-    if (!processedRow.referencia.trim()) {
-        showToast('La referencia es obligatoria.', 'error');
-        return false;
-    }
-    if (!processedRow.descripcion.trim()) {
-        showToast('La descripción es obligatoria.', 'error');
-        return false;
-    }
-    if (processedRow.precioUnitario && isNaN(Number(processedRow.precioUnitario))) {
-        showToast('El precio unitario debe ser un número válido.', 'error');
-        return false;
-    }
-    if (processedRow.referencia.length > 50) {
-        showToast('La referencia no debe exceder 50 caracteres.', 'error');
-        return false;
-    }
-    if (processedRow.descripcion.length > 200) {
-        showToast('La descripción no debe exceder 200 caracteres.', 'error');
-        return false;
-    }
-    if (!['IMPLANTES', 'INSUMO'].includes(processedRow.tipo)) {
-        showToast('El tipo debe ser IMPLANTES o INSUMO.', 'error');
-        return false;
-    }
-    if (!['COTIZACION', 'CONSIGNACION'].includes(processedRow.atributo)) {
-        showToast('El atributo debe ser COTIZACION o CONSIGNACION.', 'error');
-        return false;
-    }
-    return true;
-}
-
 document.addEventListener('DOMContentLoaded', () => {
     const loading = document.getElementById('referencias-loading');
     const importProgress = document.getElementById('referencias-import-progress');
@@ -678,39 +646,33 @@ document.addEventListener('DOMContentLoaded', () => {
                 fullName: window.currentUserData.fullName
             };
 
-            if (!validateForm(processedRow)) return;
-
-            if (processedRow.referencia && processedRow.descripcion) {
-                showLoading();
-                try {
-                    const existingRef = await getReferenciaByUniqueKey(processedRow.referencia);
-                    if (existingRef) {
-                        hideLoading();
-                        showToast('La referencia ya existe.', 'error');
-                        return;
-                    }
-                    const docRef = await addDoc(collection(db, "referencias_implantes"), {
-                        ...processedRow,
-                        createdAt: new Date()
-                    });
-                    await logAction(docRef.id, 'create', null, processedRow);
+            showLoading();
+            try {
+                const existingRef = await getReferenciaByUniqueKey(processedRow.referencia);
+                if (existingRef) {
                     hideLoading();
-                    showToast(`Referencia ${processedRow.referencia} registrada exitosamente`, 'success');
-                    referenciaInput.value = '';
-                    detallesInput.value = '';
-                    precioUnitarioInput.value = '';
-                    proveedorInput.value = '';
-                    descripcionInput.value = '';
-                    tipoInput.value = 'IMPLANTES';
-                    atributoInput.value = 'COTIZACION';
-                    document.getElementById('proveedorList').classList.remove('show');
-                    await loadReferencias();
-                } catch (error) {
-                    hideLoading();
-                    showToast('Error al registrar la referencia: ' + error.message, 'error');
+                    showToast('La referencia ya existe.', 'error');
+                    return;
                 }
-            } else {
-                showToast('Faltan referencia o descripción', 'error');
+                const docRef = await addDoc(collection(db, "referencias_implantes"), {
+                    ...processedRow,
+                    createdAt: new Date()
+                });
+                await logAction(docRef.id, 'create', null, processedRow);
+                hideLoading();
+                showToast(`Referencia ${processedRow.referencia} registrada exitosamente`, 'success');
+                referenciaInput.value = '';
+                detallesInput.value = '';
+                precioUnitarioInput.value = '';
+                proveedorInput.value = '';
+                descripcionInput.value = '';
+                tipoInput.value = 'IMPLANTES';
+                atributoInput.value = 'COTIZACION';
+                document.getElementById('proveedorList').classList.remove('show');
+                await loadReferencias();
+            } catch (error) {
+                hideLoading();
+                showToast('Error al registrar la referencia: ' + error.message, 'error');
             }
         });
     }
@@ -731,50 +693,40 @@ document.addEventListener('DOMContentLoaded', () => {
                 fullName: window.currentUserData.fullName
             };
 
-            if (!validateForm(processedRow)) return;
-
-            if (processedRow.codigo === '' || processedRow.codigo === '0') {
-                processedRow.codigo = 'PENDIENTE';
-            }
-
-            if (processedRow.referencia && processedRow.descripcion) {
-                showLoading();
-                try {
-                    const existingRef = await getReferenciaByUniqueKey(processedRow.referencia);
-                    if (existingRef) {
-                        hideLoading();
-                        showToast('La referencia ya existe.', 'error');
-                        return;
-                    }
-                    const existingCod = await getCodigoByUniqueKey(processedRow.codigo);
-                    if (existingCod) {
-                        hideLoading();
-                        showToast('El código ya existe.', 'error');
-                        return;
-                    }
-                    const docRef = await addDoc(collection(db, "referencias_implantes"), {
-                        ...processedRow,
-                        createdAt: new Date()
-                    });
-                    await logAction(docRef.id, 'create', null, processedRow);
+            showLoading();
+            try {
+                const existingRef = await getReferenciaByUniqueKey(processedRow.referencia);
+                if (existingRef) {
                     hideLoading();
-                    showToast(`Referencia ${processedRow.referencia} registrada exitosamente`, 'success');
-                    existReferenciaInput.value = '';
-                    existDetallesInput.value = '';
-                    existPrecioUnitarioInput.value = '';
-                    existCodigoInput.value = '';
-                    existProveedorInput.value = '';
-                    existDescripcionInput.value = '';
-                    existTipoInput.value = 'IMPLANTES';
-                    existAtributoInput.value = 'COTIZACION';
-                    document.getElementById('existProveedorList').classList.remove('show');
-                    await loadReferencias();
-                } catch (error) {
-                    hideLoading();
-                    showToast('Error al registrar la referencia: ' + error.message, 'error');
+                    showToast('La referencia ya existe.', 'error');
+                    return;
                 }
-            } else {
-                showToast('Faltan referencia o descripción', 'error');
+                const existingCod = await getCodigoByUniqueKey(processedRow.codigo);
+                if (existingCod) {
+                    hideLoading();
+                    showToast('El código ya existe.', 'error');
+                    return;
+                }
+                const docRef = await addDoc(collection(db, "referencias_implantes"), {
+                    ...processedRow,
+                    createdAt: new Date()
+                });
+                await logAction(docRef.id, 'create', null, processedRow);
+                hideLoading();
+                showToast(`Referencia ${processedRow.referencia} registrada exitosamente`, 'success');
+                existReferenciaInput.value = '';
+                existDetallesInput.value = '';
+                existPrecioUnitarioInput.value = '';
+                existCodigoInput.value = '';
+                existProveedorInput.value = '';
+                existDescripcionInput.value = '';
+                existTipoInput.value = 'IMPLANTES';
+                existAtributoInput.value = 'COTIZACION';
+                document.getElementById('existProveedorList').classList.remove('show');
+                await loadReferencias();
+            } catch (error) {
+                hideLoading();
+                showToast('Error al registrar la referencia: ' + error.message, 'error');
             }
         });
     }
