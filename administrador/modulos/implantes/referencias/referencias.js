@@ -191,7 +191,7 @@ function setupColumnResize() {
             header.style.width = `${newWidth}px`;
             header.style.minWidth = `${newWidth}px`;
             header.style.maxWidth = `${newWidth}px`;
-            
+
             const cells = document.querySelectorAll(`.referencias-table td:nth-child(${index + 1})`);
             cells.forEach(cell => {
                 cell.style.width = `${newWidth}px`;
@@ -244,7 +244,7 @@ function showToast(text, type = 'success') {
         toast.classList.remove('show');
         setTimeout(() => {
             toast.remove();
-        }, 300); 
+        }, 300);
     }, 5000);
 }
 
@@ -330,9 +330,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     [referenciaInput, detallesInput, proveedorInput, descripcionInput, tipoInput, atributoInput,
-     existReferenciaInput, existDetallesInput, existCodigoInput, existProveedorInput, existDescripcionInput, existTipoInput, existAtributoInput,
-     document.getElementById('editReferencia'), document.getElementById('editDetalles'), document.getElementById('editCodigo'),
-     document.getElementById('editProveedor'), document.getElementById('editDescripcion'), document.getElementById('editTipo'), document.getElementById('editAtributo'), document.getElementById('editEstado')]
+        existReferenciaInput, existDetallesInput, existCodigoInput, existProveedorInput, existDescripcionInput, existTipoInput, existAtributoInput,
+        document.getElementById('editReferencia'), document.getElementById('editDetalles'), document.getElementById('editCodigo'),
+        document.getElementById('editProveedor'), document.getElementById('editDescripcion'), document.getElementById('editTipo'), document.getElementById('editAtributo'), document.getElementById('editEstado')]
         .forEach(input => input && enforceUpperCase(input));
 
     function updateDescripcion() {
@@ -747,7 +747,7 @@ document.addEventListener('DOMContentLoaded', () => {
         showLoading();
         try {
             let q = query(collection(db, "referencias_implantes"), orderBy("createdAt", "desc"), limit(PAGE_SIZE));
-            
+
             if (searchReferencia) q = query(q, where("referencia", ">=", searchReferencia), where("referencia", "<=", searchReferencia + '\uf8ff'));
             if (searchCodigo) q = query(q, where("codigo", ">=", searchCodigo), where("codigo", "<=", searchCodigo + '\uf8ff'));
             if (searchDescripcion) q = query(q, where("descripcion", ">=", searchDescripcion), where("descripcion", "<=", searchDescripcion + '\uf8ff'));
@@ -1005,6 +1005,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 const sheet = workbook.Sheets[sheetName];
                 const jsonData = XLSX.utils.sheet_to_json(sheet);
 
+                console.log('Datos leídos del Excel:', jsonData); // LOG: Verifica qué se lee
+
                 let successCount = 0;
                 let errorCount = 0;
                 const totalRows = jsonData.length;
@@ -1024,6 +1026,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         fullName: window.currentUserData.fullName
                     };
 
+                    console.log(`Fila ${i + 1}:`, processedRow); // LOG: Verifica cada fila procesada
+
                     if (processedRow.codigo === '' || processedRow.codigo === '0') {
                         processedRow.codigo = 'PENDIENTE';
                     }
@@ -1040,11 +1044,13 @@ document.addEventListener('DOMContentLoaded', () => {
                         try {
                             const existingRef = await getReferenciaByUniqueKey(processedRow.referencia);
                             if (existingRef) {
+                                console.log(`Fila ${i + 1}: Referencia ya existe: ${processedRow.referencia}`); // LOG: Duplicado
                                 errorCount++;
                                 continue;
                             }
                             const existingCod = await getCodigoByUniqueKey(processedRow.codigo);
                             if (existingCod) {
+                                console.log(`Fila ${i + 1}: Código ya existe: ${processedRow.codigo}`); // LOG: Código duplicado
                                 errorCount++;
                                 continue;
                             }
@@ -1054,10 +1060,13 @@ document.addEventListener('DOMContentLoaded', () => {
                             });
                             await logAction(docRef.id, 'create', null, processedRow);
                             successCount++;
+                            console.log(`Fila ${i + 1}: Importada exitosamente ID: ${docRef.id}`); // LOG: Éxito
                         } catch (error) {
+                            console.error(`Fila ${i + 1}: Error al importar:`, error); // LOG: Error detallado
                             errorCount++;
                         }
                     } else {
+                        console.log(`Fila ${i + 1}: Falta referencia o descripción`); // LOG: Validación fallida
                         errorCount++;
                     }
 
