@@ -1003,30 +1003,32 @@ document.addEventListener('DOMContentLoaded', () => {
                 const workbook = XLSX.read(data, { type: 'array' });
                 const sheetName = workbook.SheetNames[0];
                 const sheet = workbook.Sheets[sheetName];
-                const jsonData = XLSX.utils.sheet_to_json(sheet);
+                const jsonData = XLSX.utils.sheet_to_json(sheet, { header: 1, raw: true }); // Añadimos raw: true
 
-                console.log('Datos leídos del Excel:', jsonData); // LOG: Verifica qué se lee
+                console.log('Datos crudos del Excel (con encabezados):', jsonData); // LOG: Muestra toda la matriz
 
                 let successCount = 0;
                 let errorCount = 0;
-                const totalRows = jsonData.length;
+                const totalRows = jsonData.length - 1; // Restamos 1 por el encabezado
 
-                for (let i = 0; i < totalRows; i++) {
+                for (let i = 1; i <= totalRows; i++) { // Empezamos desde 1 para saltar el encabezado
                     const row = jsonData[i];
+                    console.log(`Fila cruda ${i}:`, row); // LOG: Muestra los valores crudos de cada fila
+
                     let processedRow = {
-                        referencia: row.Referencia ? String(row.Referencia).trim().toUpperCase() : '',
-                        detalles: row.Detalles ? String(row.Detalles).trim().toUpperCase() : '',
-                        precioUnitario: row['Precio Unitario'] ? String(row['Precio Unitario']).replace(/[^\d]/g, '') : '',
-                        codigo: row.Código ? String(row.Código).trim().toUpperCase() : 'PENDIENTE',
-                        proveedor: row.Proveedor ? String(row.Proveedor).trim().toUpperCase() : '',
-                        descripcion: row.Descripción ? String(row.Descripción).trim().toUpperCase() : '',
-                        tipo: row.Tipo ? String(row.Tipo).trim().toUpperCase() : 'IMPLANTES',
-                        atributo: row.Atributo ? String(row.Atributo).trim().toUpperCase() : 'COTIZACION',
+                        referencia: row[0] ? String(row[0]).trim().toUpperCase() : '',
+                        detalles: row[1] ? String(row[1]).trim().toUpperCase() : '',
+                        precioUnitario: row[2] ? String(row[2]).replace(/[^\d]/g, '') : '',
+                        codigo: row[3] ? String(row[3]).trim().toUpperCase() : 'PENDIENTE',
+                        proveedor: row[4] ? String(row[4]).trim().toUpperCase() : '',
+                        descripcion: row[5] ? String(row[5]).trim().toUpperCase() : '',
+                        tipo: row[6] ? String(row[6]).trim().toUpperCase() : 'IMPLANTES',
+                        atributo: row[7] ? String(row[7]).trim().toUpperCase() : 'COTIZACION',
                         estado: 'ACTIVO',
                         fullName: window.currentUserData.fullName
                     };
 
-                    console.log(`Fila ${i + 1}:`, processedRow); // LOG: Verifica cada fila procesada
+                    console.log(`Fila procesada ${i}:`, processedRow); // LOG: Muestra después de procesar
 
                     if (processedRow.codigo === '' || processedRow.codigo === '0') {
                         processedRow.codigo = 'PENDIENTE';
@@ -1044,13 +1046,13 @@ document.addEventListener('DOMContentLoaded', () => {
                         try {
                             const existingRef = await getReferenciaByUniqueKey(processedRow.referencia);
                             if (existingRef) {
-                                console.log(`Fila ${i + 1}: Referencia ya existe: ${processedRow.referencia}`); // LOG: Duplicado
+                                console.log(`Fila ${i}: Referencia ya existe: ${processedRow.referencia}`);
                                 errorCount++;
                                 continue;
                             }
                             const existingCod = await getCodigoByUniqueKey(processedRow.codigo);
                             if (existingCod) {
-                                console.log(`Fila ${i + 1}: Código ya existe: ${processedRow.codigo}`); // LOG: Código duplicado
+                                console.log(`Fila ${i}: Código ya existe: ${processedRow.codigo}`);
                                 errorCount++;
                                 continue;
                             }
@@ -1060,17 +1062,17 @@ document.addEventListener('DOMContentLoaded', () => {
                             });
                             await logAction(docRef.id, 'create', null, processedRow);
                             successCount++;
-                            console.log(`Fila ${i + 1}: Importada exitosamente ID: ${docRef.id}`); // LOG: Éxito
+                            console.log(`Fila ${i}: Importada exitosamente ID: ${docRef.id}`);
                         } catch (error) {
-                            console.error(`Fila ${i + 1}: Error al importar:`, error); // LOG: Error detallado
+                            console.error(`Fila ${i}: Error al importar:`, error);
                             errorCount++;
                         }
                     } else {
-                        console.log(`Fila ${i + 1}: Falta referencia o descripción`); // LOG: Validación fallida
+                        console.log(`Fila ${i}: Falta referencia o descripción`);
                         errorCount++;
                     }
 
-                    const progress = ((i + 1) / totalRows) * 100;
+                    const progress = ((i) / totalRows) * 100;
                     showImportProgress(progress);
                 }
 
