@@ -548,7 +548,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    const debouncedRenderTable = debounce(renderTable, 300);
+    const debouncedLoadReferencias = debounce(loadReferencias, 300);
 
     if (buscarReferenciaInput) {
         buscarReferenciaInput.addEventListener('input', (e) => {
@@ -556,7 +556,7 @@ document.addEventListener('DOMContentLoaded', () => {
             currentPage = 1;
             lastVisible = null;
             firstVisible = null;
-            debouncedRenderTable();
+            debouncedLoadReferencias();
         });
     }
 
@@ -566,7 +566,7 @@ document.addEventListener('DOMContentLoaded', () => {
             currentPage = 1;
             lastVisible = null;
             firstVisible = null;
-            debouncedRenderTable();
+            debouncedLoadReferencias();
         });
     }
 
@@ -576,7 +576,7 @@ document.addEventListener('DOMContentLoaded', () => {
             currentPage = 1;
             lastVisible = null;
             firstVisible = null;
-            debouncedRenderTable();
+            debouncedLoadReferencias();
         });
     }
 
@@ -586,7 +586,7 @@ document.addEventListener('DOMContentLoaded', () => {
             currentPage = 1;
             lastVisible = null;
             firstVisible = null;
-            debouncedRenderTable();
+            debouncedLoadReferencias();
         });
     }
 
@@ -596,7 +596,7 @@ document.addEventListener('DOMContentLoaded', () => {
             currentPage = 1;
             lastVisible = null;
             firstVisible = null;
-            debouncedRenderTable();
+            debouncedLoadReferencias();
         });
     }
 
@@ -606,7 +606,7 @@ document.addEventListener('DOMContentLoaded', () => {
             currentPage = 1;
             lastVisible = null;
             firstVisible = null;
-            debouncedRenderTable();
+            debouncedLoadReferencias();
         });
     }
 
@@ -616,7 +616,7 @@ document.addEventListener('DOMContentLoaded', () => {
             currentPage = 1;
             lastVisible = null;
             firstVisible = null;
-            debouncedRenderTable();
+            debouncedLoadReferencias();
         });
     }
 
@@ -626,7 +626,7 @@ document.addEventListener('DOMContentLoaded', () => {
             currentPage = 1;
             lastVisible = null;
             firstVisible = null;
-            debouncedRenderTable();
+            debouncedLoadReferencias();
         });
     }
 
@@ -1003,17 +1003,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 const workbook = XLSX.read(data, { type: 'array' });
                 const sheetName = workbook.SheetNames[0];
                 const sheet = workbook.Sheets[sheetName];
-                const jsonData = XLSX.utils.sheet_to_json(sheet, { header: 1, raw: true }); // Añadimos raw: true
+                const jsonData = XLSX.utils.sheet_to_json(sheet, { header: 1, raw: true });
 
-                console.log('Datos crudos del Excel (con encabezados):', jsonData); // LOG: Muestra toda la matriz
+                console.log('Datos crudos del Excel (con encabezados):', jsonData);
 
                 let successCount = 0;
                 let errorCount = 0;
-                const totalRows = jsonData.length - 1; // Restamos 1 por el encabezado
+                const totalRows = jsonData.length - 1;
 
-                for (let i = 1; i <= totalRows; i++) { // Empezamos desde 1 para saltar el encabezado
+                for (let i = 1; i <= totalRows; i++) {
                     const row = jsonData[i];
-                    console.log(`Fila cruda ${i}:`, row); // LOG: Muestra los valores crudos de cada fila
+                    console.log(`Fila cruda ${i}:`, row);
 
                     let processedRow = {
                         referencia: row[0] ? String(row[0]).trim().toUpperCase() : '',
@@ -1028,7 +1028,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         fullName: window.currentUserData.fullName
                     };
 
-                    console.log(`Fila procesada ${i}:`, processedRow); // LOG: Muestra después de procesar
+                    console.log(`Fila procesada ${i}:`, processedRow);
 
                     if (processedRow.codigo === '' || processedRow.codigo === '0') {
                         processedRow.codigo = 'PENDIENTE';
