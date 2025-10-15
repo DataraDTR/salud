@@ -28,15 +28,6 @@ html, body {
     font-size: 18px;
 }
 
-.mantenedor-form-type {
-    margin-bottom: 15px;
-}
-
-.mantenedor-form-type label {
-    margin-right: 20px;
-    font-size: 12px;
-}
-
 .mantenedor-fields-container {
     display: flex;
     justify-content: space-between;
@@ -63,10 +54,9 @@ html, body {
     white-space: nowrap;
 }
 
-#referencia, #detalles, #precioUnitario, #proveedor, #descripcion, #tipo, #atributo,
-#codigo,
-#buscarReferencia, #buscarCodigo, #buscarDescripcion, #buscarDetalles, #buscarProveedor, #buscarTipo, #buscarAtributo,
-#editReferencia, #editDetalles, #editPrecioUnitario, #editCodigo, #editProveedor, #editDescripcion, #editTipo, #editAtributo, #editEstado {
+#referencia, #descripcion, #cantidad, #codigo, #proveedor, #tipo, #atributo,
+#buscarReferencia, #buscarDescripcion, #buscarCantidad, #buscarProveedor, #buscarTipo, #buscarAtributo,
+#editReferencia, #editDescripcion, #editCantidad, #editCodigo, #editProveedor, #editTipo, #editAtributo {
     width: 100%;
     padding: 8px;
     border: 1px solid #ddd;
@@ -76,17 +66,17 @@ html, body {
     text-transform: uppercase;
 }
 
-#referencia:focus, #detalles:focus, #precioUnitario:focus, #proveedor:focus, #descripcion:focus, #tipo:focus, #atributo:focus,
-#codigo:focus,
-#buscarReferencia:focus, #buscarCodigo:focus, #buscarDescripcion:focus, #buscarDetalles:focus, #buscarProveedor:focus, #buscarTipo:focus, #buscarAtributo:focus,
-#editReferencia:focus, #editDetalles:focus, #editPrecioUnitario:focus, #editCodigo:focus, #editProveedor:focus, #editDescripcion:focus, #editTipo:focus, #editAtributo:focus, #editEstado:focus {
+#referencia:focus, #descripcion:focus, #cantidad:focus, #codigo:focus, #proveedor:focus, #tipo:focus, #atributo:focus,
+#buscarReferencia:focus, #buscarDescripcion:focus, #buscarCantidad:focus, #buscarProveedor:focus, #buscarTipo:focus, #buscarAtributo:focus,
+#editReferencia:focus, #editDescripcion:focus, #editCantidad:focus, #editCodigo:focus, #editProveedor:focus, #editTipo:focus, #editAtributo:focus {
     box-shadow: 0 0 12px rgba(0, 123, 255, 0.5);
     outline: none;
 }
 
-#descripcion, #editDescripcion {
+#codigo, #proveedor, #tipo, #atributo,
+#editCodigo, #editProveedor, #editTipo, #editAtributo {
     background-color: #f8f9fa;
-    cursor: text;
+    cursor: not-allowed;
 }
 
 .mantenedor-autocomplete {
@@ -263,14 +253,12 @@ html, body {
 
 .mantenedor-table th:nth-child(1), .mantenedor-table td:nth-child(1) { width: 100px; min-width: 20px; max-width: 2000px; }
 .mantenedor-table th:nth-child(2), .mantenedor-table td:nth-child(2) { width: 130px; min-width: 20px; max-width: 2000px; }
-.mantenedor-table th:nth-child(3), .mantenedor-table td:nth-child(3) { width: 200px; min-width: 20px; max-width: 2000px; }
+.mantenedor-table th:nth-child(3), .mantenedor-table td:nth-child(3) { width: 250px; min-width: 20px; max-width: 2000px; }
 .mantenedor-table th:nth-child(4), .mantenedor-table td:nth-child(4) { width: 80px; min-width: 20px; max-width: 2000px; }
 .mantenedor-table th:nth-child(5), .mantenedor-table td:nth-child(5) { width: 80px; min-width: 20px; max-width: 2000px; }
 .mantenedor-table th:nth-child(6), .mantenedor-table td:nth-child(6) { width: 150px; min-width: 20px; max-width: 2000px; }
-.mantenedor-table th:nth-child(7), .mantenedor-table td:nth-child(7) { width: 250px; min-width: 20px; max-width: 2000px; }
+.mantenedor-table th:nth-child(7), .mantenedor-table td:nth-child(7) { width: 120px; min-width: 20px; max-width: 2000px; }
 .mantenedor-table th:nth-child(8), .mantenedor-table td:nth-child(8) { width: 120px; min-width: 20px; max-width: 2000px; }
-.mantenedor-table th:nth-child(9), .mantenedor-table td:nth-child(9) { width: 120px; min-width: 20px; max-width: 2000px; }
-.mantenedor-table th:nth-child(10), .mantenedor-table td:nth-child(10) { width: 80px; min-width: 20px; max-width: 2000px; }
 
 .mantenedor-actions {
     display: flex;

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mantenedor de Referencias</title>
+    <title>Mantenedor de Implantes</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="mantenedor.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -37,7 +37,7 @@
 </head>
 <body>
     <div class="mantenedor-main-container">
-        <h1 class="mantenedor-title">Mantenedor de Referencias</h1>
+        <h1 class="mantenedor-title">Mantenedor de Implantes</h1>
 
         <div id="mantenedor-message"></div>
 
@@ -59,38 +59,24 @@
                 </div>
             </div>
             <div class="mantenedor-form-group">
-                <label for="detalles" class="mantenedor-label">Detalles:</label>
-                <input type="text" id="detalles" autocomplete="off">
-            </div>
-            <div class="mantenedor-form-group">
-                <label for="precioUnitario" class="mantenedor-label">Precio Unitario:</label>
-                <input type="text" id="precioUnitario" autocomplete="off">
+                <label for="cantidad" class="mantenedor-label">Cantidad:</label>
+                <input type="number" id="cantidad" min="0" autocomplete="off">
             </div>
             <div class="mantenedor-form-group">
                 <label for="codigo" class="mantenedor-label">Código:</label>
-                <input type="text" id="codigo" autocomplete="off">
+                <input type="text" id="codigo" readonly autocomplete="off">
             </div>
             <div class="mantenedor-form-group">
                 <label for="proveedor" class="mantenedor-label">Proveedor:</label>
-                <div class="mantenedor-autocomplete">
-                    <input type="text" id="proveedor" autocomplete="off">
-                    <span class="mantenedor-icon" id="proveedorIcon"><i class="fas fa-chevron-down"></i></span>
-                    <div class="mantenedor-autocomplete-list" id="proveedorList"></div>
-                </div>
+                <input type="text" id="proveedor" readonly autocomplete="off">
             </div>
             <div class="mantenedor-form-group">
                 <label for="tipo" class="mantenedor-label">Tipo:</label>
-                <select id="tipo" autocomplete="off">
-                    <option value="IMPLANTES">IMPLANTES</option>
-                    <option value="INSUMO">INSUMO</option>
-                </select>
+                <input type="text" id="tipo" readonly autocomplete="off">
             </div>
             <div class="mantenedor-form-group">
                 <label for="atributo" class="mantenedor-label">Atributo:</label>
-                <select id="atributo" autocomplete="off">
-                    <option value="COTIZACION">COTIZACION</option>
-                    <option value="CONSIGNACION">CONSIGNACION</option>
-                </select>
+                <input type="text" id="atributo" readonly autocomplete="off">
             </div>
             <button id="ingresarBtn" class="modal-btn modal-btn-primary">Ingresar</button>
         </div>
@@ -101,16 +87,12 @@
                 <input type="text" id="buscarReferencia" placeholder="Buscar por referencia" autocomplete="off">
             </div>
             <div class="mantenedor-form-group">
-                <label for="buscarCodigo" class="mantenedor-label">Buscar Código:</label>
-                <input type="text" id="buscarCodigo" placeholder="Buscar por código" autocomplete="off">
-            </div>
-            <div class="mantenedor-form-group">
                 <label for="buscarDescripcion" class="mantenedor-label">Buscar Descripción:</label>
                 <input type="text" id="buscarDescripcion" placeholder="Buscar por descripción" autocomplete="off">
             </div>
             <div class="mantenedor-form-group">
-                <label for="buscarDetalles" class="mantenedor-label">Buscar Detalles:</label>
-                <input type="text" id="buscarDetalles" placeholder="Buscar por detalles" autocomplete="off">
+                <label for="buscarCantidad" class="mantenedor-label">Buscar Cantidad:</label>
+                <input type="number" id="buscarCantidad" placeholder="Buscar por cantidad" min="0" autocomplete="off">
             </div>
             <div class="mantenedor-form-group">
                 <label for="buscarProveedor" class="mantenedor-label">Buscar Proveedor:</label>
@@ -132,9 +114,6 @@
                     <option value="CONSIGNACION">CONSIGNACION</option>
                 </select>
             </div>
-            <div class="mantenedor-form-group">
-                <label><input type="checkbox" id="mostrarPendientes"> Mostrar solo códigos pendientes</label>
-            </div>
             <div class="mantenedor-actions-menu">
                 <button id="actionsBtn"><i class="fas fa-angle-down"></i> Acciones</button>
                 <div id="actionsMenu" class="mantenedor-dropdown-menu">
@@ -153,14 +132,12 @@
                     <tr>
                         <th>Acciones</th>
                         <th>Referencia</th>
-                        <th>Detalles</th>
-                        <th>Precio Unitario</th>
+                        <th>Descripción</th>
+                        <th>Cantidad</th>
                         <th>Código</th>
                         <th>Proveedor</th>
-                        <th>Descripción</th>
                         <th>Tipo</th>
                         <th>Atributo</th>
-                        <th>Estado</th>
                     </tr>
                 </thead>
                 <tbody id="mantenedorBody">
@@ -196,57 +173,44 @@
         <div id="editModal" class="modal">
             <div class="modal-content">
                 <span class="close" id="closeEditModal">&times;</span>
-                <h2>Editar Referencia</h2>
+                <h2>Editar Registro</h2>
                 <form id="editForm">
                     <input type="hidden" id="editId" autocomplete="off">
                     <div class="modal-form-group">
                         <label for="editReferencia">Referencia:</label>
-                        <input type="text" id="editReferencia" required autocomplete="off">
-                    </div>
-                    <div class="modal-form-group">
-                        <label for="editDetalles">Detalles:</label>
-                        <input type="text" id="editDetalles" required autocomplete="off">
-                    </div>
-                    <div class="modal-form-group">
-                        <label for="editPrecioUnitario">Precio Unitario:</label>
-                        <input type="text" id="editPrecioUnitario" autocomplete="off">
-                    </div>
-                    <div class="modal-form-group">
-                        <label for="editCodigo">Código:</label>
-                        <input type="text" id="editCodigo" autocomplete="off">
-                    </div>
-                    <div class="modal-form-group">
-                        <label for="editProveedor">Proveedor:</label>
                         <div class="mantenedor-autocomplete">
-                            <input type="text" id="editProveedor" autocomplete="off">
-                            <span class="mantenedor-icon" id="editProveedorIcon"><i class="fas fa-chevron-down"></i></span>
-                            <div class="mantenedor-autocomplete-list" id="editProveedorList"></div>
+                            <input type="text" id="editReferencia" required autocomplete="off">
+                            <span class="mantenedor-icon" id="editReferenciaIcon"><i class="fas fa-chevron-down"></i></span>
+                            <div class="mantenedor-autocomplete-list" id="editReferenciaList"></div>
                         </div>
                     </div>
                     <div class="modal-form-group">
                         <label for="editDescripcion">Descripción:</label>
-                        <input type="text" id="editDescripcion" autocomplete="off">
+                        <div class="mantenedor-autocomplete">
+                            <input type="text" id="editDescripcion" required autocomplete="off">
+                            <span class="mantenedor-icon" id="editDescripcionIcon"><i class="fas fa-chevron-down"></i></span>
+                            <div class="mantenedor-autocomplete-list" id="editDescripcionList"></div>
+                        </div>
+                    </div>
+                    <div class="modal-form-group">
+                        <label for="editCantidad">Cantidad:</label>
+                        <input type="number" id="editCantidad" min="0" required autocomplete="off">
+                    </div>
+                    <div class="modal-form-group">
+                        <label for="editCodigo">Código:</label>
+                        <input type="text" id="editCodigo" readonly autocomplete="off">
+                    </div>
+                    <div class="modal-form-group">
+                        <label for="editProveedor">Proveedor:</label>
+                        <input type="text" id="editProveedor" readonly autocomplete="off">
                     </div>
                     <div class="modal-form-group">
                         <label for="editTipo">Tipo:</label>
-                        <select id="editTipo" autocomplete="off">
-                            <option value="IMPLANTES">IMPLANTES</option>
-                            <option value="INSUMO">INSUMO</option>
-                        </select>
+                        <input type="text" id="editTipo" readonly autocomplete="off">
                     </div>
                     <div class="modal-form-group">
                         <label for="editAtributo">Atributo:</label>
-                        <select id="editAtributo" autocomplete="off">
-                            <option value="COTIZACION">COTIZACION</option>
-                            <option value="CONSIGNACION">CONSIGNACION</option>
-                        </select>
-                    </div>
-                    <div class="modal-form-group">
-                        <label for="editEstado">Estado:</label>
-                        <select id="editEstado" autocomplete="off">
-                            <option value="ACTIVO">ACTIVO</option>
-                            <option value="INACTIVO">INACTIVO</option>
-                        </select>
+                        <input type="text" id="editAtributo" readonly autocomplete="off">
                     </div>
                     <div class="modal-buttons">
                         <button type="button" class="modal-btn modal-btn-secondary" id="cancelEdit">Cancelar</button>
@@ -259,7 +223,7 @@
         <div id="deleteModal" class="modal">
             <div class="modal-content">
                 <span class="close" id="closeDeleteModal">&times;</span>
-                <h2>Eliminar Referencia</h2>
+                <h2>Eliminar Registro</h2>
                 <p class="delete-modal-text" id="deleteText"></p>
                 <div class="modal-buttons">
                     <button type="button" class="modal-btn modal-btn-secondary" id="cancelDelete">No</button>
@@ -271,7 +235,7 @@
         <div id="historyModal" class="modal">
             <div class="modal-content">
                 <span class="close" id="closeHistory">&times;</span>
-                <h2 id="historyTitle">HISTORIAL REFERENCIA</h2>
+                <h2 id="historyTitle">HISTORIAL REGISTRO</h2>
                 <hr>
                 <div id="historyContent"></div>
                 <div class="modal-buttons">

@@ -22,59 +22,13 @@ const PAGE_SIZE = 50;
 let lastVisible = null;
 let firstVisible = null;
 let searchReferencia = '';
-let searchCodigo = '';
 let searchDescripcion = '';
-let searchDetalles = '';
+let searchCantidad = '';
 let searchProveedor = '';
 let searchTipo = '';
 let searchAtributo = '';
-let mostrarPendientes = false;
-let proveedores = [];
 let references = [];
 let totalRecords = 0;
-
-function formatNumberWithThousandsSeparator(number) {
-    if (!number) return '';
-    const cleaned = String(number).replace(/[^\d]/g, '');
-    return cleaned ? Number(cleaned).toLocaleString('es-CL') : '';
-}
-
-async function getReferenciaByUniqueKey(referencia, excludeId = null) {
-    if (!referencia) return null;
-    const q = query(collection(db, "referencias_implantes"), where("referencia", "==", referencia.trim().toUpperCase()));
-    const querySnapshot = await getDocs(q);
-    if (!querySnapshot.empty) {
-        const doc = querySnapshot.docs[0];
-        if (excludeId && doc.id === excludeId) return null;
-        return { id: doc.id, ...doc.data() };
-    }
-    return null;
-}
-
-async function getCodigoByUniqueKey(codigo, excludeId = null) {
-    if (!codigo || codigo === 'PENDIENTE' || codigo === '0' || codigo === '') return null;
-    const q = query(collection(db, "referencias_implantes"), where("codigo", "==", codigo.trim().toUpperCase()));
-    const querySnapshot = await getDocs(q);
-    if (!querySnapshot.empty) {
-        const doc = querySnapshot.docs[0];
-        if (excludeId && doc.id === excludeId) return null;
-        return { id: doc.id, ...doc.data() };
-    }
-    return null;
-}
-
-async function loadProveedores() {
-    try {
-        const querySnapshot = await getDocs(collection(db, "empresas"));
-        proveedores = [];
-        querySnapshot.forEach((doc) => {
-            proveedores.push({ id: doc.id, ...doc.data() });
-        });
-        proveedores.sort((a, b) => a.nombre.localeCompare(b.nombre));
-    } catch (error) {
-        showToast('Error al cargar proveedores: ' + error.message, 'error');
-    }
-}
 
 async function loadReferences() {
     try {
@@ -160,10 +114,10 @@ function setupAutocomplete(inputId, iconId, listId, dataSource, field, onSelect)
     });
 }
 
-async function logAction(referenciaId, action, oldData = null, newData = null) {
+async function logAction(mantenedorId, action, oldData = null, newData = null) {
     if (!window.currentUserData) return;
-    await addDoc(collection(db, "referencias_implantes_historial"), {
-        referenciaId,
+    await addDoc(collection(db, "mantenedor_implantes_historial"), {
+        mantenedorId,
         action,
         timestamp: new Date(),
         userId: auth.currentUser ? auth.currentUser.uid : null,
@@ -276,21 +230,18 @@ document.addEventListener('DOMContentLoaded', () => {
     const paginationInfo = document.getElementById('paginationInfo');
     const referenciaInput = document.getElementById('referencia');
     const descripcionInput = document.getElementById('descripcion');
-    const detallesInput = document.getElementById('detalles');
-    const precioUnitarioInput = document.getElementById('precioUnitario');
+    const cantidadInput = document.getElementById('cantidad');
     const codigoInput = document.getElementById('codigo');
     const proveedorInput = document.getElementById('proveedor');
     const tipoInput = document.getElementById('tipo');
     const atributoInput = document.getElementById('atributo');
     const ingresarBtn = document.getElementById('ingresarBtn');
     const buscarReferenciaInput = document.getElementById('buscarReferencia');
-    const buscarCodigoInput = document.getElementById('buscarCodigo');
     const buscarDescripcionInput = document.getElementById('buscarDescripcion');
-    const buscarDetallesInput = document.getElementById('buscarDetalles');
+    const buscarCantidadInput = document.getElementById('buscarCantidad');
     const buscarProveedorInput = document.getElementById('buscarProveedor');
     const buscarTipoInput = document.getElementById('buscarTipo');
     const buscarAtributoInput = document.getElementById('buscarAtributo');
-    const mostrarPendientesCheckbox = document.getElementById('mostrarPendientes');
     const actionsBtn = document.getElementById('actionsBtn');
     const actionsMenu = document.getElementById('actionsMenu');
     const downloadTemplate = document.getElementById('downloadTemplate');
@@ -318,35 +269,15 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentDeleteId = null;
     let currentDeleteReferencia = null;
 
-    function formatMontoInput(input) {
-        input.addEventListener('input', (e) => {
-            const value = e.target.value.replace(/[^\d]/g, '');
-            e.target.value = formatNumberWithThousandsSeparator(value);
-        });
-    }
-
-    formatMontoInput(precioUnitarioInput);
-    formatMontoInput(document.getElementById('editPrecioUnitario'));
-
     function enforceUpperCase(input) {
         input.addEventListener('input', (e) => {
             e.target.value = e.target.value.toUpperCase();
         });
     }
 
-    [referenciaInput, detallesInput, codigoInput, proveedorInput, descripcionInput, tipoInput, atributoInput,
-        document.getElementById('editReferencia'), document.getElementById('editDetalles'), document.getElementById('editCodigo'),
-        document.getElementById('editProveedor'), document.getElementById('editDescripcion'), document.getElementById('editTipo'), document.getElementById('editAtributo'), document.getElementById('editEstado')]
+    [referenciaInput, descripcionInput,
+        document.getElementById('editReferencia'), document.getElementById('editDescripcion')]
         .forEach(input => input && enforceUpperCase(input));
-
-    function updateDescripcion() {
-        const referencia = referenciaInput.value.trim().toUpperCase();
-        const detalles = detallesInput.value.trim().toUpperCase();
-        descripcionInput.value = referencia && detalles ? `${referencia} ${detalles}` : '';
-    }
-
-    detallesInput.addEventListener('input', updateDescripcion);
-    referenciaInput.addEventListener('input', updateDescripcion);
 
     window.showLoading = function () {
         if (loading) loading.classList.add('show');
@@ -372,19 +303,17 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    window.openEditModal = function (id, referencia) {
+    window.openEditModal = function (id, data) {
         currentEditId = id;
-        currentEditOldData = { ...referencia };
+        currentEditOldData = { ...data };
         document.getElementById('editId').value = id;
-        document.getElementById('editReferencia').value = referencia.referencia || '';
-        document.getElementById('editDetalles').value = referencia.detalles || '';
-        document.getElementById('editPrecioUnitario').value = referencia.precioUnitario ? formatNumberWithThousandsSeparator(referencia.precioUnitario) : '';
-        document.getElementById('editCodigo').value = referencia.codigo || '';
-        document.getElementById('editProveedor').value = referencia.proveedor || '';
-        document.getElementById('editDescripcion').value = referencia.descripcion || '';
-        document.getElementById('editTipo').value = referencia.tipo || 'IMPLANTES';
-        document.getElementById('editAtributo').value = referencia.atributo || 'COTIZACION';
-        document.getElementById('editEstado').value = referencia.estado || 'ACTIVO';
+        document.getElementById('editReferencia').value = data.referencia || '';
+        document.getElementById('editDescripcion').value = data.descripcion || '';
+        document.getElementById('editCantidad').value = data.cantidad || 0;
+        document.getElementById('editCodigo').value = data.codigo || '';
+        document.getElementById('editProveedor').value = data.proveedor || '';
+        document.getElementById('editTipo').value = data.tipo || '';
+        document.getElementById('editAtributo').value = data.atributo || '';
         editModal.style.display = 'block';
     };
 
@@ -393,13 +322,14 @@ document.addEventListener('DOMContentLoaded', () => {
         currentEditId = null;
         currentEditOldData = null;
         editForm.reset();
-        document.getElementById('editProveedorList').classList.remove('show');
+        document.getElementById('editReferenciaList').classList.remove('show');
+        document.getElementById('editDescripcionList').classList.remove('show');
     }
 
     window.openDeleteModal = function (id, referencia) {
         currentDeleteId = id;
         currentDeleteReferencia = referencia;
-        deleteText.textContent = `¿Desea eliminar la referencia "${referencia}"?`;
+        deleteText.textContent = `¿Desea eliminar el registro "${referencia}"?`;
         deleteModal.style.display = 'block';
     };
 
@@ -410,9 +340,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     window.openHistoryModal = function (id, referencia) {
-        historyTitle.textContent = `HISTORIAL REFERENCIA ${referencia}`;
+        historyTitle.textContent = `HISTORIAL REGISTRO ${referencia}`;
         showLoading();
-        const q = query(collection(db, "referencias_implantes_historial"), where("referenciaId", "==", id), orderBy("timestamp", "desc"));
+        const q = query(collection(db, "mantenedor_implantes_historial"), where("mantenedorId", "==", id), orderBy("timestamp", "desc"));
         getDocs(q).then((querySnapshot) => {
             hideLoading();
             let html = '';
@@ -462,53 +392,41 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         if (!currentEditId) return;
 
+        const referencia = document.getElementById('editReferencia').value.trim().toUpperCase();
+        const descripcion = document.getElementById('editDescripcion').value.trim().toUpperCase();
+        const cantidad = document.getElementById('editCantidad').value;
+
+        const selectedRef = references.find(ref => ref.referencia === referencia && ref.descripcion === descripcion);
+        if (!selectedRef) {
+            showToast('La referencia o descripción no existe en referencias_implantes.', 'error');
+            return;
+        }
+
         let processedRow = {
-            referencia: document.getElementById('editReferencia').value.trim().toUpperCase(),
-            detalles: document.getElementById('editDetalles').value.trim().toUpperCase(),
-            precioUnitario: document.getElementById('editPrecioUnitario').value.replace(/[^\d]/g, ''),
-            codigo: document.getElementById('editCodigo').value.trim().toUpperCase(),
-            proveedor: document.getElementById('editProveedor').value.trim().toUpperCase(),
-            descripcion: document.getElementById('editDescripcion').value.trim().toUpperCase(),
-            tipo: document.getElementById('editTipo').value,
-            atributo: document.getElementById('editAtributo').value,
-            estado: document.getElementById('editEstado').value,
+            referencia,
+            descripcion,
+            cantidad: parseInt(cantidad) || 0,
+            codigo: selectedRef.codigo || '',
+            proveedor: selectedRef.proveedor || '',
+            tipo: selectedRef.tipo || 'IMPLANTES',
+            atributo: selectedRef.atributo || 'COTIZACION',
             fullName: window.currentUserData.fullName
         };
 
-        if (processedRow.codigo === '' || processedRow.codigo === '0') {
-            processedRow.codigo = 'PENDIENTE';
-        }
-
-        if (processedRow.referencia) {
-            showLoading();
-            try {
-                const existingRef = await getReferenciaByUniqueKey(processedRow.referencia, currentEditId);
-                if (existingRef) {
-                    hideLoading();
-                    showToast('La referencia ya existe.', 'error');
-                    return;
-                }
-                const existingCod = await getCodigoByUniqueKey(processedRow.codigo, currentEditId);
-                if (existingCod) {
-                    hideLoading();
-                    showToast('El código ya existe.', 'error');
-                    return;
-                }
-                await updateDoc(doc(db, "referencias_implantes", currentEditId), {
-                    ...processedRow,
-                    createdAt: new Date()
-                });
-                await logAction(currentEditId, 'update', currentEditOldData, processedRow);
-                hideLoading();
-                showToast(`Referencia ${processedRow.referencia} actualizada exitosamente`, 'success');
-                closeEditModalHandler();
-                await loadMantenedor();
-            } catch (error) {
-                hideLoading();
-                showToast('Error al actualizar la referencia: ' + error.message, 'error');
-            }
-        } else {
-            showToast('Falta la referencia', 'error');
+        showLoading();
+        try {
+            await updateDoc(doc(db, "mantenedor_implantes", currentEditId), {
+                ...processedRow,
+                updatedAt: new Date()
+            });
+            await logAction(currentEditId, 'update', currentEditOldData, processedRow);
+            hideLoading();
+            showToast(`Registro ${processedRow.referencia} actualizado exitosamente`, 'success');
+            closeEditModalHandler();
+            await loadMantenedor();
+        } catch (error) {
+            hideLoading();
+            showToast('Error al actualizar el registro: ' + error.message, 'error');
         }
     });
 
@@ -517,23 +435,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
         showLoading();
         try {
-            const referenciaDoc = await getDoc(doc(db, "referencias_implantes", currentDeleteId));
-            if (referenciaDoc.exists()) {
-                const referenciaData = referenciaDoc.data();
-                await logAction(currentDeleteId, 'delete', referenciaData);
-                await deleteDoc(doc(db, "referencias_implantes", currentDeleteId));
+            const mantenedorDoc = await getDoc(doc(db, "mantenedor_implantes", currentDeleteId));
+            if (mantenedorDoc.exists()) {
+                const mantenedorData = mantenedorDoc.data();
+                await logAction(currentDeleteId, 'delete', mantenedorData);
+                await deleteDoc(doc(db, "mantenedor_implantes", currentDeleteId));
                 hideLoading();
-                showToast(`Referencia ${currentDeleteReferencia} eliminada exitosamente`, 'success');
+                showToast(`Registro ${currentDeleteReferencia} eliminado exitosamente`, 'success');
                 closeDeleteModalHandler();
                 await loadMantenedor();
             } else {
                 hideLoading();
-                showToast('La referencia no existe.', 'error');
+                showToast('El registro no existe.', 'error');
                 closeDeleteModalHandler();
             }
         } catch (error) {
             hideLoading();
-            showToast('Error al eliminar la referencia: ' + error.message, 'error');
+            showToast('Error al eliminar el registro: ' + error.message, 'error');
         }
     });
 
@@ -542,16 +460,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (buscarReferenciaInput) {
         buscarReferenciaInput.addEventListener('input', (e) => {
             searchReferencia = e.target.value.trim().toUpperCase();
-            currentPage = 1;
-            lastVisible = null;
-            firstVisible = null;
-            debouncedLoadMantenedor();
-        });
-    }
-
-    if (buscarCodigoInput) {
-        buscarCodigoInput.addEventListener('input', (e) => {
-            searchCodigo = e.target.value.trim().toUpperCase();
             currentPage = 1;
             lastVisible = null;
             firstVisible = null;
@@ -569,9 +477,9 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    if (buscarDetallesInput) {
-        buscarDetallesInput.addEventListener('input', (e) => {
-            searchDetalles = e.target.value.trim().toUpperCase();
+    if (buscarCantidadInput) {
+        buscarCantidadInput.addEventListener('input', (e) => {
+            searchCantidad = e.target.value.trim();
             currentPage = 1;
             lastVisible = null;
             firstVisible = null;
@@ -609,84 +517,57 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    if (mostrarPendientesCheckbox) {
-        mostrarPendientesCheckbox.addEventListener('change', (e) => {
-            mostrarPendientes = e.target.checked;
-            currentPage = 1;
-            lastVisible = null;
-            firstVisible = null;
-            debouncedLoadMantenedor();
-        });
-    }
-
     if (ingresarBtn) {
         ingresarBtn.addEventListener('click', async (e) => {
             e.preventDefault();
+            const referencia = referenciaInput.value.trim().toUpperCase();
+            const descripcion = descripcionInput.value.trim().toUpperCase();
+            const cantidad = cantidadInput.value;
+
+            if (!referencia || !descripcion || !cantidad) {
+                showToast('Referencia, descripción y cantidad son obligatorios.', 'error');
+                return;
+            }
+
+            const selectedRef = references.find(ref => ref.referencia === referencia && ref.descripcion === descripcion);
+            if (!selectedRef) {
+                showToast('La referencia o descripción no existe en referencias_implantes.', 'error');
+                return;
+            }
+
             let processedRow = {
-                referencia: referenciaInput.value.trim().toUpperCase(),
-                detalles: detallesInput.value.trim().toUpperCase(),
-                precioUnitario: precioUnitarioInput.value.replace(/[^\d]/g, ''),
-                codigo: codigoInput.value.trim().toUpperCase(),
-                proveedor: proveedorInput.value.trim().toUpperCase(),
-                descripcion: descripcionInput.value.trim().toUpperCase(),
-                tipo: tipoInput.value,
-                atributo: atributoInput.value,
-                estado: 'ACTIVO',
+                referencia,
+                descripcion,
+                cantidad: parseInt(cantidad) || 0,
+                codigo: selectedRef.codigo || '',
+                proveedor: selectedRef.proveedor || '',
+                tipo: selectedRef.tipo || 'IMPLANTES',
+                atributo: selectedRef.atributo || 'COTIZACION',
                 fullName: window.currentUserData.fullName
             };
 
-            if (processedRow.codigo === '' || processedRow.codigo === '0') {
-                processedRow.codigo = 'PENDIENTE';
-            }
-
             showLoading();
             try {
-                const existingRef = await getReferenciaByUniqueKey(processedRow.referencia);
-                if (existingRef && existingRef.id) {
-                    const existingCod = await getCodigoByUniqueKey(processedRow.codigo, existingRef.id);
-                    if (existingCod) {
-                        hideLoading();
-                        showToast('El código ya existe.', 'error');
-                        return;
-                    }
-                    await updateDoc(doc(db, "referencias_implantes", existingRef.id), {
-                        ...processedRow,
-                        createdAt: new Date()
-                    });
-                    await logAction(existingRef.id, 'update', existingRef, processedRow);
-                    hideLoading();
-                    showToast(`Referencia ${processedRow.referencia} actualizada exitosamente`, 'success');
-                } else {
-                    const existingCod = await getCodigoByUniqueKey(processedRow.codigo);
-                    if (existingCod) {
-                        hideLoading();
-                        showToast('El código ya existe.', 'error');
-                        return;
-                    }
-                    const docRef = await addDoc(collection(db, "referencias_implantes"), {
-                        ...processedRow,
-                        createdAt: new Date()
-                    });
-                    await logAction(docRef.id, 'create', null, processedRow);
-                    hideLoading();
-                    showToast(`Referencia ${processedRow.referencia} registrada exitosamente`, 'success');
-                }
+                const docRef = await addDoc(collection(db, "mantenedor_implantes"), {
+                    ...processedRow,
+                    createdAt: new Date()
+                });
+                await logAction(docRef.id, 'create', null, processedRow);
+                hideLoading();
+                showToast(`Registro ${processedRow.referencia} registrado exitosamente`, 'success');
                 referenciaInput.value = '';
                 descripcionInput.value = '';
-                detallesInput.value = '';
-                precioUnitarioInput.value = '';
+                cantidadInput.value = '';
                 codigoInput.value = '';
                 proveedorInput.value = '';
-                tipoInput.value = 'IMPLANTES';
-                atributoInput.value = 'COTIZACION';
+                tipoInput.value = '';
+                atributoInput.value = '';
                 document.getElementById('referenciaList').classList.remove('show');
                 document.getElementById('descripcionList').classList.remove('show');
-                document.getElementById('proveedorList').classList.remove('show');
                 await loadMantenedor();
-                await loadReferences();
             } catch (error) {
                 hideLoading();
-                showToast('Error al registrar/actualizar la referencia: ' + error.message, 'error');
+                showToast('Error al registrar el registro: ' + error.message, 'error');
             }
         });
     }
@@ -694,20 +575,19 @@ document.addEventListener('DOMContentLoaded', () => {
     async function loadMantenedor() {
         showLoading();
         try {
-            let q = query(collection(db, "referencias_implantes"), orderBy("createdAt", "desc"));
+            let q = query(collection(db, "mantenedor_implantes"), orderBy("createdAt", "desc"));
             const conditions = [];
 
             if (searchReferencia) {
                 conditions.push(where("referencia", ">=", searchReferencia));
                 conditions.push(where("referencia", "<=", searchReferencia + '\uf8ff'));
             }
-            if (searchCodigo) {
-                conditions.push(where("codigo", ">=", searchCodigo));
-                conditions.push(where("codigo", "<=", searchCodigo + '\uf8ff'));
+            if (searchDescripcion) {
+                conditions.push(where("descripcion", ">=", searchDescripcion));
+                conditions.push(where("descripcion", "<=", searchDescripcion + '\uf8ff'));
             }
-            if (searchDetalles) {
-                conditions.push(where("detalles", ">=", searchDetalles));
-                conditions.push(where("detalles", "<=", searchDetalles + '\uf8ff'));
+            if (searchCantidad) {
+                conditions.push(where("cantidad", "==", parseInt(searchCantidad)));
             }
             if (searchProveedor) {
                 conditions.push(where("proveedor", ">=", searchProveedor));
@@ -719,9 +599,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (searchAtributo) {
                 conditions.push(where("atributo", "==", searchAtributo));
             }
-            if (mostrarPendientes) {
-                conditions.push(where("codigo", "==", "PENDIENTE"));
-            }
 
             if (currentPage > 1 && lastVisible) {
                 conditions.push(startAfter(lastVisible));
@@ -731,18 +608,10 @@ document.addEventListener('DOMContentLoaded', () => {
             q = query(q, ...conditions);
 
             const querySnapshot = await getDocs(q);
-            let tempMantenedor = [];
+            mantenedor = [];
             querySnapshot.forEach((doc) => {
-                tempMantenedor.push({ id: doc.id, ...doc.data() });
+                mantenedor.push({ id: doc.id, ...doc.data() });
             });
-
-            if (searchDescripcion) {
-                tempMantenedor = tempMantenedor.filter(ref =>
-                    ref.descripcion && ref.descripcion.toUpperCase().includes(searchDescripcion)
-                );
-            }
-
-            mantenedor = tempMantenedor;
 
             if (querySnapshot.docs.length > 0) {
                 lastVisible = querySnapshot.docs[querySnapshot.docs.length - 1];
@@ -752,22 +621,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 firstVisible = null;
             }
 
-            let countQuery = query(collection(db, "referencias_implantes"));
+            let countQuery = query(collection(db, "mantenedor_implantes"));
             if (searchReferencia) {
                 countQuery = query(countQuery,
                     where("referencia", ">=", searchReferencia),
                     where("referencia", "<=", searchReferencia + '\uf8ff')
                 );
-            } else if (searchCodigo) {
+            } else if (searchDescripcion) {
                 countQuery = query(countQuery,
-                    where("codigo", ">=", searchCodigo),
-                    where("codigo", "<=", searchCodigo + '\uf8ff')
+                    where("descripcion", ">=", searchDescripcion),
+                    where("descripcion", "<=", searchDescripcion + '\uf8ff')
                 );
-            } else if (searchDetalles) {
-                countQuery = query(countQuery,
-                    where("detalles", ">=", searchDetalles),
-                    where("detalles", "<=", searchDetalles + '\uf8ff')
-                );
+            } else if (searchCantidad) {
+                countQuery = query(countQuery, where("cantidad", "==", parseInt(searchCantidad)));
             } else if (searchProveedor) {
                 countQuery = query(countQuery,
                     where("proveedor", ">=", searchProveedor),
@@ -777,22 +643,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 countQuery = query(countQuery, where("tipo", "==", searchTipo));
             } else if (searchAtributo) {
                 countQuery = query(countQuery, where("atributo", "==", searchAtributo));
-            } else if (mostrarPendientes) {
-                countQuery = query(countQuery, where("codigo", "==", "PENDIENTE"));
             }
 
             const countSnapshot = await getDocs(countQuery);
             totalRecords = countSnapshot.size;
 
-            if (searchDescripcion) {
-                totalRecords = mantenedor.length;
-            }
-
             renderTable();
             hideLoading();
         } catch (error) {
             hideLoading();
-            showToast('Error al cargar las referencias: ' + error.message, 'error');
+            showToast('Error al cargar los registros: ' + error.message, 'error');
         }
     }
 
@@ -800,7 +660,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (mantenedorBody) {
             mantenedorBody.innerHTML = '';
             if (mantenedor.length === 0) {
-                mantenedorBody.innerHTML = '<tr><td colspan="10">No hay registros para mostrar.</td></tr>';
+                mantenedorBody.innerHTML = '<tr><td colspan="8">No hay registros para mostrar.</td></tr>';
             } else {
                 mantenedor.forEach(ref => {
                     const row = document.createElement('tr');
@@ -811,14 +671,12 @@ document.addEventListener('DOMContentLoaded', () => {
                             <button title="Ver Historial" class="mantenedor-btn-history" onclick="openHistoryModal('${ref.id}', '${ref.referencia}')"><i class="fas fa-history"></i></button>
                         </td>
                         <td>${ref.referencia || ''}</td>
-                        <td>${ref.detalles || ''}</td>
-                        <td>${formatNumberWithThousandsSeparator(ref.precioUnitario)}</td>
+                        <td>${ref.descripcion || ''}</td>
+                        <td>${ref.cantidad || 0}</td>
                         <td>${ref.codigo || ''}</td>
                         <td>${ref.proveedor || ''}</td>
-                        <td>${ref.descripcion || ''}</td>
                         <td>${ref.tipo || ''}</td>
                         <td>${ref.atributo || ''}</td>
-                        <td>${ref.estado || 'ACTIVO'}</td>
                     `;
                     mantenedorBody.appendChild(row);
                 });
@@ -923,14 +781,12 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         const templateData = [{
             referencia: '',
-            detalles: '',
-            precioUnitario: '',
+            descripcion: '',
+            cantidad: '',
             codigo: '',
             proveedor: '',
-            descripcion: '',
             tipo: 'IMPLANTES',
-            atributo: 'COTIZACION',
-            estado: 'ACTIVO'
+            atributo: 'COTIZACION'
         }];
         const ws = XLSX.utils.json_to_sheet(templateData);
         const wb = XLSX.utils.book_new();
@@ -949,7 +805,7 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         showLoading();
         try {
-            const q = query(collection(db, "referencias_implantes"));
+            const q = query(collection(db, "mantenedor_implantes"));
             const querySnapshot = await getDocs(q);
             const allMantenedor = [];
             querySnapshot.forEach((doc) => {
@@ -957,14 +813,12 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             const data = allMantenedor.map(ref => ({
                 Referencia: ref.referencia || '',
-                Detalles: ref.detalles || '',
-                'Precio Unitario': ref.precioUnitario ? formatNumberWithThousandsSeparator(ref.precioUnitario) : '',
+                Descripción: ref.descripcion || '',
+                Cantidad: ref.cantidad || 0,
                 Código: ref.codigo || '',
                 Proveedor: ref.proveedor || '',
-                Descripción: ref.descripcion || '',
                 Tipo: ref.tipo || '',
-                Atributo: ref.atributo || '',
-                Estado: ref.estado || 'ACTIVO'
+                Atributo: ref.atributo || ''
             }));
             const ws = XLSX.utils.json_to_sheet(data);
             const wb = XLSX.utils.book_new();
@@ -982,14 +836,12 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         const data = mantenedor.map(ref => ({
             Referencia: ref.referencia || '',
-            Detalles: ref.detalles || '',
-            'Precio Unitario': ref.precioUnitario ? formatNumberWithThousandsSeparator(ref.precioUnitario) : '',
+            Descripción: ref.descripcion || '',
+            Cantidad: ref.cantidad || 0,
             Código: ref.codigo || '',
             Proveedor: ref.proveedor || '',
-            Descripción: ref.descripcion || '',
             Tipo: ref.tipo || '',
-            Atributo: ref.atributo || '',
-            Estado: ref.estado || 'ACTIVO'
+            Atributo: ref.atributo || ''
         }));
         const ws = XLSX.utils.json_to_sheet(data);
         const wb = XLSX.utils.book_new();
@@ -1021,20 +873,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     let processedRow = {
                         referencia: row[0] ? String(row[0]).trim().toUpperCase() : '',
-                        detalles: row[1] ? String(row[1]).trim().toUpperCase() : '',
-                        precioUnitario: row[2] ? String(row[2]).replace(/[^\d]/g, '') : '',
-                        codigo: row[3] ? String(row[3]).trim().toUpperCase() : 'PENDIENTE',
+                        descripcion: row[1] ? String(row[1]).trim().toUpperCase() : '',
+                        cantidad: row[2] ? parseInt(row[2]) : 0,
+                        codigo: row[3] ? String(row[3]).trim().toUpperCase() : '',
                         proveedor: row[4] ? String(row[4]).trim().toUpperCase() : '',
-                        descripcion: row[5] ? String(row[5]).trim().toUpperCase() : '',
-                        tipo: row[6] ? String(row[6]).trim().toUpperCase() : 'IMPLANTES',
-                        atributo: row[7] ? String(row[7]).trim().toUpperCase() : 'COTIZACION',
-                        estado: 'ACTIVO',
+                        tipo: row[5] ? String(row[5]).trim().toUpperCase() : 'IMPLANTES',
+                        atributo: row[6] ? String(row[6]).trim().toUpperCase() : 'COTIZACION',
                         fullName: window.currentUserData.fullName
                     };
-
-                    if (processedRow.codigo === '' || processedRow.codigo === '0') {
-                        processedRow.codigo = 'PENDIENTE';
-                    }
 
                     if (!['IMPLANTES', 'INSUMO'].includes(processedRow.tipo)) {
                         processedRow.tipo = 'IMPLANTES';
@@ -1044,19 +890,18 @@ document.addEventListener('DOMContentLoaded', () => {
                         processedRow.atributo = 'COTIZACION';
                     }
 
-                    if (processedRow.referencia && processedRow.descripcion) {
+                    if (processedRow.referencia && processedRow.descripcion && processedRow.cantidad) {
+                        const selectedRef = references.find(ref => ref.referencia === processedRow.referencia && ref.descripcion === processedRow.descripcion);
+                        if (!selectedRef) {
+                            errorCount++;
+                            continue;
+                        }
+                        processedRow.codigo = selectedRef.codigo || '';
+                        processedRow.proveedor = selectedRef.proveedor || '';
+                        processedRow.tipo = selectedRef.tipo || 'IMPLANTES';
+                        processedRow.atributo = selectedRef.atributo || 'COTIZACION';
                         try {
-                            const existingRef = await getReferenciaByUniqueKey(processedRow.referencia);
-                            if (existingRef) {
-                                errorCount++;
-                                continue;
-                            }
-                            const existingCod = await getCodigoByUniqueKey(processedRow.codigo);
-                            if (existingCod) {
-                                errorCount++;
-                                continue;
-                            }
-                            const docRef = await addDoc(collection(db, "referencias_implantes"), {
+                            const docRef = await addDoc(collection(db, "mantenedor_implantes"), {
                                 ...processedRow,
                                 createdAt: new Date()
                             });
@@ -1101,27 +946,34 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 window.currentUserData = { fullName: user.displayName || 'Usuario Invitado', username: user.email || 'invitado' };
             }
-            await loadProveedores();
             await loadReferences();
-            setupAutocomplete('proveedor', 'proveedorIcon', 'proveedorList', proveedores, 'nombre');
-            setupAutocomplete('editProveedor', 'editProveedorIcon', 'editProveedorList', proveedores, 'nombre');
             setupAutocomplete('referencia', 'referenciaIcon', 'referenciaList', references, 'referencia', (selected) => {
-                detallesInput.value = selected.detalles || '';
-                precioUnitarioInput.value = formatNumberWithThousandsSeparator(selected.precioUnitario) || '';
+                descripcionInput.value = selected.descripcion || '';
                 codigoInput.value = selected.codigo || '';
                 proveedorInput.value = selected.proveedor || '';
-                descripcionInput.value = selected.descripcion || '';
                 tipoInput.value = selected.tipo || 'IMPLANTES';
                 atributoInput.value = selected.atributo || 'COTIZACION';
             });
             setupAutocomplete('descripcion', 'descripcionIcon', 'descripcionList', references, 'descripcion', (selected) => {
                 referenciaInput.value = selected.referencia || '';
-                detallesInput.value = selected.detalles || '';
-                precioUnitarioInput.value = formatNumberWithThousandsSeparator(selected.precioUnitario) || '';
                 codigoInput.value = selected.codigo || '';
                 proveedorInput.value = selected.proveedor || '';
                 tipoInput.value = selected.tipo || 'IMPLANTES';
                 atributoInput.value = selected.atributo || 'COTIZACION';
+            });
+            setupAutocomplete('editReferencia', 'editReferenciaIcon', 'editReferenciaList', references, 'referencia', (selected) => {
+                document.getElementById('editDescripcion').value = selected.descripcion || '';
+                document.getElementById('editCodigo').value = selected.codigo || '';
+                document.getElementById('editProveedor').value = selected.proveedor || '';
+                document.getElementById('editTipo').value = selected.tipo || 'IMPLANTES';
+                document.getElementById('editAtributo').value = selected.atributo || 'COTIZACION';
+            });
+            setupAutocomplete('editDescripcion', 'editDescripcionIcon', 'editDescripcionList', references, 'descripcion', (selected) => {
+                document.getElementById('editReferencia').value = selected.referencia || '';
+                document.getElementById('editCodigo').value = selected.codigo || '';
+                document.getElementById('editProveedor').value = selected.proveedor || '';
+                document.getElementById('editTipo').value = selected.tipo || 'IMPLANTES';
+                document.getElementById('editAtributo').value = selected.atributo || 'COTIZACION';
             });
             await loadMantenedor();
         } catch (error) {
