@@ -662,16 +662,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 conditions.push(where("codigo", "==", "PENDIENTE"));
             }
 
-            // Apply pagination
             if (currentPage > 1 && lastVisible) {
                 conditions.push(startAfter(lastVisible));
             }
             conditions.push(limit(PAGE_SIZE));
 
-            // Apply conditions to query
             q = query(q, ...conditions);
-
-            console.log('Firestore query conditions:', conditions);
 
             const querySnapshot = await getDocs(q);
             let tempReferencias = [];
@@ -679,7 +675,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 tempReferencias.push({ id: doc.id, ...doc.data() });
             });
 
-            // Client-side filtering for descripcion if provided
             if (searchDescripcion) {
                 tempReferencias = tempReferencias.filter(ref =>
                     ref.descripcion && ref.descripcion.toUpperCase().includes(searchDescripcion)
@@ -696,7 +691,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 firstVisible = null;
             }
 
-            // Count total records for pagination
             let countQuery = query(collection(db, "referencias_implantes"));
             if (searchReferencia) {
                 countQuery = query(countQuery,
@@ -729,18 +723,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const countSnapshot = await getDocs(countQuery);
             totalRecords = countSnapshot.size;
 
-            // Adjust totalRecords for descripcion client-side filter
             if (searchDescripcion) {
                 totalRecords = referencias.length;
             }
 
-            console.log('Loaded referencias:', referencias);
-            console.log('Total records:', totalRecords);
-
             renderTable();
             hideLoading();
         } catch (error) {
-            console.error('Error loading referencias:', error);
             hideLoading();
             showToast('Error al cargar las referencias: ' + error.message, 'error');
         }
@@ -962,15 +951,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 const sheet = workbook.Sheets[sheetName];
                 const jsonData = XLSX.utils.sheet_to_json(sheet, { header: 1, raw: true });
 
-                console.log('Datos crudos del Excel (con encabezados):', jsonData);
-
                 let successCount = 0;
                 let errorCount = 0;
                 const totalRows = jsonData.length - 1;
 
                 for (let i = 1; i <= totalRows; i++) {
                     const row = jsonData[i];
-                    console.log(`Fila cruda ${i}:`, row);
 
                     let processedRow = {
                         referencia: row[0] ? String(row[0]).trim().toUpperCase() : '',
@@ -984,8 +970,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         estado: 'ACTIVO',
                         fullName: window.currentUserData.fullName
                     };
-
-                    console.log(`Fila procesada ${i}:`, processedRow);
 
                     if (processedRow.codigo === '' || processedRow.codigo === '0') {
                         processedRow.codigo = 'PENDIENTE';
@@ -1003,13 +987,11 @@ document.addEventListener('DOMContentLoaded', () => {
                         try {
                             const existingRef = await getReferenciaByUniqueKey(processedRow.referencia);
                             if (existingRef) {
-                                console.log(`Fila ${i}: Referencia ya existe: ${processedRow.referencia}`);
                                 errorCount++;
                                 continue;
                             }
                             const existingCod = await getCodigoByUniqueKey(processedRow.codigo);
                             if (existingCod) {
-                                console.log(`Fila ${i}: Código ya existe: ${processedRow.codigo}`);
                                 errorCount++;
                                 continue;
                             }
@@ -1019,13 +1001,10 @@ document.addEventListener('DOMContentLoaded', () => {
                             });
                             await logAction(docRef.id, 'create', null, processedRow);
                             successCount++;
-                            console.log(`Fila ${i}: Importada exitosamente ID: ${docRef.id}`);
                         } catch (error) {
-                            console.error(`Fila ${i}: Error al importar:`, error);
                             errorCount++;
                         }
                     } else {
-                        console.log(`Fila ${i}: Falta referencia o descripción`);
                         errorCount++;
                     }
 
