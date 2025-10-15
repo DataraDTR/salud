@@ -18,7 +18,7 @@ setPersistence(auth, browserSessionPersistence);
 
 let referencias = [];
 let currentPage = 1;
-const PAGE_SIZE = 10;
+const PAGE_SIZE = 50;
 let lastVisible = null;
 let firstVisible = null;
 let searchReferencia = '';
@@ -234,20 +234,17 @@ function showToast(text, type = 'success') {
     toast.className = `referencias-toast ${type}`;
     toast.textContent = text;
 
-    // Añadir el nuevo toast al FINAL del contenedor (debajo de los anteriores)
     toastContainer.appendChild(toast);
 
-    // Mostrar el toast con animación
     setTimeout(() => {
         toast.classList.add('show');
-    }, 100); // Pequeño retraso para la animación
+    }, 100);
 
-    // Ocultar y eliminar el toast después de 5 segundos
     setTimeout(() => {
         toast.classList.remove('show');
         setTimeout(() => {
             toast.remove();
-        }, 300); // Esperar a que termine la animación de desvanecimiento
+        }, 300); 
     }, 5000);
 }
 
