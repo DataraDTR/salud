@@ -1,5 +1,5 @@
 const { initializeApp, getAuth, onAuthStateChanged, setPersistence, browserSessionPersistence } = window.firebaseModules;
-const { getFirestore, collection, addDoc, getDocs, query, where, doc, updateDoc, deleteDoc, orderBy, getDoc } = window.firebaseModules;
+const { getFirestore, collection, addDoc, getDocs, query, where, doc, updateDoc, deleteDoc, orderBy, getDoc, limit, startAfter, endBefore } = window.firebaseModules;
 
 const firebaseConfig = {
     apiKey: "AIzaSyD6JY7FaRqjZoN6OzbFHoIXxd-IJL3H-Ek",
@@ -16,10 +16,13 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 
 setPersistence(auth, browserSessionPersistence);
+db.settings({ cacheSizeBytes: firebase.firestore.CACHE_SIZE_UNLIMITED, merge: true });
 
 let referencias = [];
 let currentPage = 1;
 const PAGE_SIZE = 10;
+let lastVisible = null;
+let firstVisible = null;
 let searchReferencia = '';
 let searchCodigo = '';
 let searchDescripcion = '';
@@ -29,6 +32,7 @@ let searchTipo = '';
 let searchAtributo = '';
 let mostrarPendientes = false;
 let proveedores = [];
+let totalRecords = 0;
 
 function formatNumberWithThousandsSeparator(number) {
     if (!number) return '';
@@ -214,6 +218,14 @@ function setupColumnResize() {
         document.addEventListener('mouseup', stopResize);
         document.addEventListener('touchend', stopResize);
     });
+}
+
+function debounce(func, wait) {
+    let timeout;
+    return function (...args) {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(this, args), wait);
+    };
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -528,11 +540,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    const debouncedRenderTable = debounce(renderTable, 300);
+
     if (buscarReferenciaInput) {
         buscarReferenciaInput.addEventListener('input', (e) => {
             searchReferencia = e.target.value.trim().toUpperCase();
             currentPage = 1;
-            renderTable();
+            lastVisible = null;
+            firstVisible = null;
+            debouncedRenderTable();
         });
     }
 
@@ -540,7 +556,9 @@ document.addEventListener('DOMContentLoaded', () => {
         buscarCodigoInput.addEventListener('input', (e) => {
             searchCodigo = e.target.value.trim().toUpperCase();
             currentPage = 1;
-            renderTable();
+            lastVisible = null;
+            firstVisible = null;
+            debouncedRenderTable();
         });
     }
 
@@ -548,7 +566,9 @@ document.addEventListener('DOMContentLoaded', () => {
         buscarDescripcionInput.addEventListener('input', (e) => {
             searchDescripcion = e.target.value.trim().toUpperCase();
             currentPage = 1;
-            renderTable();
+            lastVisible = null;
+            firstVisible = null;
+            debouncedRenderTable();
         });
     }
 
@@ -556,7 +576,9 @@ document.addEventListener('DOMContentLoaded', () => {
         buscarDetallesInput.addEventListener('input', (e) => {
             searchDetalles = e.target.value.trim().toUpperCase();
             currentPage = 1;
-            renderTable();
+            lastVisible = null;
+            firstVisible = null;
+            debouncedRenderTable();
         });
     }
 
@@ -564,7 +586,9 @@ document.addEventListener('DOMContentLoaded', () => {
         buscarProveedorInput.addEventListener('input', (e) => {
             searchProveedor = e.target.value.trim().toUpperCase();
             currentPage = 1;
-            renderTable();
+            lastVisible = null;
+            firstVisible = null;
+            debouncedRenderTable();
         });
     }
 
@@ -572,7 +596,9 @@ document.addEventListener('DOMContentLoaded', () => {
         buscarTipoInput.addEventListener('change', (e) => {
             searchTipo = e.target.value;
             currentPage = 1;
-            renderTable();
+            lastVisible = null;
+            firstVisible = null;
+            debouncedRenderTable();
         });
     }
 
@@ -580,7 +606,9 @@ document.addEventListener('DOMContentLoaded', () => {
         buscarAtributoInput.addEventListener('change', (e) => {
             searchAtributo = e.target.value;
             currentPage = 1;
-            renderTable();
+            lastVisible = null;
+            firstVisible = null;
+            debouncedRenderTable();
         });
     }
 
@@ -588,7 +616,9 @@ document.addEventListener('DOMContentLoaded', () => {
         mostrarPendientesCheckbox.addEventListener('change', (e) => {
             mostrarPendientes = e.target.checked;
             currentPage = 1;
-            renderTable();
+            lastVisible = null;
+            firstVisible = null;
+            debouncedRenderTable();
         });
     }
 
@@ -705,39 +735,44 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    onAuthStateChanged(auth, async (user) => {
-        if (!user) {
-            window.location.replace('../index.html');
-            return;
-        }
-        try {
-            const userDocRef = doc(db, 'users', user.uid);
-            const userDoc = await getDoc(userDocRef);
-            if (userDoc.exists()) {
-                window.currentUserData = userDoc.data();
-            } else {
-                window.currentUserData = { fullName: user.displayName || 'Usuario Invitado', username: user.email || 'invitado' };
-            }
-            await loadProveedores();
-            setupAutocomplete('proveedor', 'proveedorIcon', 'proveedorList');
-            setupAutocomplete('existProveedor', 'existProveedorIcon', 'existProveedorList');
-            setupAutocomplete('editProveedor', 'editProveedorIcon', 'editProveedorList');
-            await loadReferencias();
-        } catch (error) {
-            window.currentUserData = { fullName: 'Usuario Invitado', username: 'invitado' };
-            showToast('Error al cargar datos del usuario.', 'error');
-        }
-    });
-
     async function loadReferencias() {
         showLoading();
         try {
-            const querySnapshot = await getDocs(collection(db, "referencias_implantes"));
+            let q = query(collection(db, "referencias_implantes"), orderBy("createdAt", "desc"), limit(PAGE_SIZE));
+            
+            if (searchReferencia) q = query(q, where("referencia", ">=", searchReferencia), where("referencia", "<=", searchReferencia + '\uf8ff'));
+            if (searchCodigo) q = query(q, where("codigo", ">=", searchCodigo), where("codigo", "<=", searchCodigo + '\uf8ff'));
+            if (searchDescripcion) q = query(q, where("descripcion", ">=", searchDescripcion), where("descripcion", "<=", searchDescripcion + '\uf8ff'));
+            if (searchDetalles) q = query(q, where("detalles", ">=", searchDetalles), where("detalles", "<=", searchDetalles + '\uf8ff'));
+            if (searchProveedor) q = query(q, where("proveedor", ">=", searchProveedor), where("proveedor", "<=", searchProveedor + '\uf8ff'));
+            if (searchTipo) q = query(q, where("tipo", "==", searchTipo));
+            if (searchAtributo) q = query(q, where("atributo", "==", searchAtributo));
+            if (mostrarPendientes) q = query(q, where("codigo", "==", "PENDIENTE"));
+
+            if (currentPage > 1 && lastVisible) {
+                q = query(q, startAfter(lastVisible));
+            } else if (currentPage < Math.ceil(totalRecords / PAGE_SIZE) && firstVisible) {
+                q = query(q, endBefore(firstVisible), limit(PAGE_SIZE));
+            }
+
+            const querySnapshot = await getDocs(q);
             referencias = [];
             querySnapshot.forEach((doc) => {
                 referencias.push({ id: doc.id, ...doc.data() });
             });
-            referencias.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+            if (querySnapshot.docs.length > 0) {
+                lastVisible = querySnapshot.docs[querySnapshot.docs.length - 1];
+                firstVisible = querySnapshot.docs[0];
+            } else {
+                lastVisible = null;
+                firstVisible = null;
+            }
+
+            const countQuery = query(collection(db, "referencias_implantes"));
+            const countSnapshot = await getDocs(countQuery);
+            totalRecords = countSnapshot.size;
+
             renderTable();
             hideLoading();
         } catch (error) {
@@ -746,34 +781,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function getFilteredReferencias() {
-        let filtered = referencias.filter(referencia =>
-            referencia.referencia.toUpperCase().includes(searchReferencia) &&
-            (referencia.codigo || '').toUpperCase().includes(searchCodigo) &&
-            referencia.descripcion.toUpperCase().includes(searchDescripcion) &&
-            referencia.detalles.toUpperCase().includes(searchDetalles) &&
-            (referencia.proveedor || '').toUpperCase().includes(searchProveedor) &&
-            (searchTipo === '' || referencia.tipo === searchTipo) &&
-            (searchAtributo === '' || referencia.atributo === searchAtributo)
-        );
-        if (mostrarPendientes) {
-            filtered = filtered.filter(referencia => referencia.codigo === 'PENDIENTE');
-        }
-        return filtered.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-    }
-
     function renderTable() {
-        const filteredReferencias = getFilteredReferencias();
-        const start = (currentPage - 1) * PAGE_SIZE;
-        const end = start + PAGE_SIZE;
-        const pageReferencias = filteredReferencias.slice(start, end);
-
         if (referenciasBody) {
             referenciasBody.innerHTML = '';
-            if (pageReferencias.length === 0) {
+            if (referencias.length === 0) {
                 referenciasBody.innerHTML = '<tr><td colspan="10">No hay registros para mostrar.</td></tr>';
             } else {
-                pageReferencias.forEach(referencia => {
+                referencias.forEach(referencia => {
                     const row = document.createElement('tr');
                     row.innerHTML = `
                         <td class="referencias-actions">
@@ -796,7 +810,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        updatePagination(filteredReferencias.length);
+        updatePagination(totalRecords);
         setupColumnResize();
     }
 
@@ -858,24 +872,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function goToPage(page) {
         currentPage = page;
-        renderTable();
+        loadReferencias();
     }
 
     if (prevBtn) {
         prevBtn.addEventListener('click', () => {
             if (currentPage > 1) {
                 currentPage--;
-                renderTable();
+                loadReferencias();
             }
         });
     }
 
     if (nextBtn) {
         nextBtn.addEventListener('click', () => {
-            const totalPages = Math.ceil(getFilteredReferencias().length / PAGE_SIZE);
+            const totalPages = Math.ceil(totalRecords / PAGE_SIZE);
             if (currentPage < totalPages) {
                 currentPage++;
-                renderTable();
+                loadReferencias();
             }
         });
     }
@@ -916,34 +930,42 @@ document.addEventListener('DOMContentLoaded', () => {
         actionsMenu.style.display = 'none';
     });
 
-    downloadAll.addEventListener('click', (e) => {
+    downloadAll.addEventListener('click', async (e) => {
         e.preventDefault();
-        const filteredReferencias = getFilteredReferencias();
-        const data = filteredReferencias.map(ref => ({
-            Referencia: ref.referencia || '',
-            Detalles: ref.detalles || '',
-            'Precio Unitario': ref.precioUnitario ? formatNumberWithThousandsSeparator(ref.precioUnitario) : '',
-            Código: ref.codigo || '',
-            Proveedor: ref.proveedor || '',
-            Descripción: ref.descripcion || '',
-            Tipo: ref.tipo || '',
-            Atributo: ref.atributo || '',
-            Estado: ref.estado || 'ACTIVO'
-        }));
-        const ws = XLSX.utils.json_to_sheet(data);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Referencias");
-        XLSX.writeFile(wb, 'referencias_todas.xlsx');
-        actionsMenu.style.display = 'none';
+        showLoading();
+        try {
+            const q = query(collection(db, "referencias_implantes"));
+            const querySnapshot = await getDocs(q);
+            const allReferencias = [];
+            querySnapshot.forEach((doc) => {
+                allReferencias.push({ id: doc.id, ...doc.data() });
+            });
+            const data = allReferencias.map(ref => ({
+                Referencia: ref.referencia || '',
+                Detalles: ref.detalles || '',
+                'Precio Unitario': ref.precioUnitario ? formatNumberWithThousandsSeparator(ref.precioUnitario) : '',
+                Código: ref.codigo || '',
+                Proveedor: ref.proveedor || '',
+                Descripción: ref.descripcion || '',
+                Tipo: ref.tipo || '',
+                Atributo: ref.atributo || '',
+                Estado: ref.estado || 'ACTIVO'
+            }));
+            const ws = XLSX.utils.json_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Referencias");
+            XLSX.writeFile(wb, 'referencias_todas.xlsx');
+            actionsMenu.style.display = 'none';
+            hideLoading();
+        } catch (error) {
+            hideLoading();
+            showToast('Error al descargar los registros: ' + error.message, 'error');
+        }
     });
 
     downloadPage.addEventListener('click', (e) => {
         e.preventDefault();
-        const filteredReferencias = getFilteredReferencias();
-        const start = (currentPage - 1) * PAGE_SIZE;
-        const end = start + PAGE_SIZE;
-        const pageReferencias = filteredReferencias.slice(start, end);
-        const data = pageReferencias.map(ref => ({
+        const data = referencias.map(ref => ({
             Referencia: ref.referencia || '',
             Detalles: ref.detalles || '',
             'Precio Unitario': ref.precioUnitario ? formatNumberWithThousandsSeparator(ref.precioUnitario) : '',
@@ -1047,6 +1069,30 @@ document.addEventListener('DOMContentLoaded', () => {
             hideImportProgress();
             showToast('Error al importar el archivo: ' + error.message, 'error');
             fileUpload.value = '';
+        }
+    });
+
+    onAuthStateChanged(auth, async (user) => {
+        if (!user) {
+            window.location.replace('../index.html');
+            return;
+        }
+        try {
+            const userDocRef = doc(db, 'users', user.uid);
+            const userDoc = await getDoc(userDocRef);
+            if (userDoc.exists()) {
+                window.currentUserData = userDoc.data();
+            } else {
+                window.currentUserData = { fullName: user.displayName || 'Usuario Invitado', username: user.email || 'invitado' };
+            }
+            await loadProveedores();
+            setupAutocomplete('proveedor', 'proveedorIcon', 'proveedorList');
+            setupAutocomplete('existProveedor', 'existProveedorIcon', 'existProveedorList');
+            setupAutocomplete('editProveedor', 'editProveedorIcon', 'editProveedorList');
+            await loadReferencias();
+        } catch (error) {
+            window.currentUserData = { fullName: 'Usuario Invitado', username: 'invitado' };
+            showToast('Error al cargar datos del usuario.', 'error');
         }
     });
 });
