@@ -59,6 +59,10 @@
                 </div>
             </div>
             <div class="mantenedor-form-group">
+                <label for="precio" class="mantenedor-label">Precio:</label>
+                <input type="text" id="precio" readonly autocomplete="off">
+            </div>
+            <div class="mantenedor-form-group">
                 <label for="codigo" class="mantenedor-label">Código:</label>
                 <input type="text" id="codigo" readonly autocomplete="off">
             </div>
@@ -125,6 +129,9 @@
                         <th>Acciones</th>
                         <th>Referencia</th>
                         <th>Descripción</th>
+                        <th>Precio</th>
+                        <th>Cantidades</th>
+                        <th>Total</th>
                         <th>Código</th>
                         <th>Proveedor</th>
                         <th>Tipo</th>
@@ -182,6 +189,10 @@
                             <span class="mantenedor-icon" id="editDescripcionIcon"><i class="fas fa-chevron-down"></i></span>
                             <div class="mantenedor-autocomplete-list" id="editDescripcionList"></div>
                         </div>
+                    </div>
+                    <div class="modal-form-group">
+                        <label for="editPrecio">Precio:</label>
+                        <input type="text" id="editPrecio" readonly autocomplete="off">
                     </div>
                     <div class="modal-form-group">
                         <label for="editCodigo">Código:</label>

@@ -30,6 +30,12 @@ let references = [];
 let totalRecords = 0;
 let visibleSubRows = {};
 
+function formatNumberWithThousandsSeparator(number) {
+    if (!number) return '0';
+    const cleaned = String(number).replace(/[^\d]/g, '');
+    return cleaned ? Number(cleaned).toLocaleString('es-CL') : '0';
+}
+
 async function loadReferences() {
     try {
         const querySnapshot = await getDocs(collection(db, "referencias_implantes"));
@@ -260,6 +266,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const paginationInfo = document.getElementById('paginationInfo');
     const referenciaInput = document.getElementById('referencia');
     const descripcionInput = document.getElementById('descripcion');
+    const precioInput = document.getElementById('precio');
     const codigoInput = document.getElementById('codigo');
     const proveedorInput = document.getElementById('proveedor');
     const tipoInput = document.getElementById('tipo');
@@ -344,6 +351,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('editId').value = id;
         document.getElementById('editReferencia').value = data.referencia || '';
         document.getElementById('editDescripcion').value = data.descripcion || '';
+        document.getElementById('editPrecio').value = formatNumberWithThousandsSeparator(data.precio) || '';
         document.getElementById('editCodigo').value = data.codigo || '';
         document.getElementById('editProveedor').value = data.proveedor || '';
         document.getElementById('editTipo').value = data.tipo || '';
@@ -351,12 +359,27 @@ document.addEventListener('DOMContentLoaded', () => {
         editModal.style.display = 'block';
     };
 
+    function closeEditModalHandler() {
+        editModal.style.display = 'none';
+        currentEditId = null;
+        currentEditOldData = null;
+        editForm.reset();
+        document.getElementById('editReferenciaList').classList.remove('show');
+        document.getElementById('editDescripcionList').classList.remove('show');
+    }
+
     window.openDeleteModal = function (id, referencia) {
         currentDeleteId = id;
         currentDeleteReferencia = referencia;
         deleteText.textContent = `¿Desea eliminar el registro "${referencia}"?`;
         deleteModal.style.display = 'block';
     };
+
+    function closeDeleteModalHandler() {
+        deleteModal.style.display = 'none';
+        currentDeleteId = null;
+        currentDeleteReferencia = null;
+    }
 
     window.openHistoryModal = function (id, referencia) {
         historyTitle.textContent = `HISTORIAL REGISTRO ${referencia}`;
@@ -384,6 +407,11 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
+    function closeHistoryModalHandler() {
+        historyModal.style.display = 'none';
+        historyContent.innerHTML = '';
+    }
+
     window.openAddSubRowModal = function (mainId, referencia) {
         currentAddSubRowMainId = mainId;
         document.getElementById('addSubRowMainId').value = mainId;
@@ -393,37 +421,17 @@ document.addEventListener('DOMContentLoaded', () => {
         addSubRowModal.style.display = 'block';
     };
 
-    window.toggleSubRows = async function (mainId, referencia) {
-        const isVisible = visibleSubRows[mainId] || false;
-        visibleSubRows[mainId] = !isVisible;
-        await renderTable();
-    };
-
-    function closeEditModalHandler() {
-        editModal.style.display = 'none';
-        currentEditId = null;
-        currentEditOldData = null;
-        editForm.reset();
-        document.getElementById('editReferenciaList').classList.remove('show');
-        document.getElementById('editDescripcionList').classList.remove('show');
-    }
-
-    function closeDeleteModalHandler() {
-        deleteModal.style.display = 'none';
-        currentDeleteId = null;
-        currentDeleteReferencia = null;
-    }
-
-    function closeHistoryModalHandler() {
-        historyModal.style.display = 'none';
-        historyContent.innerHTML = '';
-    }
-
     function closeAddSubRowModalHandler() {
         addSubRowModal.style.display = 'none';
         currentAddSubRowMainId = null;
         addSubRowForm.reset();
     }
+
+    window.toggleSubRows = async function (mainId, referencia) {
+        const isVisible = visibleSubRows[mainId] || false;
+        visibleSubRows[mainId] = !isVisible;
+        await renderTable();
+    };
 
     closeEditModal.addEventListener('click', closeEditModalHandler);
     cancelEdit.addEventListener('click', closeEditModalHandler);
@@ -465,6 +473,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let processedRow = {
             referencia,
             descripcion,
+            precio: parseInt(selectedRef.precioUnitario.replace(/[^\d]/g, '')) || 0,
             codigo: selectedRef.codigo || '',
             proveedor: selectedRef.proveedor || '',
             tipo: selectedRef.tipo || 'IMPLANTES',
@@ -629,6 +638,7 @@ document.addEventListener('DOMContentLoaded', () => {
             let processedRow = {
                 referencia,
                 descripcion,
+                precio: parseInt(selectedRef.precioUnitario.replace(/[^\d]/g, '')) || 0,
                 codigo: selectedRef.codigo || '',
                 proveedor: selectedRef.proveedor || '',
                 tipo: selectedRef.tipo || 'IMPLANTES',
@@ -647,6 +657,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 showToast(`Registro ${processedRow.referencia} registrado exitosamente`, 'success');
                 referenciaInput.value = '';
                 descripcionInput.value = '';
+                precioInput.value = '';
                 codigoInput.value = '';
                 proveedorInput.value = '';
                 tipoInput.value = '';
@@ -713,30 +724,26 @@ document.addEventListener('DOMContentLoaded', () => {
                     where("referencia", ">=", searchReferencia),
                     where("referencia", "<=", searchReferencia + '\uf8ff')
                 );
-            }
-            if (searchDescripcion) {
+            } else if (searchDescripcion) {
                 countQuery = query(countQuery,
                     where("descripcion", ">=", searchDescripcion),
                     where("descripcion", "<=", searchDescripcion + '\uf8ff')
                 );
-            }
-            if (searchProveedor) {
+            } else if (searchProveedor) {
                 countQuery = query(countQuery,
                     where("proveedor", ">=", searchProveedor),
                     where("proveedor", "<=", searchProveedor + '\uf8ff')
                 );
-            }
-            if (searchTipo) {
+            } else if (searchTipo) {
                 countQuery = query(countQuery, where("tipo", "==", searchTipo));
-            }
-            if (searchAtributo) {
+            } else if (searchAtributo) {
                 countQuery = query(countQuery, where("atributo", "==", searchAtributo));
             }
 
             const countSnapshot = await getDocs(countQuery);
             totalRecords = countSnapshot.size;
 
-            renderTable();
+            await renderTable();
             hideLoading();
         } catch (error) {
             hideLoading();
@@ -748,9 +755,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (mantenedorBody) {
             mantenedorBody.innerHTML = '';
             if (mantenedor.length === 0) {
-                mantenedorBody.innerHTML = '<tr><td colspan="7">No hay registros para mostrar.</td></tr>';
+                mantenedorBody.innerHTML = '<tr><td colspan="10">No hay registros para mostrar.</td></tr>';
             } else {
                 for (const ref of mantenedor) {
+                    const subRows = await loadSubRows(ref.id);
+                    const sumCantidades = subRows.reduce((sum, sub) => sum + (sub.cantidad || 0), 0);
+                    const total = ref.precio * sumCantidades;
+
                     const row = document.createElement('tr');
                     const isSubRowsVisible = visibleSubRows[ref.id] || false;
                     row.innerHTML = `
@@ -763,6 +774,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         </td>
                         <td>${ref.referencia || ''}</td>
                         <td>${ref.descripcion || ''}</td>
+                        <td>${formatNumberWithThousandsSeparator(ref.precio)}</td>
+                        <td>${formatNumberWithThousandsSeparator(sumCantidades)}</td>
+                        <td>${formatNumberWithThousandsSeparator(total)}</td>
                         <td>${ref.codigo || ''}</td>
                         <td>${ref.proveedor || ''}</td>
                         <td>${ref.tipo || ''}</td>
@@ -771,7 +785,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     mantenedorBody.appendChild(row);
 
                     if (isSubRowsVisible) {
-                        const subRows = await loadSubRows(ref.id);
                         for (const subRow of subRows) {
                             const subRowElement = document.createElement('tr');
                             subRowElement.className = 'mantenedor-subrow';
@@ -779,7 +792,10 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <td></td>
                                 <td>Lote: ${subRow.lote || ''}</td>
                                 <td>Fecha Venc.: ${subRow.fechaVencimiento || ''}</td>
-                                <td>Cant.: ${subRow.cantidad || 0}</td>
+                                <td>Precio: ${formatNumberWithThousandsSeparator(ref.precio)}</td>
+                                <td>Cant.: ${formatNumberWithThousandsSeparator(subRow.cantidad || 0)}</td>
+                                <td></td>
+                                <td></td>
                                 <td></td>
                                 <td></td>
                                 <td></td>
@@ -890,6 +906,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const templateData = [{
             referencia: '',
             descripcion: '',
+            precio: '',
             codigo: '',
             proveedor: '',
             tipo: 'IMPLANTES',
@@ -921,6 +938,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = allMantenedor.map(ref => ({
                 Referencia: ref.referencia || '',
                 Descripción: ref.descripcion || '',
+                Precio: formatNumberWithThousandsSeparator(ref.precio),
                 Código: ref.codigo || '',
                 Proveedor: ref.proveedor || '',
                 Tipo: ref.tipo || '',
@@ -943,6 +961,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const data = mantenedor.map(ref => ({
             Referencia: ref.referencia || '',
             Descripción: ref.descripcion || '',
+            Precio: formatNumberWithThousandsSeparator(ref.precio),
             Código: ref.codigo || '',
             Proveedor: ref.proveedor || '',
             Tipo: ref.tipo || '',
@@ -979,10 +998,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     let processedRow = {
                         referencia: row[0] ? String(row[0]).trim().toUpperCase() : '',
                         descripcion: row[1] ? String(row[1]).trim().toUpperCase() : '',
-                        codigo: row[2] ? String(row[2]).trim().toUpperCase() : '',
-                        proveedor: row[3] ? String(row[3]).trim().toUpperCase() : '',
-                        tipo: row[4] ? String(row[4]).trim().toUpperCase() : 'IMPLANTES',
-                        atributo: row[5] ? String(row[5]).trim().toUpperCase() : 'COTIZACION',
+                        precio: row[2] ? parseInt(String(row[2]).replace(/[^\d]/g, '')) : 0,
+                        codigo: row[3] ? String(row[3]).trim().toUpperCase() : '',
+                        proveedor: row[4] ? String(row[4]).trim().toUpperCase() : '',
+                        tipo: row[5] ? String(row[5]).trim().toUpperCase() : 'IMPLANTES',
+                        atributo: row[6] ? String(row[6]).trim().toUpperCase() : 'COTIZACION',
                         fullName: window.currentUserData.fullName
                     };
 
@@ -1000,6 +1020,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             errorCount++;
                             continue;
                         }
+                        processedRow.precio = parseInt(selectedRef.precioUnitario.replace(/[^\d]/g, '')) || 0;
                         processedRow.codigo = selectedRef.codigo || '';
                         processedRow.proveedor = selectedRef.proveedor || '';
                         processedRow.tipo = selectedRef.tipo || 'IMPLANTES';
@@ -1045,6 +1066,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 await loadReferences();
                 setupAutocomplete('referencia', 'referenciaIcon', 'referenciaList', references, 'referencia', (item) => {
                     descripcionInput.value = item.descripcion || '';
+                    precioInput.value = formatNumberWithThousandsSeparator(item.precioUnitario) || '';
                     codigoInput.value = item.codigo || '';
                     proveedorInput.value = item.proveedor || '';
                     tipoInput.value = item.tipo || 'IMPLANTES';
@@ -1052,6 +1074,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
                 setupAutocomplete('descripcion', 'descripcionIcon', 'descripcionList', references, 'descripcion', (item) => {
                     referenciaInput.value = item.referencia || '';
+                    precioInput.value = formatNumberWithThousandsSeparator(item.precioUnitario) || '';
                     codigoInput.value = item.codigo || '';
                     proveedorInput.value = item.proveedor || '';
                     tipoInput.value = item.tipo || 'IMPLANTES';
@@ -1059,6 +1082,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
                 setupAutocomplete('editReferencia', 'editReferenciaIcon', 'editReferenciaList', references, 'referencia', (item) => {
                     document.getElementById('editDescripcion').value = item.descripcion || '';
+                    document.getElementById('editPrecio').value = formatNumberWithThousandsSeparator(item.precioUnitario) || '';
                     document.getElementById('editCodigo').value = item.codigo || '';
                     document.getElementById('editProveedor').value = item.proveedor || '';
                     document.getElementById('editTipo').value = item.tipo || 'IMPLANTES';
@@ -1066,6 +1090,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
                 setupAutocomplete('editDescripcion', 'editDescripcionIcon', 'editDescripcionList', references, 'descripcion', (item) => {
                     document.getElementById('editReferencia').value = item.referencia || '';
+                    document.getElementById('editPrecio').value = formatNumberWithThousandsSeparator(item.precioUnitario) || '';
                     document.getElementById('editCodigo').value = item.codigo || '';
                     document.getElementById('editProveedor').value = item.proveedor || '';
                     document.getElementById('editTipo').value = item.tipo || 'IMPLANTES';
