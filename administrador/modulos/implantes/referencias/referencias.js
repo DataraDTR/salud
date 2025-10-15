@@ -234,8 +234,8 @@ function showToast(text, type = 'success') {
     toast.className = `referencias-toast ${type}`;
     toast.textContent = text;
 
-    // Insertar el nuevo toast al inicio del contenedor (para que aparezca arriba)
-    toastContainer.insertBefore(toast, toastContainer.firstChild);
+    // Añadir el nuevo toast al FINAL del contenedor (debajo de los anteriores)
+    toastContainer.appendChild(toast);
 
     // Mostrar el toast con animación
     setTimeout(() => {
