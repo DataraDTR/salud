@@ -248,6 +248,38 @@ function showToast(text, type = 'success') {
     }, 5000);
 }
 
+function validateForm(processedRow) {
+    if (!processedRow.referencia.trim()) {
+        showToast('La referencia es obligatoria.', 'error');
+        return false;
+    }
+    if (!processedRow.descripcion.trim()) {
+        showToast('La descripción es obligatoria.', 'error');
+        return false;
+    }
+    if (processedRow.precioUnitario && isNaN(Number(processedRow.precioUnitario))) {
+        showToast('El precio unitario debe ser un número válido.', 'error');
+        return false;
+    }
+    if (processedRow.referencia.length > 50) {
+        showToast('La referencia no debe exceder 50 caracteres.', 'error');
+        return false;
+    }
+    if (processedRow.descripcion.length > 200) {
+        showToast('La descripción no debe exceder 200 caracteres.', 'error');
+        return false;
+    }
+    if (!['IMPLANTES', 'INSUMO'].includes(processedRow.tipo)) {
+        showToast('El tipo debe ser IMPLANTES o INSUMO.', 'error');
+        return false;
+    }
+    if (!['COTIZACION', 'CONSIGNACION'].includes(processedRow.atributo)) {
+        showToast('El atributo debe ser COTIZACION o CONSIGNACION.', 'error');
+        return false;
+    }
+    return true;
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     const loading = document.getElementById('referencias-loading');
     const importProgress = document.getElementById('referencias-import-progress');
@@ -646,6 +678,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 fullName: window.currentUserData.fullName
             };
 
+            if (!validateForm(processedRow)) return;
+
             if (processedRow.referencia && processedRow.descripcion) {
                 showLoading();
                 try {
@@ -696,6 +730,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 estado: 'ACTIVO',
                 fullName: window.currentUserData.fullName
             };
+
+            if (!validateForm(processedRow)) return;
 
             if (processedRow.codigo === '' || processedRow.codigo === '0') {
                 processedRow.codigo = 'PENDIENTE';
@@ -750,7 +786,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (searchReferencia) q = query(q, where("referencia", ">=", searchReferencia), where("referencia", "<=", searchReferencia + '\uf8ff'));
             if (searchCodigo) q = query(q, where("codigo", ">=", searchCodigo), where("codigo", "<=", searchCodigo + '\uf8ff'));
-            if (searchDescripcion) q = query(q, where("descripcion", ">=", searchDescripcion), where("descripcion", "<=", searchDescripcion + '\uf8ff'));
+            if (searchDescripcion) q = query(q, where("descripcionTokens", "array-contains", searchDescripcion));
             if (searchDetalles) q = query(q, where("detalles", ">=", searchDetalles), where("detalles", "<=", searchDetalles + '\uf8ff'));
             if (searchProveedor) q = query(q, where("proveedor", ">=", searchProveedor), where("proveedor", "<=", searchProveedor + '\uf8ff'));
             if (searchTipo) q = query(q, where("tipo", "==", searchTipo));
