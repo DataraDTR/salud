@@ -226,12 +226,36 @@ function debounce(func, wait) {
     };
 }
 
+function showToast(text, type = 'success') {
+    const toastContainer = document.getElementById('referencias-toast-container');
+    if (!toastContainer) return;
+
+    const toast = document.createElement('div');
+    toast.className = `referencias-toast ${type}`;
+    toast.textContent = text;
+
+    // Insertar el nuevo toast al inicio del contenedor (para que aparezca arriba)
+    toastContainer.insertBefore(toast, toastContainer.firstChild);
+
+    // Mostrar el toast con animación
+    setTimeout(() => {
+        toast.classList.add('show');
+    }, 100); // Pequeño retraso para la animación
+
+    // Ocultar y eliminar el toast después de 5 segundos
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => {
+            toast.remove();
+        }, 300); // Esperar a que termine la animación de desvanecimiento
+    }, 5000);
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     const loading = document.getElementById('referencias-loading');
     const importProgress = document.getElementById('referencias-import-progress');
     const progressBar = document.getElementById('progressBar');
     const progressText = document.getElementById('progressText');
-    const toast = document.getElementById('referencias-toast');
     const referenciasBody = document.getElementById('referenciasBody');
     const prevBtn = document.getElementById('prevBtn');
     const nextBtn = document.getElementById('nextBtn');
@@ -359,17 +383,6 @@ document.addEventListener('DOMContentLoaded', () => {
             importProgress.classList.remove('show');
             progressBar.style.width = '0%';
             progressText.textContent = 'Importando: 0%';
-        }
-    }
-
-    function showToast(text, type = 'success') {
-        if (toast) {
-            toast.textContent = text;
-            toast.className = `referencias-toast ${type}`;
-            toast.classList.add('show');
-            setTimeout(() => {
-                toast.classList.remove('show');
-            }, 5000);
         }
     }
 
