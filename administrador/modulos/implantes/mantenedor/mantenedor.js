@@ -713,19 +713,23 @@ document.addEventListener('DOMContentLoaded', () => {
                     where("referencia", ">=", searchReferencia),
                     where("referencia", "<=", searchReferencia + '\uf8ff')
                 );
-            } else if (searchDescripcion) {
+            }
+            if (searchDescripcion) {
                 countQuery = query(countQuery,
                     where("descripcion", ">=", searchDescripcion),
                     where("descripcion", "<=", searchDescripcion + '\uf8ff')
                 );
-            } else if (searchProveedor) {
+            }
+            if (searchProveedor) {
                 countQuery = query(countQuery,
                     where("proveedor", ">=", searchProveedor),
                     where("proveedor", "<=", searchProveedor + '\uf8ff')
                 );
-            } else if (searchTipo) {
+            }
+            if (searchTipo) {
                 countQuery = query(countQuery, where("tipo", "==", searchTipo));
-            } else if (searchAtributo) {
+            }
+            if (searchAtributo) {
                 countQuery = query(countQuery, where("atributo", "==", searchAtributo));
             }
 
@@ -1024,4 +1028,55 @@ document.addEventListener('DOMContentLoaded', () => {
                 fileUpload.value = '';
                 await loadMantenedor();
             };
-            reader.readAsArray
+            reader.readAsArrayBuffer(file);
+        } catch (error) {
+            hideLoading();
+            hideImportProgress();
+            showToast('Error al importar el archivo: ' + error.message, 'error');
+            fileUpload.value = '';
+        }
+    });
+
+    onAuthStateChanged(auth, async (user) => {
+        if (user) {
+            try {
+                const userDoc = await getDoc(doc(db, "users", user.uid));
+                window.currentUserData = userDoc.exists() ? userDoc.data() : { fullName: 'Usuario Invitado', username: 'invitado' };
+                await loadReferences();
+                setupAutocomplete('referencia', 'referenciaIcon', 'referenciaList', references, 'referencia', (item) => {
+                    descripcionInput.value = item.descripcion || '';
+                    codigoInput.value = item.codigo || '';
+                    proveedorInput.value = item.proveedor || '';
+                    tipoInput.value = item.tipo || 'IMPLANTES';
+                    atributoInput.value = item.atributo || 'COTIZACION';
+                });
+                setupAutocomplete('descripcion', 'descripcionIcon', 'descripcionList', references, 'descripcion', (item) => {
+                    referenciaInput.value = item.referencia || '';
+                    codigoInput.value = item.codigo || '';
+                    proveedorInput.value = item.proveedor || '';
+                    tipoInput.value = item.tipo || 'IMPLANTES';
+                    atributoInput.value = item.atributo || 'COTIZACION';
+                });
+                setupAutocomplete('editReferencia', 'editReferenciaIcon', 'editReferenciaList', references, 'referencia', (item) => {
+                    document.getElementById('editDescripcion').value = item.descripcion || '';
+                    document.getElementById('editCodigo').value = item.codigo || '';
+                    document.getElementById('editProveedor').value = item.proveedor || '';
+                    document.getElementById('editTipo').value = item.tipo || 'IMPLANTES';
+                    document.getElementById('editAtributo').value = item.atributo || 'COTIZACION';
+                });
+                setupAutocomplete('editDescripcion', 'editDescripcionIcon', 'editDescripcionList', references, 'descripcion', (item) => {
+                    document.getElementById('editReferencia').value = item.referencia || '';
+                    document.getElementById('editCodigo').value = item.codigo || '';
+                    document.getElementById('editProveedor').value = item.proveedor || '';
+                    document.getElementById('editTipo').value = item.tipo || 'IMPLANTES';
+                    document.getElementById('editAtributo').value = item.atributo || 'COTIZACION';
+                });
+                await loadMantenedor();
+            } catch (error) {
+                showToast('Error al cargar datos del usuario: ' + error.message, 'error');
+            }
+        } else {
+            showToast('Usuario no autenticado', 'error');
+        }
+    });
+});
