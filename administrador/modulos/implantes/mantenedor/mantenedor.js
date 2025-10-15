@@ -1,3 +1,4 @@
+
 const { initializeApp, getAuth, onAuthStateChanged, setPersistence, browserSessionPersistence, getFirestore, collection, addDoc, getDocs, query, where, doc, updateDoc, deleteDoc, orderBy, getDoc, limit, startAfter, endBefore } = window.firebaseModules;
 
 const firebaseConfig = {
@@ -430,7 +431,53 @@ document.addEventListener('DOMContentLoaded', () => {
     window.toggleSubRows = async function (mainId, referencia) {
         const isVisible = visibleSubRows[mainId] || false;
         visibleSubRows[mainId] = !isVisible;
-        await renderTable();
+
+        const mainRow = document.querySelector(`tr[data-main-id="${mainId}"]`);
+        if (!mainRow) return;
+
+        const toggleButton = mainRow.querySelector('.mantenedor-btn-toggle-subrows i');
+        toggleButton.className = `fas ${visibleSubRows[mainId] ? 'fa-chevron-up' : 'fa-chevron-down'}`;
+
+        const existingSubRows = document.querySelectorAll(`tr[data-parent-id="${mainId}"]`);
+        existingSubRows.forEach(row => row.remove());
+
+        if (visibleSubRows[mainId]) {
+            const ref = mantenedor.find(r => r.id === mainId);
+            if (!ref) return;
+
+            const subRows = await loadSubRows(mainId);
+            subRows.forEach((subRow, index) => {
+                const subRowElement = document.createElement('tr');
+                subRowElement.className = 'mantenedor-subrow';
+                subRowElement.setAttribute('data-parent-id', mainId);
+                subRowElement.innerHTML = `
+                    <td></td>
+                    <td>Lote: ${subRow.lote || ''}</td>
+                    <td>Fecha Venc.: ${subRow.fechaVencimiento || ''}</td>
+                    <td>Precio: ${formatNumberWithThousandsSeparator(ref.precio)}</td>
+                    <td>Cant.: ${formatNumberWithThousandsSeparator(subRow.cantidad || 0)}</td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                `;
+                mainRow.insertAdjacentElement('afterend', subRowElement);
+                setTimeout(() => {
+                    subRowElement.classList.add('show');
+                }, 10);
+            });
+        }
+
+        const ref = mantenedor.find(r => r.id === mainId);
+        if (ref) {
+            const subRows = await loadSubRows(mainId);
+            const sumCantidades = subRows.reduce((sum, sub) => sum + (sub.cantidad || 0), 0);
+            const total = ref.precio * sumCantidades;
+            const cells = mainRow.children;
+            cells[4].textContent = formatNumberWithThousandsSeparator(sumCantidades);
+            cells[5].textContent = formatNumberWithThousandsSeparator(total);
+        }
     };
 
     closeEditModal.addEventListener('click', closeEditModalHandler);
@@ -559,7 +606,7 @@ document.addEventListener('DOMContentLoaded', () => {
             showToast(`Subfila para lote ${lote} registrada exitosamente`, 'success');
             closeAddSubRowModalHandler();
             visibleSubRows[currentAddSubRowMainId] = true;
-            await loadMantenedor();
+            await toggleSubRows(currentAddSubRowMainId, mantenedor.find(r => r.id === currentAddSubRowMainId)?.referencia);
         } catch (error) {
             hideLoading();
             showToast('Error al registrar la subfila: ' + error.message, 'error');
@@ -763,6 +810,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const total = ref.precio * sumCantidades;
 
                     const row = document.createElement('tr');
+                    row.setAttribute('data-main-id', ref.id);
                     const isSubRowsVisible = visibleSubRows[ref.id] || false;
                     row.innerHTML = `
                         <td class="mantenedor-actions">
@@ -785,9 +833,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     mantenedorBody.appendChild(row);
 
                     if (isSubRowsVisible) {
-                        for (const subRow of subRows) {
+                        subRows.forEach((subRow) => {
                             const subRowElement = document.createElement('tr');
-                            subRowElement.className = 'mantenedor-subrow';
+                            subRowElement.className = 'mantenedor-subrow show';
+                            subRowElement.setAttribute('data-parent-id', ref.id);
                             subRowElement.innerHTML = `
                                 <td></td>
                                 <td>Lote: ${subRow.lote || ''}</td>
@@ -800,8 +849,8 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <td></td>
                                 <td></td>
                             `;
-                            mantenedorBody.appendChild(subRowElement);
-                        }
+                            row.insertAdjacentElement('afterend', subRowElement);
+                        });
                     }
                 }
             }
@@ -903,75 +952,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     downloadTemplate.addEventListener('click', (e) => {
         e.preventDefault();
-        const templateData = [{
-            referencia: '',
-            descripcion: '',
-            precio: '',
-            codigo: '',
-            proveedor: '',
-            tipo: 'IMPLANTES',
-            atributo: 'COTIZACION'
-        }];
-        const ws = XLSX.utils.json_to_sheet(templateData);
         const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Template");
-        XLSX.writeFile(wb, 'formato_importacion_mantenedor.xlsx');
-        actionsMenu.style.display = 'none';
+        const ws_data = [
+            ['Referencia', 'Descripción', 'Lote', 'Fecha de Vencimiento', 'Cantidad'],
+            ['REF123', 'IMPLANTE EJEMPLO', 'LOTE001', '2025-12-31', 10]
+        ];
+        const ws = XLSX.utils.aoa_to_sheet(ws_data);
+        XLSX.utils.book_append_sheet(wb, ws, "Formato");
+        XLSX.writeFile(wb, 'formato_importacion.xlsx');
     });
 
     importExcel.addEventListener('click', (e) => {
         e.preventDefault();
         fileUpload.click();
-        actionsMenu.style.display = 'none';
-    });
-
-    downloadAll.addEventListener('click', async (e) => {
-        e.preventDefault();
-        showLoading();
-        try {
-            const q = query(collection(db, "mantenedor_implantes"));
-            const querySnapshot = await getDocs(q);
-            const allMantenedor = [];
-            querySnapshot.forEach((doc) => {
-                allMantenedor.push({ id: doc.id, ...doc.data() });
-            });
-            const data = allMantenedor.map(ref => ({
-                Referencia: ref.referencia || '',
-                Descripción: ref.descripcion || '',
-                Precio: formatNumberWithThousandsSeparator(ref.precio),
-                Código: ref.codigo || '',
-                Proveedor: ref.proveedor || '',
-                Tipo: ref.tipo || '',
-                Atributo: ref.atributo || ''
-            }));
-            const ws = XLSX.utils.json_to_sheet(data);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Mantenedor");
-            XLSX.writeFile(wb, 'mantenedor_todos.xlsx');
-            actionsMenu.style.display = 'none';
-            hideLoading();
-        } catch (error) {
-            hideLoading();
-            showToast('Error al descargar los registros: ' + error.message, 'error');
-        }
-    });
-
-    downloadPage.addEventListener('click', (e) => {
-        e.preventDefault();
-        const data = mantenedor.map(ref => ({
-            Referencia: ref.referencia || '',
-            Descripción: ref.descripcion || '',
-            Precio: formatNumberWithThousandsSeparator(ref.precio),
-            Código: ref.codigo || '',
-            Proveedor: ref.proveedor || '',
-            Tipo: ref.tipo || '',
-            Atributo: ref.atributo || ''
-        }));
-        const ws = XLSX.utils.json_to_sheet(data);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Mantenedor");
-        XLSX.writeFile(wb, `mantenedor_pagina_${currentPage}.xlsx`);
-        actionsMenu.style.display = 'none';
     });
 
     fileUpload.addEventListener('change', async (e) => {
@@ -979,129 +972,274 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!file) return;
 
         showLoading();
-        try {
-            const reader = new FileReader();
-            reader.onload = async (event) => {
+        const reader = new FileReader();
+        reader.onload = async (event) => {
+            try {
                 const data = new Uint8Array(event.target.result);
                 const workbook = XLSX.read(data, { type: 'array' });
-                const sheetName = workbook.SheetNames[0];
-                const sheet = workbook.Sheets[sheetName];
-                const jsonData = XLSX.utils.sheet_to_json(sheet, { header: 1, raw: true });
+                const sheet = workbook.Sheets[workbook.SheetNames[0]];
+                const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
 
-                let successCount = 0;
-                let errorCount = 0;
-                const totalRows = jsonData.length - 1;
+                if (rows.length < 2) {
+                    hideLoading();
+                    showToast('El archivo Excel no contiene datos válidos.', 'error');
+                    return;
+                }
 
-                for (let i = 1; i <= totalRows; i++) {
-                    const row = jsonData[i];
+                const headers = rows[0].map(h => h ? h.toString().trim().toLowerCase() : '');
+                const requiredHeaders = ['referencia', 'descripción', 'lote', 'fecha de vencimiento', 'cantidad'];
+                const missingHeaders = requiredHeaders.filter(h => !headers.includes(h.toLowerCase()));
+                if (missingHeaders.length > 0) {
+                    hideLoading();
+                    showToast(`Faltan columnas requeridas: ${missingHeaders.join(', ')}`, 'error');
+                    return;
+                }
 
-                    let processedRow = {
-                        referencia: row[0] ? String(row[0]).trim().toUpperCase() : '',
-                        descripcion: row[1] ? String(row[1]).trim().toUpperCase() : '',
-                        precio: row[2] ? parseInt(String(row[2]).replace(/[^\d]/g, '')) : 0,
-                        codigo: row[3] ? String(row[3]).trim().toUpperCase() : '',
-                        proveedor: row[4] ? String(row[4]).trim().toUpperCase() : '',
-                        tipo: row[5] ? String(row[5]).trim().toUpperCase() : 'IMPLANTES',
-                        atributo: row[6] ? String(row[6]).trim().toUpperCase() : 'COTIZACION',
-                        fullName: window.currentUserData.fullName
-                    };
+                const referenciaIdx = headers.indexOf('referencia');
+                const descripcionIdx = headers.indexOf('descripción');
+                const loteIdx = headers.indexOf('lote');
+                const fechaVencIdx = headers.indexOf('fecha de vencimiento');
+                const cantidadIdx = headers.indexOf('cantidad');
 
-                    if (!['IMPLANTES', 'INSUMO'].includes(processedRow.tipo)) {
-                        processedRow.tipo = 'IMPLANTES';
+                const totalRows = rows.length - 1;
+                let processedRows = 0;
+
+                for (let i = 1; i < rows.length; i++) {
+                    const row = rows[i];
+                    const referencia = row[referenciaIdx] ? row[referenciaIdx].toString().trim().toUpperCase() : '';
+                    const descripcion = row[descripcionIdx] ? row[descripcionIdx].toString().trim().toUpperCase() : '';
+                    const lote = row[loteIdx] ? row[loteIdx].toString().trim().toUpperCase() : '';
+                    const fechaVencimiento = row[fechaVencIdx] ? row[fechaVencIdx].toString().trim() : '';
+                    const cantidad = row[cantidadIdx] ? parseInt(row[cantidadIdx]) : 0;
+
+                    if (!referencia || !descripcion || !lote || !fechaVencimiento || isNaN(cantidad)) {
+                        showToast(`Fila ${i + 1}: Datos incompletos o inválidos.`, 'error');
+                        continue;
                     }
 
-                    if (!['COTIZACION', 'CONSIGNACION'].includes(processedRow.atributo)) {
-                        processedRow.atributo = 'COTIZACION';
+                    const selectedRef = references.find(ref => ref.referencia === referencia && ref.descripcion === descripcion);
+                    if (!selectedRef) {
+                        showToast(`Fila ${i + 1}: La referencia o descripción no existe en referencias_implantes.`, 'error');
+                        continue;
                     }
 
-                    if (processedRow.referencia && processedRow.descripcion) {
-                        const selectedRef = references.find(ref => ref.referencia === processedRow.referencia && ref.descripcion === processedRow.descripcion);
-                        if (!selectedRef) {
-                            errorCount++;
-                            continue;
-                        }
-                        processedRow.precio = parseInt(selectedRef.precioUnitario.replace(/[^\d]/g, '')) || 0;
-                        processedRow.codigo = selectedRef.codigo || '';
-                        processedRow.proveedor = selectedRef.proveedor || '';
-                        processedRow.tipo = selectedRef.tipo || 'IMPLANTES';
-                        processedRow.atributo = selectedRef.atributo || 'COTIZACION';
-                        try {
-                            const docRef = await addDoc(collection(db, "mantenedor_implantes"), {
-                                ...processedRow,
-                                createdAt: new Date()
-                            });
-                            await logAction(docRef.id, 'create', null, processedRow);
-                            successCount++;
-                        } catch (error) {
-                            errorCount++;
-                        }
+                    let mainDoc = null;
+                    const q = query(collection(db, "mantenedor_implantes"), where("referencia", "==", referencia), where("descripcion", "==", descripcion));
+                    const querySnapshot = await getDocs(q);
+                    if (querySnapshot.empty) {
+                        const processedRow = {
+                            referencia,
+                            descripcion,
+                            precio: parseInt(selectedRef.precioUnitario.replace(/[^\d]/g, '')) || 0,
+                            codigo: selectedRef.codigo || '',
+                            proveedor: selectedRef.proveedor || '',
+                            tipo: selectedRef.tipo || 'IMPLANTES',
+                            atributo: selectedRef.atributo || 'COTIZACION',
+                            fullName: window.currentUserData.fullName,
+                            createdAt: new Date()
+                        };
+                        const docRef = await addDoc(collection(db, "mantenedor_implantes"), processedRow);
+                        await logAction(docRef.id, 'create', null, processedRow);
+                        mainDoc = { id: docRef.id, ...processedRow };
                     } else {
-                        errorCount++;
+                        mainDoc = { id: querySnapshot.docs[0].id, ...querySnapshot.docs[0].data() };
                     }
 
-                    const progress = ((i) / totalRows) * 100;
-                    showImportProgress(progress);
+                    const processedSubRow = {
+                        mainId: mainDoc.id,
+                        lote,
+                        fechaVencimiento,
+                        cantidad,
+                        fullName: window.currentUserData.fullName,
+                        createdAt: new Date()
+                    };
+                    const subRowDocRef = await addDoc(collection(db, "mantenedor_implantes_subrows"), processedSubRow);
+                    await logSubRowAction(subRowDocRef.id, mainDoc.id, 'create', null, processedSubRow);
+
+                    processedRows++;
+                    const percent = (processedRows / totalRows) * 100;
+                    showImportProgress(percent);
                 }
 
                 hideLoading();
                 hideImportProgress();
-                showToast(`Importación completada: ${successCount} registros exitosos, ${errorCount} errores`, successCount > 0 ? 'success' : 'error');
+                showToast(`Importación completada: ${processedRows} filas procesadas.`, 'success');
                 fileUpload.value = '';
                 await loadMantenedor();
-            };
-            reader.readAsArrayBuffer(file);
+            } catch (error) {
+                hideLoading();
+                hideImportProgress();
+                showToast('Error al importar el archivo: ' + error.message, 'error');
+                fileUpload.value = '';
+            }
+        };
+        reader.readAsArrayBuffer(file);
+    });
+
+    downloadAll.addEventListener('click', async (e) => {
+        e.preventDefault();
+        showLoading();
+        try {
+            const q = query(collection(db, "mantenedor_implantes"), orderBy("createdAt", "desc"));
+            const querySnapshot = await getDocs(q);
+            const data = [];
+            data.push(['Referencia', 'Descripción', 'Precio', 'Cantidades', 'Total', 'Código', 'Proveedor', 'Tipo', 'Atributo', 'Lote', 'Fecha de Vencimiento', 'Cantidad']);
+            for (const doc of querySnapshot.docs) {
+                const mainRow = doc.data();
+                const subRows = await loadSubRows(doc.id);
+                if (subRows.length === 0) {
+                    data.push([
+                        mainRow.referencia || '',
+                        mainRow.descripcion || '',
+                        formatNumberWithThousandsSeparator(mainRow.precio),
+                        '0',
+                        '0',
+                        mainRow.codigo || '',
+                        mainRow.proveedor || '',
+                        mainRow.tipo || '',
+                        mainRow.atributo || '',
+                        '', '', ''
+                    ]);
+                } else {
+                    subRows.forEach((subRow, index) => {
+                        const sumCantidades = subRows.reduce((sum, sub) => sum + (sub.cantidad || 0), 0);
+                        const total = mainRow.precio * sumCantidades;
+                        data.push([
+                            index === 0 ? mainRow.referencia || '' : '',
+                            index === 0 ? mainRow.descripcion || '' : '',
+                            index === 0 ? formatNumberWithThousandsSeparator(mainRow.precio) : '',
+                            index === 0 ? formatNumberWithThousandsSeparator(sumCantidades) : '',
+                            index === 0 ? formatNumberWithThousandsSeparator(total) : '',
+                            index === 0 ? mainRow.codigo || '' : '',
+                            index === 0 ? mainRow.proveedor || '' : '',
+                            index === 0 ? mainRow.tipo || '' : '',
+                            index === 0 ? mainRow.atributo || '' : '',
+                            subRow.lote || '',
+                            subRow.fechaVencimiento || '',
+                            formatNumberWithThousandsSeparator(subRow.cantidad || 0)
+                        ]);
+                    });
+                }
+            }
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.aoa_to_sheet(data);
+            XLSX.utils.book_append_sheet(wb, ws, "Mantenedor");
+            XLSX.writeFile(wb, 'mantenedor_todos.xlsx');
+            hideLoading();
+            showToast('Descarga completada.', 'success');
         } catch (error) {
             hideLoading();
-            hideImportProgress();
-            showToast('Error al importar el archivo: ' + error.message, 'error');
-            fileUpload.value = '';
+            showToast('Error al descargar los registros: ' + error.message, 'error');
         }
     });
 
-    onAuthStateChanged(auth, async (user) => {
-        if (user) {
-            try {
-                const userDoc = await getDoc(doc(db, "users", user.uid));
-                window.currentUserData = userDoc.exists() ? userDoc.data() : { fullName: 'Usuario Invitado', username: 'invitado' };
-                await loadReferences();
-                setupAutocomplete('referencia', 'referenciaIcon', 'referenciaList', references, 'referencia', (item) => {
-                    descripcionInput.value = item.descripcion || '';
-                    precioInput.value = formatNumberWithThousandsSeparator(item.precioUnitario) || '';
-                    codigoInput.value = item.codigo || '';
-                    proveedorInput.value = item.proveedor || '';
-                    tipoInput.value = item.tipo || 'IMPLANTES';
-                    atributoInput.value = item.atributo || 'COTIZACION';
-                });
-                setupAutocomplete('descripcion', 'descripcionIcon', 'descripcionList', references, 'descripcion', (item) => {
-                    referenciaInput.value = item.referencia || '';
-                    precioInput.value = formatNumberWithThousandsSeparator(item.precioUnitario) || '';
-                    codigoInput.value = item.codigo || '';
-                    proveedorInput.value = item.proveedor || '';
-                    tipoInput.value = item.tipo || 'IMPLANTES';
-                    atributoInput.value = item.atributo || 'COTIZACION';
-                });
-                setupAutocomplete('editReferencia', 'editReferenciaIcon', 'editReferenciaList', references, 'referencia', (item) => {
-                    document.getElementById('editDescripcion').value = item.descripcion || '';
-                    document.getElementById('editPrecio').value = formatNumberWithThousandsSeparator(item.precioUnitario) || '';
-                    document.getElementById('editCodigo').value = item.codigo || '';
-                    document.getElementById('editProveedor').value = item.proveedor || '';
-                    document.getElementById('editTipo').value = item.tipo || 'IMPLANTES';
-                    document.getElementById('editAtributo').value = item.atributo || 'COTIZACION';
-                });
-                setupAutocomplete('editDescripcion', 'editDescripcionIcon', 'editDescripcionList', references, 'descripcion', (item) => {
-                    document.getElementById('editReferencia').value = item.referencia || '';
-                    document.getElementById('editPrecio').value = formatNumberWithThousandsSeparator(item.precioUnitario) || '';
-                    document.getElementById('editCodigo').value = item.codigo || '';
-                    document.getElementById('editProveedor').value = item.proveedor || '';
-                    document.getElementById('editTipo').value = item.tipo || 'IMPLANTES';
-                    document.getElementById('editAtributo').value = item.atributo || 'COTIZACION';
-                });
-                await loadMantenedor();
-            } catch (error) {
-                showToast('Error al cargar datos del usuario: ' + error.message, 'error');
+    downloadPage.addEventListener('click', async (e) => {
+        e.preventDefault();
+        showLoading();
+        try {
+            const data = [];
+            data.push(['Referencia', 'Descripción', 'Precio', 'Cantidades', 'Total', 'Código', 'Proveedor', 'Tipo', 'Atributo', 'Lote', 'Fecha de Vencimiento', 'Cantidad']);
+            for (const ref of mantenedor) {
+                const subRows = await loadSubRows(ref.id);
+                if (subRows.length === 0) {
+                    data.push([
+                        ref.referencia || '',
+                        ref.descripcion || '',
+                        formatNumberWithThousandsSeparator(ref.precio),
+                        '0',
+                        '0',
+                        ref.codigo || '',
+                        ref.proveedor || '',
+                        ref.tipo || '',
+                        ref.atributo || '',
+                        '', '', ''
+                    ]);
+                } else {
+                    subRows.forEach((subRow, index) => {
+                        const sumCantidades = subRows.reduce((sum, sub) => sum + (sub.cantidad || 0), 0);
+                        const total = ref.precio * sumCantidades;
+                        data.push([
+                            index === 0 ? ref.referencia || '' : '',
+                            index === 0 ? ref.descripcion || '' : '',
+                            index === 0 ? formatNumberWithThousandsSeparator(ref.precio) : '',
+                            index === 0 ? formatNumberWithThousandsSeparator(sumCantidades) : '',
+                            index === 0 ? formatNumberWithThousandsSeparator(total) : '',
+                            index === 0 ? ref.codigo || '' : '',
+                            index === 0 ? ref.proveedor || '' : '',
+                            index === 0 ? ref.tipo || '' : '',
+                            index === 0 ? ref.atributo || '' : '',
+                            subRow.lote || '',
+                            subRow.fechaVencimiento || '',
+                            formatNumberWithThousandsSeparator(subRow.cantidad || 0)
+                        ]);
+                    });
+                }
             }
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.aoa_to_sheet(data);
+            XLSX.utils.book_append_sheet(wb, ws, "Mantenedor");
+            XLSX.writeFile(wb, `mantenedor_pagina_${currentPage}.xlsx`);
+            hideLoading();
+            showToast('Descarga de página completada.', 'success');
+        } catch (error) {
+            hideLoading();
+            showToast('Error al descargar la página: ' + error.message, 'error');
+        }
+    });
+
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            getDoc(doc(db, "users", user.uid)).then((docSnap) => {
+                if (docSnap.exists()) {
+                    window.currentUserData = docSnap.data();
+                    loadReferences().then(() => {
+                        setupAutocomplete('referencia', 'referenciaIcon', 'referenciaList', references, 'referencia', (item) => {
+                            referenciaInput.value = item.referencia.toUpperCase();
+                            descripcionInput.value = item.descripcion.toUpperCase();
+                            precioInput.value = formatNumberWithThousandsSeparator(item.precioUnitario);
+                            codigoInput.value = item.codigo.toUpperCase();
+                            proveedorInput.value = item.proveedor.toUpperCase();
+                            tipoInput.value = item.tipo.toUpperCase();
+                            atributoInput.value = item.atributo.toUpperCase();
+                        });
+                        setupAutocomplete('descripcion', 'descripcionIcon', 'descripcionList', references, 'descripcion', (item) => {
+                            referenciaInput.value = item.referencia.toUpperCase();
+                            descripcionInput.value = item.descripcion.toUpperCase();
+                            precioInput.value = formatNumberWithThousandsSeparator(item.precioUnitario);
+                            codigoInput.value = item.codigo.toUpperCase();
+                            proveedorInput.value = item.proveedor.toUpperCase();
+                            tipoInput.value = item.tipo.toUpperCase();
+                            atributoInput.value = item.atributo.toUpperCase();
+                        });
+                        setupAutocomplete('editReferencia', 'editReferenciaIcon', 'editReferenciaList', references, 'referencia', (item) => {
+                            document.getElementById('editReferencia').value = item.referencia.toUpperCase();
+                            document.getElementById('editDescripcion').value = item.descripcion.toUpperCase();
+                            document.getElementById('editPrecio').value = formatNumberWithThousandsSeparator(item.precioUnitario);
+                            document.getElementById('editCodigo').value = item.codigo.toUpperCase();
+                            document.getElementById('editProveedor').value = item.proveedor.toUpperCase();
+                            document.getElementById('editTipo').value = item.tipo.toUpperCase();
+                            document.getElementById('editAtributo').value = item.atributo.toUpperCase();
+                        });
+                        setupAutocomplete('editDescripcion', 'editDescripcionIcon', 'editDescripcionList', references, 'descripcion', (item) => {
+                            document.getElementById('editReferencia').value = item.referencia.toUpperCase();
+                            document.getElementById('editDescripcion').value = item.descripcion.toUpperCase();
+                            document.getElementById('editPrecio').value = formatNumberWithThousandsSeparator(item.precioUnitario);
+                            document.getElementById('editCodigo').value = item.codigo.toUpperCase();
+                            document.getElementById('editProveedor').value = item.proveedor.toUpperCase();
+                            document.getElementById('editTipo').value = item.tipo.toUpperCase();
+                            document.getElementById('editAtributo').value = item.atributo.toUpperCase();
+                        });
+                        loadMantenedor();
+                    });
+                } else {
+                    showToast('No se encontraron datos del usuario.', 'error');
+                }
+            }).catch((error) => {
+                showToast('Error al cargar datos del usuario: ' + error.message, 'error');
+            });
         } else {
-            showToast('Usuario no autenticado', 'error');
+            showToast('Usuario no autenticado.', 'error');
         }
     });
 });
+
