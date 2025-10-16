@@ -484,7 +484,7 @@ html, body {
     padding: 20px;
     border-radius: 8px;
     width: 90%;
-    max-width: 800px;
+    max-width: 1000px;
     box-shadow: 0 4px 20px rgba(0,0,0,0.2);
     max-height: 80vh;
     overflow-y: auto;
@@ -562,31 +562,36 @@ html, body {
     font-weight: bold;
 }
 
-.guias-guide-item {
-    display: flex;
-    justify-content: space-between;
-    padding: 5px 0;
+.guias-modal-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 10px;
+    font-size: 11px;
 }
 
-.guias-guide-item label {
-    font-weight: bold;
-    color: #555;
-    flex: 0 0 200px;
-}
-
-.guias-guide-item span {
-    flex: 1;
+.guias-modal-table th,
+.guias-modal-table td {
+    border: 1px solid #ddd;
+    padding: 6px;
     text-align: left;
-    color: #333;
+    vertical-align: top;
+    word-wrap: break-word;
 }
 
-.guias-guide-details {
-    margin-left: 20px;
-}
-
-.guias-guide-details h4 {
-    font-size: 13px;
-    color: #17a2b8;
-    margin: 10px 0 5px 0;
+.guias-modal-table th {
+    background-color: #f2f2f2;
     font-weight: bold;
+    color: #333;
+    white-space: nowrap;
+}
+
+.guias-modal-table td {
+    color: #333;
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.guias-modal-table tbody tr:hover {
+    background-color: #f8f9fa;
 }
