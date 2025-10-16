@@ -187,7 +187,7 @@ function showToast(text, type = 'success') {
     }, 5000);
 }
 
-function formatGuideContent(data) {
+function formatGuideContent(data, folio, folioRef) {
     const doc = data.Documento;
     let html = '';
 
@@ -395,6 +395,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const closeViewModal = document.getElementById('closeViewModal');
     const closeViewBtn = document.getElementById('closeViewBtn');
     const viewContent = document.getElementById('viewContent');
+    const modalTitle = document.getElementById('modalTitle');
 
     let currentViewId = null;
 
@@ -429,7 +430,8 @@ document.addEventListener('DOMContentLoaded', () => {
             hideLoading();
             if (docSnap.exists()) {
                 const data = docSnap.data();
-                viewContent.innerHTML = formatGuideContent(data.fullData);
+                modalTitle.textContent = `Detalles de la Guía - Folio: ${data.folio || 'N/A'}, Folio Referencia: ${data.folioRef || 'N/A'}`;
+                viewContent.innerHTML = formatGuideContent(data.fullData, data.folio, data.folioRef);
                 viewModal.style.display = 'block';
             } else {
                 showToast('La guía no existe.', 'error');
@@ -444,6 +446,7 @@ document.addEventListener('DOMContentLoaded', () => {
         viewModal.style.display = 'none';
         currentViewId = null;
         viewContent.innerHTML = '';
+        modalTitle.textContent = 'Detalles de la Guía';
     }
 
     closeViewModal.addEventListener('click', closeViewModalHandler);

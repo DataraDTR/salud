@@ -481,18 +481,36 @@ html, body {
 .modal-content {
     background-color: white;
     margin: 5% auto;
-    padding: 20px;
+    padding: 0;
     border-radius: 8px;
     width: 90%;
     max-width: 1000px;
     box-shadow: 0 4px 20px rgba(0,0,0,0.2);
     max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-header {
+    position: sticky;
+    top: 0;
+    background-color: #f8f9fa;
+    padding: 10px 20px;
+    border-bottom: 1px solid #ddd;
+    z-index: 10;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-content-body {
+    padding: 20px;
     overflow-y: auto;
+    flex-grow: 1;
 }
 
 .close {
     color: #aaa;
-    float: right;
     font-size: 24px;
     font-weight: bold;
     cursor: pointer;
@@ -505,7 +523,7 @@ html, body {
 }
 
 .modal h2 {
-    margin-top: 0;
+    margin: 0;
     font-size: 16px;
     color: #333;
 }
