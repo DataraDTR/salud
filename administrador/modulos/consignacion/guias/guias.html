@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mantenedor de Guías</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="guias.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+        import { getAuth, onAuthStateChanged, setPersistence, browserSessionPersistence } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+        import { getFirestore, collection, addDoc, getDocs, query, where, doc, orderBy, getDoc, limit, startAfter, endBefore } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+        window.firebaseModules = { 
+            initializeApp, 
+            getAuth, 
+            onAuthStateChanged, 
+            setPersistence, 
+            browserSessionPersistence, 
+            getFirestore, 
+            collection, 
+            addDoc, 
+            getDocs, 
+            query, 
+            where, 
+            doc, 
+            orderBy, 
+            getDoc, 
+            limit, 
+            startAfter, 
+            endBefore 
+        };
+    </script>
+    <script type="module" src="guias.js"></script>
+</head>
+<body>
+    <div class="guias-main-container">
+        <h1 class="guias-title">Mantenedor de Guías</h1>
+
+        <div id="guias-message"></div>
+
+        <div class="guias-import-container">
+            <div class="guias-form-group">
+                <label for="fileUpload" class="guias-label">Importar XML(s):</label>
+                <input type="file" id="fileUpload" multiple accept=".xml">
+                <button id="importBtn" class="modal-btn modal-btn-primary">Importar</button>
+            </div>
+        </div>
+
+        <div class="guias-fields-container">
+            <div class="guias-form-group">
+                <label for="buscarFolio" class="guias-label">Buscar Folio:</label>
+                <input type="text" id="buscarFolio" placeholder="Buscar por folio" autocomplete="off">
+            </div>
+            <div class="guias-form-group">
+                <label for="buscarEmpresa" class="guias-label">Buscar Empresa:</label>
+                <input type="text" id="buscarEmpresa" placeholder="Buscar por empresa" autocomplete="off">
+            </div>
+            <div class="guias-form-group">
+                <label for="buscarFecha" class="guias-label">Buscar Fecha:</label>
+                <input type="date" id="buscarFecha" autocomplete="off">
+            </div>
+            <div class="guias-actions-menu">
+                <button id="actionsBtn"><i class="fas fa-angle-down"></i> Acciones</button>
+                <div id="actionsMenu" class="guias-dropdown-menu">
+                    <div class="menu-title"><i class="fas fa-angle-down"></i> Acciones</div>
+                    <a href="#" id="downloadAll">Descargar todos los registros</a>
+                    <a href="#" id="downloadPage">Descargar hoja actual</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="guias-table-container">
+            <table id="guiasTable" class="guias-table">
+                <thead>
+                    <tr>
+                        <th>Acciones</th>
+                        <th>Empresa</th>
+                        <th>Folio</th>
+                        <th>Fecha Emisión</th>
+                        <th>Folio Referencia</th>
+                    </tr>
+                </thead>
+                <tbody id="guiasBody">
+                </tbody>
+            </table>
+        </div>
+
+        <div class="guias-pagination" id="pagination">
+            <div class="guias-pagination-info" id="paginationInfo"></div>
+            <div class="guias-pagination-controls">
+                <button id="prevBtn">Anterior</button>
+                <div class="guias-page-numbers" id="pageNumbers"></div>
+                <button id="nextBtn">Siguiente</button>
+            </div>
+        </div>
+
+        <div id="guias-loading" class="guias-loading">
+            <div class="guias-loading-spinner"></div>
+            <div class="guias-loading-text">Procesando...</div>
+        </div>
+
+        <div id="guias-import-progress" class="guias-import-progress">
+            <div class="guias-progress-bar-container">
+                <div id="progressBar" class="guias-progress-bar"></div>
+            </div>
+            <div id="progressText" class="guias-progress-text">Importando: 0%</div>
+        </div>
+
+        <div id="guias-toast-container" class="guias-toast-container"></div>
+
+        <div id="viewModal" class="modal">
+            <div class="modal-content">
+                <span class="close" id="closeViewModal">&times;</span>
+                <h2>Detalles de la Guía</h2>
+                <div id="viewContent"></div>
+                <div class="modal-buttons">
+                    <button type="button" class="modal-btn modal-btn-secondary" id="closeViewBtn">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
