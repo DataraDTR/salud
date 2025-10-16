@@ -28,12 +28,12 @@ html, body {
     font-size: 18px;
 }
 
-.guias-import-container {
+.guias-search-import-row {
     display: flex;
-    justify-content: flex-start;
+    flex-direction: row;
+    align-items: flex-start;
     gap: 10px;
     margin-bottom: 20px;
-    align-items: center;
     flex-wrap: wrap;
 }
 
@@ -42,6 +42,7 @@ html, body {
     flex-direction: column;
     align-items: flex-start;
     gap: 4px;
+    min-width: 250px;
 }
 
 .guias-import-row {
@@ -72,7 +73,11 @@ html, body {
 
 #fileUpload {
     flex: 1;
-    min-width: 200px;
+    min-width: 150px;
+}
+
+#buscarFolio, #buscarEmpresa, #buscarFecha {
+    min-width: 150px;
 }
 
 #fileUpload:focus,
