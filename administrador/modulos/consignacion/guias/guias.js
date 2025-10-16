@@ -1,7 +1,7 @@
-// Import Firebase modules directly
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js';
-import { getAuth, onAuthStateChanged, setPersistence, browserSessionPersistence } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js';
-import { getFirestore, collection, addDoc, getDocs, query, where, doc, orderBy, getDoc, limit, startAfter, endBefore } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js';
+// Import Firebase modules directly (compat API)
+import firebase from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js';
+import 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js';
+import 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js';
 
 const firebaseConfig = {
     apiKey: "AIzaSyD6JY7FaRqjZoN6OzbFHoIXxd-IJL3H-Ek",
@@ -16,18 +16,18 @@ const firebaseConfig = {
 // Initialize Firebase
 let app;
 try {
-    app = initializeApp(firebaseConfig);
+    app = firebase.initializeApp(firebaseConfig);
 } catch (error) {
     console.error('Error initializing Firebase:', error);
     showToast('Error al inicializar Firebase: ' + error.message, 'error');
 }
 
-const auth = app ? getAuth(app) : null;
-const db = app ? getFirestore(app) : null;
+const auth = app ? firebase.auth() : null;
+const db = app ? firebase.firestore() : null;
 
 if (auth) {
     try {
-        setPersistence(auth, browserSessionPersistence);
+        auth.setPersistence(firebase.auth.Auth.Persistence.SESSION);
     } catch (error) {
         console.error('Error setting Firebase persistence:', error);
         showToast('Error al configurar la persistencia: ' + error.message, 'error');
@@ -455,9 +455,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         currentViewId = id;
         showLoading();
-        getDoc(doc(db, "guias_medtronic", id)).then((docSnap) => {
+        db.collection("guias_medtronic").doc(id).get().then((docSnap) => {
             hideLoading();
-            if (docSnap.exists()) {
+            if (docSnap.exists) {
                 const data = docSnap.data();
                 if (modalTitle) {
                     modalTitle.textContent = `Detalles de la Guía - Folio: ${data.folio || 'N/A'}, Folio Referencia: ${data.folioRef || 'N/A'}`;
@@ -541,29 +541,24 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         showLoading();
         try {
-            let q = query(collection(db, "guias_medtronic"), orderBy("createdAt", "desc"));
-            const conditions = [];
+            let q = db.collection("guias_medtronic").orderBy("createdAt", "desc");
 
             if (searchFolio) {
-                conditions.push(where("folio", ">=", searchFolio));
-                conditions.push(where("folio", "<=", searchFolio + '\uf8ff'));
+                q = q.where("folio", ">=", searchFolio).where("folio", "<=", searchFolio + '\uf8ff');
             }
             if (searchEmpresa) {
-                conditions.push(where("rznSoc", ">=", searchEmpresa));
-                conditions.push(where("rznSoc", "<=", searchEmpresa + '\uf8ff'));
+                q = q.where("rznSoc", ">=", searchEmpresa).where("rznSoc", "<=", searchEmpresa + '\uf8ff');
             }
             if (searchFecha) {
-                conditions.push(where("fchEmis", "==", searchFecha));
+                q = q.where("fchEmis", "==", searchFecha);
             }
 
             if (currentPage > 1 && lastVisible) {
-                conditions.push(startAfter(lastVisible));
+                q = q.startAfter(lastVisible);
             }
-            conditions.push(limit(PAGE_SIZE));
+            q = q.limit(PAGE_SIZE);
 
-            q = query(q, ...conditions);
-
-            const querySnapshot = await getDocs(q);
+            const querySnapshot = await q.get();
             guias = [];
             querySnapshot.forEach((doc) => {
                 guias.push({ id: doc.id, ...doc.data() });
@@ -577,24 +572,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 firstVisible = null;
             }
 
-            let countQuery = query(collection(db, "guias_medtronic"));
+            let countQuery = db.collection("guias_medtronic");
             if (searchFolio) {
-                countQuery = query(countQuery,
-                    where("folio", ">=", searchFolio),
-                    where("folio", "<=", searchFolio + '\uf8ff')
-                );
+                countQuery = countQuery.where("folio", ">=", searchFolio).where("folio", "<=", searchFolio + '\uf8ff');
             }
             if (searchEmpresa) {
-                countQuery = query(countQuery,
-                    where("rznSoc", ">=", searchEmpresa),
-                    where("rznSoc", "<=", searchEmpresa + '\uf8ff')
-                );
+                countQuery = countQuery.where("rznSoc", ">=", searchEmpresa).where("rznSoc", "<=", searchEmpresa + '\uf8ff');
             }
             if (searchFecha) {
-                countQuery = query(countQuery, where("fchEmis", "==", searchFecha));
+                countQuery = countQuery.where("fchEmis", "==", searchFecha);
             }
 
-            const countSnapshot = await getDocs(countQuery);
+            const countSnapshot = await countQuery.get();
             totalRecords = countSnapshot.size;
 
             await renderTable();
@@ -736,8 +725,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             showLoading();
             try {
-                const q = query(collection(db, "guias_medtronic"));
-                const querySnapshot = await getDocs(q);
+                const querySnapshot = await db.collection("guias_medtronic").get();
                 const allGuias = [];
                 querySnapshot.forEach((doc) => {
                     allGuias.push({ id: doc.id, ...doc.data() });
@@ -802,7 +790,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             try {
                                 const xmlString = event.target.result;
                                 const parsedData = await parseXML(xmlString);
-                                await addDoc(collection(db, "guias_medtronic"), {
+                                await db.collection("guias_medtronic").add({
                                     ...parsedData,
                                     createdAt: new Date()
                                 });
@@ -833,15 +821,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (auth) {
-        onAuthStateChanged(auth, async (user) => {
+        auth.onAuthStateChanged(async (user) => {
             if (!user) {
                 window.location.replace('../index.html');
                 return;
             }
             try {
-                const userDocRef = doc(db, 'users', user.uid);
-                const userDoc = await getDoc(userDocRef);
-                if (userDoc.exists()) {
+                const userDocRef = db.collection('users').doc(user.uid);
+                const userDoc = await userDocRef.get();
+                if (userDoc.exists) {
                     window.currentUserData = userDoc.data();
                 } else {
                     window.currentUserData = { fullName: user.displayName || 'Usuario Invitado', username: user.email || 'invitado' };
