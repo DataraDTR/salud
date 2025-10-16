@@ -37,23 +37,19 @@ html, body {
     flex-wrap: wrap;
 }
 
-.guias-fields-container {
-    display: flex;
-    justify-content: space-between;
-    gap: 10px;
-    margin-bottom: 20px;
-    align-items: center;
-    flex-wrap: wrap;
-}
-
-.guias-form-group {
+.guias-import-group {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
     gap: 4px;
-    flex: 1;
-    min-width: 0;
-    max-width: 200px;
+}
+
+.guias-import-row {
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+    align-items: center;
+    width: 100%;
 }
 
 .guias-label {
@@ -72,6 +68,11 @@ html, body {
     font-size: 11px;
     box-sizing: border-box;
     text-transform: uppercase;
+}
+
+#fileUpload {
+    flex: 1;
+    min-width: 200px;
 }
 
 #fileUpload:focus,
@@ -529,9 +530,50 @@ html, body {
     background-color: #5a6268;
 }
 
-#viewContent {
+.guias-guide-content {
     font-size: 12px;
     color: #333;
-    white-space: pre-wrap;
-    word-wrap: break-word;
+    line-height: 1.6;
+}
+
+.guias-guide-section {
+    margin-bottom: 20px;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 10px;
+}
+
+.guias-guide-section h3 {
+    font-size: 14px;
+    color: #007bff;
+    margin: 0 0 10px 0;
+    font-weight: bold;
+}
+
+.guias-guide-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 5px 0;
+}
+
+.guias-guide-item label {
+    font-weight: bold;
+    color: #555;
+    flex: 0 0 200px;
+}
+
+.guias-guide-item span {
+    flex: 1;
+    text-align: left;
+    color: #333;
+}
+
+.guias-guide-details {
+    margin-left: 20px;
+}
+
+.guias-guide-details h4 {
+    font-size: 13px;
+    color: #17a2b8;
+    margin: 10px 0 5px 0;
+    font-weight: bold;
 }

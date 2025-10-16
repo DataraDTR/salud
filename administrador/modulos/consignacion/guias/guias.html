@@ -40,10 +40,12 @@
         <div id="guias-message"></div>
 
         <div class="guias-import-container">
-            <div class="guias-form-group">
+            <div class="guias-import-group">
                 <label for="fileUpload" class="guias-label">Importar XML(s):</label>
-                <input type="file" id="fileUpload" multiple accept=".xml">
-                <button id="importBtn" class="modal-btn modal-btn-primary">Importar</button>
+                <div class="guias-import-row">
+                    <input type="file" id="fileUpload" multiple accept=".xml">
+                    <button id="importBtn" class="modal-btn modal-btn-primary">Importar</button>
+                </div>
             </div>
         </div>
 
@@ -113,7 +115,7 @@
             <div class="modal-content">
                 <span class="close" id="closeViewModal">&times;</span>
                 <h2>Detalles de la Guía</h2>
-                <div id="viewContent"></div>
+                <div id="viewContent" class="guias-guide-content"></div>
                 <div class="modal-buttons">
                     <button type="button" class="modal-btn modal-btn-secondary" id="closeViewBtn">Cerrar</button>
                 </div>

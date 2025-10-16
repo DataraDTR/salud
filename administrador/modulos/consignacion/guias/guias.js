@@ -44,13 +44,17 @@ async function parseXML(xmlString) {
     const encabezado = documento.querySelector("Encabezado");
     const idDoc = encabezado.querySelector("IdDoc");
     const emisor = encabezado.querySelector("Emisor");
-    const referencia = documento.querySelector("Referencia");
+    const receptor = encabezado.querySelector("Receptor");
+    const transporte = encabezado.querySelector("Transporte");
+    const totales = encabezado.querySelector("Totales");
+    const referencias = documento.querySelectorAll("Referencia");
+    const detalles = documento.querySelectorAll("Detalle");
 
     const parsedData = {
         folio: getText(idDoc, "Folio"),
         fchEmis: getText(idDoc, "FchEmis"),
         rznSoc: getText(emisor, "RznSoc"),
-        folioRef: getText(referencia, "FolioRef"),
+        folioRef: getText(referencias[0], "FolioRef"),
         fullData: {} // Para almacenar todos los datos parseados
     };
 
@@ -67,7 +71,28 @@ async function parseXML(xmlString) {
         return obj;
     };
 
-    parsedData.fullData = extractAll(dte);
+    // Extraer detalles y referencias como arrays
+    const extractArray = (nodes, tagName) => {
+        const arr = [];
+        nodes.forEach(node => {
+            arr.push(extractAll(node));
+        });
+        return arr;
+    };
+
+    parsedData.fullData = {
+        Documento: {
+            Encabezado: {
+                IdDoc: extractAll(idDoc),
+                Emisor: extractAll(emisor),
+                Receptor: extractAll(receptor),
+                Transporte: transporte ? extractAll(transporte) : {},
+                Totales: extractAll(totales)
+            },
+            Detalle: extractArray(detalles, "Detalle"),
+            Referencia: extractArray(referencias, "Referencia")
+        }
+    };
 
     return parsedData;
 }
@@ -162,6 +187,106 @@ function showToast(text, type = 'success') {
     }, 5000);
 }
 
+function formatGuideContent(data) {
+    const doc = data.Documento;
+    let html = '';
+
+    // Encabezado
+    html += '<div class="guias-guide-section">';
+    html += '<h3>Encabezado</h3>';
+    html += `<div class="guias-guide-item"><label>Tipo DTE:</label><span>${doc.Encabezado.IdDoc.TipoDTE || ''}</span></div>`;
+    html += `<div class="guias-guide-item"><label>Folio:</label><span>${doc.Encabezado.IdDoc.Folio || ''}</span></div>`;
+    html += `<div class="guias-guide-item"><label>Fecha Emisión:</label><span>${doc.Encabezado.IdDoc.FchEmis || ''}</span></div>`;
+    html += `<div class="guias-guide-item"><label>Tipo Despacho:</label><span>${doc.Encabezado.IdDoc.TipoDespacho || ''}</span></div>`;
+    html += `<div class="guias-guide-item"><label>Indicador Traslado:</label><span>${doc.Encabezado.IdDoc.IndTraslado || ''}</span></div>`;
+    html += `<div class="guias-guide-item"><label>Forma Pago:</label><span>${doc.Encabezado.IdDoc.FmaPago || ''}</span></div>`;
+    html += `<div class="guias-guide-item"><label>Término Pago:</label><span>${doc.Encabezado.IdDoc.TermPagoGlosa || ''}</span></div>`;
+    html += `<div class="guias-guide-item"><label>Fecha Vencimiento:</label><span>${doc.Encabezado.IdDoc.FchVenc || ''}</span></div>`;
+    html += '</div>';
+
+    // Emisor
+    html += '<div class="guias-guide-section">';
+    html += '<h3>Emisor</h3>';
+    html += `<div class="guias-guide-item"><label>RUT Emisor:</label><span>${doc.Encabezado.Emisor.RUTEmisor || ''}</span></div>`;
+    html += `<div class="guias-guide-item"><label>Razón Social:</label><span>${doc.Encabezado.Emisor.RznSoc || ''}</span></div>`;
+    html += `<div class="guias-guide-item"><label>Giro:</label><span>${doc.Encabezado.Emisor.GiroEmis || ''}</span></div>`;
+    html += `<div class="guias-guide-item"><label>Actividad Económica:</label><span>${doc.Encabezado.Emisor.Acteco || ''}</span></div>`;
+    html += `<div class="guias-guide-item"><label>Código SII Sucursal:</label><span>${doc.Encabezado.Emisor.CdgSIISucur || ''}</span></div>`;
+    html += `<div class="guias-guide-item"><label>Dirección Origen:</label><span>${doc.Encabezado.Emisor.DirOrigen || ''}</span></div>`;
+    html += `<div class="guias-guide-item"><label>Comuna Origen:</label><span>${doc.Encabezado.Emisor.CmnaOrigen || ''}</span></div>`;
+    html += `<div class="guias-guide-item"><label>Ciudad Origen:</label><span>${doc.Encabezado.Emisor.CiudadOrigen || ''}</span></div>`;
+    html += '</div>';
+
+    // Receptor
+    html += '<div class="guias-guide-section">';
+    html += '<h3>Receptor</h3>';
+    html += `<div class="guias-guide-item"><label>RUT Receptor:</label><span>${doc.Encabezado.Receptor.RUTRecep || ''}</span></div>`;
+    html += `<div class="guias-guide-item"><label>Código Interno Receptor:</label><span>${doc.Encabezado.Receptor.CdgIntRecep || ''}</span></div>`;
+    html += `<div class="guias-guide-item"><label>Razón Social:</label><span>${doc.Encabezado.Receptor.RznSocRecep || ''}</span></div>`;
+    html += `<div class="guias-guide-item"><label>Giro:</label><span>${doc.Encabezado.Receptor.GiroRecep || ''}</span></div>`;
+    html += `<div class="guias-guide-item"><label>Dirección:</label><span>${doc.Encabezado.Receptor.DirRecep || ''}</span></div>`;
+    html += `<div class="guias-guide-item"><label>Comuna:</label><span>${doc.Encabezado.Receptor.CmnaRecep || ''}</span></div>`;
+    html += `<div class="guias-guide-item"><label>Ciudad:</label><span>${doc.Encabezado.Receptor.CiudadRecep || ''}</span></div>`;
+    html += `<div class="guias-guide-item"><label>Dirección Postal:</label><span>${doc.Encabezado.Receptor.DirPostal || ''}</span></div>`;
+    html += `<div class="guias-guide-item"><label>Comuna Postal:</label><span>${doc.Encabezado.Receptor.CmnaPostal || ''}</span></div>`;
+    html += `<div class="guias-guide-item"><label>Ciudad Postal:</label><span>${doc.Encabezado.Receptor.CiudadPostal || ''}</span></div>`;
+    html += '</div>';
+
+    // Transporte
+    html += '<div class="guias-guide-section">';
+    html += '<h3>Transporte</h3>';
+    html += `<div class="guias-guide-item"><label>Dirección Destino:</label><span>${doc.Encabezado.Transporte.DirDest || ''}</span></div>`;
+    html += `<div class="guias-guide-item"><label>Comuna Destino:</label><span>${doc.Encabezado.Transporte.CmnaDest || ''}</span></div>`;
+    html += `<div class="guias-guide-item"><label>Ciudad Destino:</label><span>${doc.Encabezado.Transporte.CiudadDest || ''}</span></div>`;
+    html += '</div>';
+
+    // Totales
+    html += '<div class="guias-guide-section">';
+    html += '<h3>Totales</h3>';
+    html += `<div class="guias-guide-item"><label>Monto Neto:</label><span>${doc.Encabezado.Totales.MntNeto || ''}</span></div>`;
+    html += `<div class="guias-guide-item"><label>Monto Exento:</label><span>${doc.Encabezado.Totales.MntExe || ''}</span></div>`;
+    html += `<div class="guias-guide-item"><label>Tasa IVA:</label><span>${doc.Encabezado.Totales.TasaIVA || ''}</span></div>`;
+    html += `<div class="guias-guide-item"><label>IVA:</label><span>${doc.Encabezado.Totales.IVA || ''}</span></div>`;
+    html += `<div class="guias-guide-item"><label>Monto Total:</label><span>${doc.Encabezado.Totales.MntTotal || ''}</span></div>`;
+    html += '</div>';
+
+    // Detalles
+    html += '<div class="guias-guide-section">';
+    html += '<h3>Detalles</h3>';
+    doc.Detalle.forEach((detalle, index) => {
+        html += `<div class="guias-guide-details">`;
+        html += `<h4>Ítem ${index + 1}</h4>`;
+        html += `<div class="guias-guide-item"><label>Número Línea:</label><span>${detalle.NroLinDet || ''}</span></div>`;
+        html += `<div class="guias-guide-item"><label>Código:</label><span>${detalle.CdgItem?.VlrCodigo || ''}</span></div>`;
+        html += `<div class="guias-guide-item"><label>Tipo Código:</label><span>${detalle.CdgItem?.TpoCodigo || ''}</span></div>`;
+        html += `<div class="guias-guide-item"><label>Nombre Ítem:</label><span>${detalle.NmbItem || ''}</span></div>`;
+        html += `<div class="guias-guide-item"><label>Descripción:</label><span>${detalle.DscItem || ''}</span></div>`;
+        html += `<div class="guias-guide-item"><label>Cantidad:</label><span>${detalle.QtyItem || ''}</span></div>`;
+        html += `<div class="guias-guide-item"><label>Fecha Vencimiento:</label><span>${detalle.FchVencim || ''}</span></div>`;
+        html += `<div class="guias-guide-item"><label>Unidad Medida:</label><span>${detalle.UnmdItem || ''}</span></div>`;
+        html += `<div class="guias-guide-item"><label>Precio Unitario:</label><span>${detalle.PrcItem || ''}</span></div>`;
+        html += `<div class="guias-guide-item"><label>Monto Ítem:</label><span>${detalle.MontoItem || ''}</span></div>`;
+        html += `</div>`;
+    });
+    html += '</div>';
+
+    // Referencias
+    html += '<div class="guias-guide-section">';
+    html += '<h3>Referencias</h3>';
+    doc.Referencia.forEach((referencia, index) => {
+        html += `<div class="guias-guide-details">`;
+        html += `<h4>Referencia ${index + 1}</h4>`;
+        html += `<div class="guias-guide-item"><label>Número Línea:</label><span>${referencia.NroLinRef || ''}</span></div>`;
+        html += `<div class="guias-guide-item"><label>Tipo Documento:</label><span>${referencia.TpoDocRef || ''}</span></div>`;
+        html += `<div class="guias-guide-item"><label>Folio Referencia:</label><span>${referencia.FolioRef || ''}</span></div>`;
+        html += `<div class="guias-guide-item"><label>Fecha Referencia:</label><span>${referencia.FchRef || ''}</span></div>`;
+        html += `</div>`;
+    });
+    html += '</div>';
+
+    return html;
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     const loading = document.getElementById('guias-loading');
     const importProgress = document.getElementById('guias-import-progress');
@@ -219,7 +344,7 @@ document.addEventListener('DOMContentLoaded', () => {
             hideLoading();
             if (docSnap.exists()) {
                 const data = docSnap.data();
-                viewContent.innerHTML = `<pre>${JSON.stringify(data.fullData, null, 2)}</pre>`;
+                viewContent.innerHTML = formatGuideContent(data.fullData);
                 viewModal.style.display = 'block';
             } else {
                 showToast('La guía no existe.', 'error');
