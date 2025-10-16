@@ -565,19 +565,47 @@
             });
         });
 
-        function loadContent(path) {
+        async function loadContent(path) {
             if (path === '#') {
                 document.querySelector('.content').innerHTML = '<div class="loading">Contenido no disponible.</div>';
                 return;
             }
-            const iframe = document.createElement('iframe');
-            iframe.src = path;
-            iframe.style.width = '100%';
-            iframe.style.height = '100%';
-            iframe.style.border = 'none';
-            iframe.style.minHeight = '600px';
-            document.querySelector('.content').innerHTML = '';
-            document.querySelector('.content').appendChild(iframe);
+
+            try {
+                // Verificar si el archivo existe usando fetch
+                const response = await fetch(path, { method: 'HEAD' });
+                if (response.ok) {
+                    // Si el archivo existe, cargarlo en el iframe
+                    const iframe = document.createElement('iframe');
+                    iframe.src = path;
+                    iframe.style.width = '100%';
+                    iframe.style.height = '100%';
+                    iframe.style.border = 'none';
+                    iframe.style.minHeight = '600px';
+                    document.querySelector('.content').innerHTML = '';
+                    document.querySelector('.content').appendChild(iframe);
+                } else {
+                    // Si el archivo no existe, cargar src/404.html
+                    const iframe = document.createElement('iframe');
+                    iframe.src = '../src/404.html';
+                    iframe.style.width = '100%';
+                    iframe.style.height = '100%';
+                    iframe.style.border = 'none';
+                    iframe.style.minHeight = '600px';
+                    document.querySelector('.content').innerHTML = '';
+                    document.querySelector('.content').appendChild(iframe);
+                }
+            } catch (error) {
+                // En caso de error (como 404), cargar src/404.html
+                const iframe = document.createElement('iframe');
+                iframe.src = '../src/404.html';
+                iframe.style.width = '100%';
+                iframe.style.height = '100%';
+                iframe.style.border = 'none';
+                iframe.style.minHeight = '600px';
+                document.querySelector('.content').innerHTML = '';
+                document.querySelector('.content').appendChild(iframe);
+            }
         }
 
         document.querySelector('.logo-title').addEventListener('click', function() {
