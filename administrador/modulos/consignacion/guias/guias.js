@@ -1,7 +1,4 @@
-// Import Firebase modules directly (compat API)
-import firebase from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js';
-import 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js';
-import 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js';
+// No explicit imports needed since Firebase scripts are loaded in HTML and attach to global firebase object
 
 const firebaseConfig = {
     apiKey: "AIzaSyD6JY7FaRqjZoN6OzbFHoIXxd-IJL3H-Ek",
