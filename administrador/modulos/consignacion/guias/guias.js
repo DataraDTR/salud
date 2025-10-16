@@ -1,4 +1,7 @@
-const { initializeApp, getAuth, onAuthStateChanged, setPersistence, browserSessionPersistence, getFirestore, collection, addDoc, getDocs, query, where, doc, orderBy, getDoc, limit, startAfter, endBefore } = window.firebaseModules;
+// Import Firebase modules directly
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js';
+import { getAuth, onAuthStateChanged, setPersistence, browserSessionPersistence } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js';
+import { getFirestore, collection, addDoc, getDocs, query, where, doc, orderBy, getDoc, limit, startAfter, endBefore } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js';
 
 const firebaseConfig = {
     apiKey: "AIzaSyD6JY7FaRqjZoN6OzbFHoIXxd-IJL3H-Ek",
@@ -10,11 +13,26 @@ const firebaseConfig = {
     measurementId: "G-MLYVTZPPLD"
 };
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
+// Initialize Firebase
+let app;
+try {
+    app = initializeApp(firebaseConfig);
+} catch (error) {
+    console.error('Error initializing Firebase:', error);
+    showToast('Error al inicializar Firebase: ' + error.message, 'error');
+}
 
-setPersistence(auth, browserSessionPersistence);
+const auth = app ? getAuth(app) : null;
+const db = app ? getFirestore(app) : null;
+
+if (auth) {
+    try {
+        setPersistence(auth, browserSessionPersistence);
+    } catch (error) {
+        console.error('Error setting Firebase persistence:', error);
+        showToast('Error al configurar la persistencia: ' + error.message, 'error');
+    }
+}
 
 let guias = [];
 let currentPage = 1;
@@ -167,7 +185,10 @@ function debounce(func, wait) {
 
 function showToast(text, type = 'success') {
     const toastContainer = document.getElementById('guias-toast-container');
-    if (!toastContainer) return;
+    if (!toastContainer) {
+        console.warn('Toast container not found');
+        return;
+    }
 
     const toast = document.createElement('div');
     toast.className = `guias-toast ${type}`;
@@ -424,6 +445,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     window.openViewModal = function (id) {
+        if (!db) {
+            showToast('Error: Firebase no está inicializado correctamente.', 'error');
+            return;
+        }
         currentViewId = id;
         showLoading();
         getDoc(doc(db, "guias_medtronic", id)).then((docSnap) => {
@@ -435,8 +460,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else {
                     showToast('Error: No se encontró el elemento del título del modal.', 'error');
                 }
-                viewContent.innerHTML = formatGuideContent(data.fullData, data.folio, data.folioRef);
-                viewModal.style.display = 'block';
+                if (viewContent) {
+                    viewContent.innerHTML = formatGuideContent(data.fullData, data.folio, data.folioRef);
+                } else {
+                    showToast('Error: No se encontró el contenedor de contenido del modal.', 'error');
+                }
+                if (viewModal) {
+                    viewModal.style.display = 'block';
+                } else {
+                    showToast('Error: No se encontró el modal.', 'error');
+                }
             } else {
                 showToast('La guía no existe.', 'error');
             }
@@ -447,16 +480,14 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     function closeViewModalHandler() {
-        viewModal.style.display = 'none';
+        if (viewModal) viewModal.style.display = 'none';
         currentViewId = null;
-        viewContent.innerHTML = '';
-        if (modalTitle) {
-            modalTitle.textContent = 'Detalles de la Guía';
-        }
+        if (viewContent) viewContent.innerHTML = '';
+        if (modalTitle) modalTitle.textContent = 'Detalles de la Guía';
     }
 
-    closeViewModal.addEventListener('click', closeViewModalHandler);
-    closeViewBtn.addEventListener('click', closeViewModalHandler);
+    if (closeViewModal) closeViewModal.addEventListener('click', closeViewModalHandler);
+    if (closeViewBtn) closeViewBtn.addEventListener('click', closeViewModalHandler);
     window.addEventListener('click', (e) => {
         if (e.target === viewModal) closeViewModalHandler();
     });
@@ -495,11 +526,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (importBtn) {
         importBtn.addEventListener('click', () => {
-            fileUpload.click();
+            if (fileUpload) fileUpload.click();
         });
     }
 
     async function loadGuias() {
+        if (!db) {
+            showToast('Error: Firebase no está inicializado correctamente.', 'error');
+            return;
+        }
         showLoading();
         try {
             let q = query(collection(db, "guias_medtronic"), orderBy("createdAt", "desc"));
@@ -672,27 +707,58 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    actionsBtn.addEventListener('click', () => {
-        actionsMenu.style.display = actionsMenu.style.display === 'block' ? 'none' : 'block';
-    });
+    if (actionsBtn) {
+        actionsBtn.addEventListener('click', () => {
+            if (actionsMenu) {
+                actionsMenu.style.display = actionsMenu.style.display === 'block' ? 'none' : 'block';
+            }
+        });
+    }
 
     window.addEventListener('click', (e) => {
-        if (!actionsBtn.contains(e.target) && !actionsMenu.contains(e.target)) {
+        if (actionsBtn && actionsMenu && !actionsBtn.contains(e.target) && !actionsMenu.contains(e.target)) {
             actionsMenu.style.display = 'none';
         }
     });
 
-    downloadAll.addEventListener('click', async (e) => {
-        e.preventDefault();
-        showLoading();
-        try {
-            const q = query(collection(db, "guias_medtronic"));
-            const querySnapshot = await getDocs(q);
-            const allGuias = [];
-            querySnapshot.forEach((doc) => {
-                allGuias.push({ id: doc.id, ...doc.data() });
-            });
-            const data = allGuias.map(guia => ({
+    if (downloadAll) {
+        downloadAll.addEventListener('click', async (e) => {
+            e.preventDefault();
+            if (!db) {
+                showToast('Error: Firebase no está inicializado correctamente.', 'error');
+                return;
+            }
+            showLoading();
+            try {
+                const q = query(collection(db, "guias_medtronic"));
+                const querySnapshot = await getDocs(q);
+                const allGuias = [];
+                querySnapshot.forEach((doc) => {
+                    allGuias.push({ id: doc.id, ...doc.data() });
+                });
+                const data = allGuias.map(guia => ({
+                    Empresa: guia.rznSoc || '',
+                    Folio: guia.folio || '',
+                    'Fecha Emisión': guia.fchEmis || '',
+                    'Folio Referencia': guia.folioRef || ''
+                }));
+                const ws = XLSX.utils.json_to_sheet(data);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "Guias");
+                XLSX.writeFile(wb, 'guias_todas.xlsx');
+                if (actionsMenu) actionsMenu.style.display = 'none';
+                hideLoading();
+            } catch (error) {
+                hideLoading();
+                showToast('Error al descargar las guías: ' + error.message, 'error');
+            }
+        });
+    }
+
+    if (downloadPage) {
+        downloadPage.addEventListener('click', (e) => {
+            e.preventDefault();
+            const data = guias.map(guia => ({
                 Empresa: guia.rznSoc || '',
                 Folio: guia.folio || '',
                 'Fecha Emisión': guia.fchEmis || '',
@@ -701,94 +767,87 @@ document.addEventListener('DOMContentLoaded', () => {
             const ws = XLSX.utils.json_to_sheet(data);
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, "Guias");
-            XLSX.writeFile(wb, 'guias_todas.xlsx');
-            actionsMenu.style.display = 'none';
-            hideLoading();
-        } catch (error) {
-            hideLoading();
-            showToast('Error al descargar las guías: ' + error.message, 'error');
-        }
-    });
+            XLSX.writeFile(wb, `guias_pagina_${currentPage}.xlsx`);
+            if (actionsMenu) actionsMenu.style.display = 'none';
+        });
+    }
 
-    downloadPage.addEventListener('click', (e) => {
-        e.preventDefault();
-        const data = guias.map(guia => ({
-            Empresa: guia.rznSoc || '',
-            Folio: guia.folio || '',
-            'Fecha Emisión': guia.fchEmis || '',
-            'Folio Referencia': guia.folioRef || ''
-        }));
-        const ws = XLSX.utils.json_to_sheet(data);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Guias");
-        XLSX.writeFile(wb, `guias_pagina_${currentPage}.xlsx`);
-        actionsMenu.style.display = 'none';
-    });
+    if (fileUpload) {
+        fileUpload.addEventListener('change', async (e) => {
+            const files = e.target.files;
+            if (!files || files.length === 0) return;
 
-    fileUpload.addEventListener('change', async (e) => {
-        const files = e.target.files;
-        if (!files || files.length === 0) return;
-
-        showLoading();
-        try {
-            let successCount = 0;
-            let errorCount = 0;
-            const totalFiles = files.length;
-
-            for (let i = 0; i < totalFiles; i++) {
-                const file = files[i];
-                const reader = new FileReader();
-                await new Promise((resolve) => {
-                    reader.onload = async (event) => {
-                        try {
-                            const xmlString = event.target.result;
-                            const parsedData = await parseXML(xmlString);
-                            await addDoc(collection(db, "guias_medtronic"), {
-                                ...parsedData,
-                                createdAt: new Date()
-                            });
-                            successCount++;
-                        } catch (error) {
-                            errorCount++;
-                        }
-                        const progress = ((i + 1) / totalFiles) * 100;
-                        showImportProgress(progress);
-                        resolve();
-                    };
-                    reader.readAsText(file);
-                });
+            if (!db) {
+                showToast('Error: Firebase no está inicializado correctamente.', 'error');
+                return;
             }
 
-            hideLoading();
-            hideImportProgress();
-            showToast(`Importación completada: ${successCount} guías exitosas, ${errorCount} errores`, successCount > 0 ? 'success' : 'error');
-            fileUpload.value = '';
-            await loadGuias();
-        } catch (error) {
-            hideLoading();
-            hideImportProgress();
-            showToast('Error al importar los archivos: ' + error.message, 'error');
-            fileUpload.value = '';
-        }
-    });
+            showLoading();
+            try {
+                let successCount = 0;
+                let errorCount = 0;
+                const totalFiles = files.length;
 
-    onAuthStateChanged(auth, async (user) => {
-        if (!user) {
-            window.location.replace('../index.html');
-            return;
-        }
-        try {
-            const userDocRef = doc(db, 'users', user.uid);
-            const userDoc = await getDoc(userDocRef);
-            if (userDoc.exists()) {
-                window.currentUserData = userDoc.data();
-            } else {
-                window.currentUserData = { fullName: user.displayName || 'Usuario Invitado', username: user.email || 'invitado' };
+                for (let i = 0; i < totalFiles; i++) {
+                    const file = files[i];
+                    const reader = new FileReader();
+                    await new Promise((resolve) => {
+                        reader.onload = async (event) => {
+                            try {
+                                const xmlString = event.target.result;
+                                const parsedData = await parseXML(xmlString);
+                                await addDoc(collection(db, "guias_medtronic"), {
+                                    ...parsedData,
+                                    createdAt: new Date()
+                                });
+                                successCount++;
+                            } catch (error) {
+                                errorCount++;
+                            }
+                            const progress = ((i + 1) / totalFiles) * 100;
+                            showImportProgress(progress);
+                            resolve();
+                        };
+                        reader.readAsText(file);
+                    });
+                }
+
+                hideLoading();
+                hideImportProgress();
+                showToast(`Importación completada: ${successCount} guías exitosas, ${errorCount} errores`, successCount > 0 ? 'success' : 'error');
+                fileUpload.value = '';
+                await loadGuias();
+            } catch (error) {
+                hideLoading();
+                hideImportProgress();
+                showToast('Error al importar los archivos: ' + error.message, 'error');
+                fileUpload.value = '';
             }
-            await loadGuias();
-        } catch (error) {
-            window.currentUserData = { fullName: 'Usuario Invitado', username: 'invitado' };
-            showToast('Error al cargar datos del usuario.', 'error');
-        }
-    });
+        });
+    }
+
+    if (auth) {
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) {
+                window.location.replace('../index.html');
+                return;
+            }
+            try {
+                const userDocRef = doc(db, 'users', user.uid);
+                const userDoc = await getDoc(userDocRef);
+                if (userDoc.exists()) {
+                    window.currentUserData = userDoc.data();
+                } else {
+                    window.currentUserData = { fullName: user.displayName || 'Usuario Invitado', username: user.email || 'invitado' };
+                }
+                await loadGuias();
+            } catch (error) {
+                window.currentUserData = { fullName: 'Usuario Invitado', username: 'invitado' };
+                showToast('Error al cargar datos del usuario: ' + error.message, 'error');
+            }
+        });
+    } else {
+        showToast('Error: Firebase Authentication no está inicializado.', 'error');
+        window.location.replace('../index.html');
+    }
 });
