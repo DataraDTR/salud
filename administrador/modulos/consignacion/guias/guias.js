@@ -430,7 +430,11 @@ document.addEventListener('DOMContentLoaded', () => {
             hideLoading();
             if (docSnap.exists()) {
                 const data = docSnap.data();
-                modalTitle.textContent = `Detalles de la Guía - Folio: ${data.folio || 'N/A'}, Folio Referencia: ${data.folioRef || 'N/A'}`;
+                if (modalTitle) {
+                    modalTitle.textContent = `Detalles de la Guía - Folio: ${data.folio || 'N/A'}, Folio Referencia: ${data.folioRef || 'N/A'}`;
+                } else {
+                    showToast('Error: No se encontró el elemento del título del modal.', 'error');
+                }
                 viewContent.innerHTML = formatGuideContent(data.fullData, data.folio, data.folioRef);
                 viewModal.style.display = 'block';
             } else {
@@ -446,7 +450,9 @@ document.addEventListener('DOMContentLoaded', () => {
         viewModal.style.display = 'none';
         currentViewId = null;
         viewContent.innerHTML = '';
-        modalTitle.textContent = 'Detalles de la Guía';
+        if (modalTitle) {
+            modalTitle.textContent = 'Detalles de la Guía';
+        }
     }
 
     closeViewModal.addEventListener('click', closeViewModalHandler);
