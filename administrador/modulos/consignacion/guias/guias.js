@@ -117,6 +117,10 @@ async function parseXML(xmlString) {
 
 function setupColumnResize() {
     const table = document.querySelector('.guias-table');
+    if (!table) {
+        console.warn('Tabla no encontrada para redimensionamiento');
+        return;
+    }
     const headers = document.querySelectorAll('.guias-table th');
 
     headers.forEach((header, index) => {
@@ -186,7 +190,7 @@ function debounce(func, wait) {
 function showToast(text, type = 'success') {
     const toastContainer = document.getElementById('guias-toast-container');
     if (!toastContainer) {
-        console.warn('Toast container not found');
+        console.warn('Contenedor de toast no encontrado');
         return;
     }
 
@@ -621,6 +625,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     guiasBody.appendChild(row);
                 });
             }
+        } else {
+            showToast('Error: No se encontró el cuerpo de la tabla.', 'error');
         }
 
         updatePagination(totalRecords);
