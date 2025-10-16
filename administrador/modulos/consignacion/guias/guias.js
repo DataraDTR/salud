@@ -218,6 +218,79 @@ function formatGuideContent(data) {
     html += '</table>';
     html += '</div>';
 
+    // Referencias
+    html += '<div class="guias-guide-section">';
+    html += '<h3>Referencias</h3>';
+    html += '<table class="guias-modal-table">';
+    html += '<thead>';
+    html += '<tr>';
+    html += `<th>Referencia</th><th>Número Línea</th><th>Tipo Documento</th><th>Folio Referencia</th><th>Fecha Referencia</th>`;
+    html += '</tr>';
+    html += '</thead>';
+    html += '<tbody>';
+    const referencias = Array.isArray(doc.Referencia) ? doc.Referencia : doc.Referencia ? [doc.Referencia] : [];
+    referencias.forEach((referencia, index) => {
+        html += '<tr>';
+        html += `<td>Referencia ${index + 1}</td>`;
+        html += `<td>${referencia.NroLinRef || ''}</td>`;
+        html += `<td>${referencia.TpoDocRef || ''}</td>`;
+        html += `<td>${referencia.FolioRef || ''}</td>`;
+        html += `<td>${referencia.FchRef || ''}</td>`;
+        html += '</tr>';
+    });
+    html += '</tbody>';
+    html += '</table>';
+    html += '</div>';
+
+    // Detalles
+    html += '<div class="guias-guide-section">';
+    html += '<h3>Detalles</h3>';
+    html += '<table class="guias-modal-table">';
+    html += '<thead>';
+    html += '<tr>';
+    html += `<th>Ítem</th><th>Número Línea</th><th>Código</th><th>Tipo Código</th><th>Nombre Ítem</th>`;
+    html += `<th>Descripción</th><th>Cantidad</th><th>Fecha Vencimiento</th><th>Unidad Medida</th>`;
+    html += `<th>Precio Unitario</th><th>Monto Ítem</th>`;
+    html += '</tr>';
+    html += '</thead>';
+    html += '<tbody>';
+    const detalles = Array.isArray(doc.Detalle) ? doc.Detalle : doc.Detalle ? [doc.Detalle] : [];
+    detalles.forEach((detalle, index) => {
+        html += '<tr>';
+        html += `<td>Ítem ${index + 1}</td>`;
+        html += `<td>${detalle.NroLinDet || ''}</td>`;
+        html += `<td>${detalle.CdgItem?.VlrCodigo || ''}</td>`;
+        html += `<td>${detalle.CdgItem?.TpoCodigo || ''}</td>`;
+        html += `<td>${detalle.NmbItem || ''}</td>`;
+        html += `<td>${detalle.DscItem || ''}</td>`;
+        html += `<td>${detalle.QtyItem || ''}</td>`;
+        html += `<td>${detalle.FchVencim || ''}</td>`;
+        html += `<td>${detalle.UnmdItem || ''}</td>`;
+        html += `<td>${detalle.PrcItem || ''}</td>`;
+        html += `<td>${detalle.MontoItem || ''}</td>`;
+        html += '</tr>';
+    });
+    html += '</tbody>';
+    html += '</table>';
+    html += '</div>';
+
+    // Totales
+    html += '<div class="guias-guide-section">';
+    html += '<h3>Totales</h3>';
+    html += '<table class="guias-modal-table">';
+    html += '<tr>';
+    html += `<th>Monto Neto</th><th>Monto Exento</th><th>Tasa IVA</th><th>IVA</th><th>Monto Total</th>`;
+    html += '</tr>';
+    html += '<tr>';
+    html += `<td>${doc.Encabezado.Totales.MntNeto || ''}</td>`;
+    html += `<td>${doc.Encabezado.Totales.MntExe || ''}</td>`;
+    html += `<td>${doc.Encabezado.Totales.TasaIVA || ''}</td>`;
+    html += `<td>${doc.Encabezado.Totales.IVA || ''}</td>`;
+    html += `<td>${doc.Encabezado.Totales.MntTotal || ''}</td>`;
+    html += '</tr>';
+    html += '</table>';
+    html += '</div>';
+
     // Emisor
     html += '<div class="guias-guide-section">';
     html += '<h3>Emisor</h3>';
@@ -293,79 +366,6 @@ function formatGuideContent(data) {
     html += `<td>${doc.Encabezado.Transporte.CmnaDest || ''}</td>`;
     html += `<td>${doc.Encabezado.Transporte.CiudadDest || ''}</td>`;
     html += '</tr>';
-    html += '</table>';
-    html += '</div>';
-
-    // Totales
-    html += '<div class="guias-guide-section">';
-    html += '<h3>Totales</h3>';
-    html += '<table class="guias-modal-table">';
-    html += '<tr>';
-    html += `<th>Monto Neto</th><th>Monto Exento</th><th>Tasa IVA</th><th>IVA</th><th>Monto Total</th>`;
-    html += '</tr>';
-    html += '<tr>';
-    html += `<td>${doc.Encabezado.Totales.MntNeto || ''}</td>`;
-    html += `<td>${doc.Encabezado.Totales.MntExe || ''}</td>`;
-    html += `<td>${doc.Encabezado.Totales.TasaIVA || ''}</td>`;
-    html += `<td>${doc.Encabezado.Totales.IVA || ''}</td>`;
-    html += `<td>${doc.Encabezado.Totales.MntTotal || ''}</td>`;
-    html += '</tr>';
-    html += '</table>';
-    html += '</div>';
-
-    // Detalles
-    html += '<div class="guias-guide-section">';
-    html += '<h3>Detalles</h3>';
-    html += '<table class="guias-modal-table">';
-    html += '<thead>';
-    html += '<tr>';
-    html += `<th>Ítem</th><th>Número Línea</th><th>Código</th><th>Tipo Código</th><th>Nombre Ítem</th>`;
-    html += `<th>Descripción</th><th>Cantidad</th><th>Fecha Vencimiento</th><th>Unidad Medida</th>`;
-    html += `<th>Precio Unitario</th><th>Monto Ítem</th>`;
-    html += '</tr>';
-    html += '</thead>';
-    html += '<tbody>';
-    const detalles = Array.isArray(doc.Detalle) ? doc.Detalle : doc.Detalle ? [doc.Detalle] : [];
-    detalles.forEach((detalle, index) => {
-        html += '<tr>';
-        html += `<td>Ítem ${index + 1}</td>`;
-        html += `<td>${detalle.NroLinDet || ''}</td>`;
-        html += `<td>${detalle.CdgItem?.VlrCodigo || ''}</td>`;
-        html += `<td>${detalle.CdgItem?.TpoCodigo || ''}</td>`;
-        html += `<td>${detalle.NmbItem || ''}</td>`;
-        html += `<td>${detalle.DscItem || ''}</td>`;
-        html += `<td>${detalle.QtyItem || ''}</td>`;
-        html += `<td>${detalle.FchVencim || ''}</td>`;
-        html += `<td>${detalle.UnmdItem || ''}</td>`;
-        html += `<td>${detalle.PrcItem || ''}</td>`;
-        html += `<td>${detalle.MontoItem || ''}</td>`;
-        html += '</tr>';
-    });
-    html += '</tbody>';
-    html += '</table>';
-    html += '</div>';
-
-    // Referencias
-    html += '<div class="guias-guide-section">';
-    html += '<h3>Referencias</h3>';
-    html += '<table class="guias-modal-table">';
-    html += '<thead>';
-    html += '<tr>';
-    html += `<th>Referencia</th><th>Número Línea</th><th>Tipo Documento</th><th>Folio Referencia</th><th>Fecha Referencia</th>`;
-    html += '</tr>';
-    html += '</thead>';
-    html += '<tbody>';
-    const referencias = Array.isArray(doc.Referencia) ? doc.Referencia : doc.Referencia ? [doc.Referencia] : [];
-    referencias.forEach((referencia, index) => {
-        html += '<tr>';
-        html += `<td>Referencia ${index + 1}</td>`;
-        html += `<td>${referencia.NroLinRef || ''}</td>`;
-        html += `<td>${referencia.TpoDocRef || ''}</td>`;
-        html += `<td>${referencia.FolioRef || ''}</td>`;
-        html += `<td>${referencia.FchRef || ''}</td>`;
-        html += '</tr>';
-    });
-    html += '</tbody>';
     html += '</table>';
     html += '</div>';
 
