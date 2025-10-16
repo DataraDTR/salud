@@ -253,7 +253,8 @@ function formatGuideContent(data) {
     // Detalles
     html += '<div class="guias-guide-section">';
     html += '<h3>Detalles</h3>';
-    doc.Detalle.forEach((detalle, index) => {
+    const detalles = Array.isArray(doc.Detalle) ? doc.Detalle : doc.Detalle ? [doc.Detalle] : [];
+    detalles.forEach((detalle, index) => {
         html += `<div class="guias-guide-details">`;
         html += `<h4>Ítem ${index + 1}</h4>`;
         html += `<div class="guias-guide-item"><label>Número Línea:</label><span>${detalle.NroLinDet || ''}</span></div>`;
@@ -273,7 +274,8 @@ function formatGuideContent(data) {
     // Referencias
     html += '<div class="guias-guide-section">';
     html += '<h3>Referencias</h3>';
-    doc.Referencia.forEach((referencia, index) => {
+    const referencias = Array.isArray(doc.Referencia) ? doc.Referencia : doc.Referencia ? [doc.Referencia] : [];
+    referencias.forEach((referencia, index) => {
         html += `<div class="guias-guide-details">`;
         html += `<h4>Referencia ${index + 1}</h4>`;
         html += `<div class="guias-guide-item"><label>Número Línea:</label><span>${referencia.NroLinRef || ''}</span></div>`;
