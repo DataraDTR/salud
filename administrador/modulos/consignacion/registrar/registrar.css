@@ -32,7 +32,7 @@ html, body {
     display: flex;
     justify-content: space-between;
     gap: 10px;
-    margin-bottom: 10px; /* Reducido de 20px a 10px */
+    margin-bottom: 10px;
     align-items: center;
     flex-wrap: wrap;
 }
@@ -92,7 +92,9 @@ html, body {
 }
 
 .registrar-date-search {
-    min-width: 350px; /* Aumentado para acomodar la fila única */
+    min-width: 400px;
+    max-width: 500px;
+    flex-shrink: 1;
     display: flex;
     flex-direction: column;
     gap: 4px;
@@ -101,8 +103,9 @@ html, body {
 .registrar-date-options {
     display: flex;
     flex-wrap: nowrap;
-    gap: 8px;
+    gap: 6px;
     align-items: center;
+    flex-shrink: 1;
 }
 
 .registrar-date-options label {
@@ -111,35 +114,46 @@ html, body {
     gap: 4px;
     font-size: 10px;
     white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .registrar-date-group {
     display: flex;
-    gap: 8px;
+    gap: 6px;
     align-items: center;
+    flex-shrink: 1;
+}
+
+#dateDay, #dateWeek, #dateMonth {
+    min-width: 0;
+}
+
+#fechaDia, #fechaDesde, #fechaHasta {
+    width: 100px;
+    min-width: 100px;
 }
 
 #mesSelect {
-    width: 100px; /* Ajustado para la fila */
+    width: 90px;
+    min-width: 90px;
     padding: 8px;
     border: 1px solid #ddd;
     border-radius: 4px;
 }
 
 #anioSelect {
-    width: 80px; /* Ajustado para la fila */
+    width: 70px;
+    min-width: 70px;
     padding: 8px;
     border: 1px solid #ddd;
     border-radius: 4px;
 }
 
-#fechaDia, #fechaDesde, #fechaHasta {
-    width: 120px; /* Ajustado para la fila */
-}
-
 .registrar-actions-menu {
+    flex-shrink: 0;
     position: relative;
-    align-self: flex-end;
+    align-self: center;
+    min-width: 120px;
 }
 
 #actionsBtn {
@@ -393,7 +407,7 @@ html, body {
 }
 
 #registrar-message {
-    margin-bottom: 10px; /* Reducido de 20px a 10px */
+    margin-bottom: 10px;
     padding: 8px;
     border-radius: 4px;
     display: none;
@@ -641,4 +655,27 @@ html, body {
 
 .history-entry:last-child {
     border-bottom: none;
+}
+
+@media screen and (max-width: 1200px) {
+    .registrar-date-search {
+        min-width: 300px;
+        max-width: 400px;
+    }
+    .registrar-date-options {
+        flex-wrap: wrap;
+        gap: 4px;
+    }
+    #fechaDia, #fechaDesde, #fechaHasta {
+        width: 90px;
+        min-width: 90px;
+    }
+    #mesSelect {
+        width: 80px;
+        min-width: 80px;
+    }
+    #anioSelect {
+        width: 60px;
+        min-width: 60px;
+    }
 }

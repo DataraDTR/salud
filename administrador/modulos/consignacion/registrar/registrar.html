@@ -120,16 +120,16 @@
             <div class="registrar-form-group registrar-date-search">
                 <label class="registrar-label">Buscar por Fecha:</label>
                 <div class="registrar-date-options">
-                    <label><input type="radio" name="dateType" value="day" checked> Día específico</label>
-                    <label><input type="radio" name="dateType" value="week"> Semana (desde-hasta)</label>
-                    <label><input type="radio" name="dateType" value="month"> Mes específico</label>
+                    <label><input type="radio" name="dateType" value="day" checked> Día</label>
                     <div id="dateDay" class="registrar-date-group">
                         <input type="date" id="fechaDia" autocomplete="off">
                     </div>
+                    <label><input type="radio" name="dateType" value="week"> Semana</label>
                     <div id="dateWeek" class="registrar-date-group" style="display: none;">
                         <input type="date" id="fechaDesde" placeholder="Desde" autocomplete="off">
                         <input type="date" id="fechaHasta" placeholder="Hasta" autocomplete="off">
                     </div>
+                    <label><input type="radio" name="dateType" value="month"> Mes</label>
                     <div id="dateMonth" class="registrar-date-group" style="display: none;">
                         <select id="mesSelect">
                             <option value="01">Enero</option>
