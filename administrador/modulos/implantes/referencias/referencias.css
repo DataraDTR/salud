@@ -244,16 +244,16 @@ html, body {
     background-color: #f8f9fa;
 }
 
-.referencias-table th:nth-child(1), .referencias-table td:nth-child(1) { width: 100px; min-width: 80px; max-width: 100px; }
-.referencias-table th:nth-child(2), .referencias-table td:nth-child(2) { width: 130px; min-width: 80px; max-width: 130px; }
-.referencias-table th:nth-child(3), .referencias-table td:nth-child(3) { width: 200px; min-width: 150px; max-width: 200px; }
-.referencias-table th:nth-child(4), .referencias-table td:nth-child(4) { width: 100px; min-width: 80px; max-width: 100px; }
-.referencias-table th:nth-child(5), .referencias-table td:nth-child(5) { width: 80px; min-width: 60px; max-width: 80px; }
-.referencias-table th:nth-child(6), .referencias-table td:nth-child(6) { width: 150px; min-width: 100px; max-width: 150px; }
-.referencias-table th:nth-child(7), .referencias-table td:nth-child(7) { width: 250px; min-width: 200px; max-width: 250px; }
-.referencias-table th:nth-child(8), .referencias-table td:nth-child(8) { width: 120px; min-width: 80px; max-width: 120px; }
-.referencias-table th:nth-child(9), .referencias-table td:nth-child(9) { width: 120px; min-width: 80px; max-width: 120px; }
-.referencias-table th:nth-child(10), .referencias-table td:nth-child(10) { width: 80px; min-width: 60px; max-width: 80px; }
+.referencias-table th:nth-child(1), .referencias-table td:nth-child(1) { width: 100px; min-width: 80px; }
+.referencias-table th:nth-child(2), .referencias-table td:nth-child(2) { width: 130px; min-width: 80px; }
+.referencias-table th:nth-child(3), .referencias-table td:nth-child(3) { width: 200px; min-width: 150px; }
+.referencias-table th:nth-child(4), .referencias-table td:nth-child(4) { width: 100px; min-width: 80px; }
+.referencias-table th:nth-child(5), .referencias-table td:nth-child(5) { width: 80px; min-width: 60px; }
+.referencias-table th:nth-child(6), .referencias-table td:nth-child(6) { width: 150px; min-width: 100px; }
+.referencias-table th:nth-child(7), .referencias-table td:nth-child(7) { width: 250px; min-width: 200px; }
+.referencias-table th:nth-child(8), .referencias-table td:nth-child(8) { width: 120px; min-width: 80px; }
+.referencias-table th:nth-child(9), .referencias-table td:nth-child(9) { width: 120px; min-width: 80px; }
+.referencias-table th:nth-child(10), .referencias-table td:nth-child(10) { width: 80px; min-width: 60px; }
 
 .referencias-actions {
     display: flex;
@@ -482,7 +482,6 @@ html, body {
     color: #333;
 }
 
-/* Contenedor para los toasts - crece hacia abajo (nuevos mensajes abajo) */
 .referencias-toast-container {
     position: fixed;
     bottom: 20px;
@@ -494,7 +493,6 @@ html, body {
     max-width: 350px;
 }
 
-/* Estilo base para cada mensaje */
 .referencias-toast {
     background-color: #333;
     color: white;
@@ -510,18 +508,15 @@ html, body {
     word-wrap: break-word;
 }
 
-/* Animación de entrada: aparece deslizándose desde abajo */
 .referencias-toast.show {
     opacity: 1;
     transform: translateY(0);
 }
 
-/* Mensaje de éxito */
 .referencias-toast.success {
     background-color: #28a745;
 }
 
-/* Mensaje de error */
 .referencias-toast.error {
     background-color: #dc3545;
 }
