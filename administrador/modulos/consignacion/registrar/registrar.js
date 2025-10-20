@@ -1,6 +1,15 @@
-// Acceder a auth y db desde window.firebaseApp
-const db = window.firebaseApp.db;
-const auth = window.firebaseApp.auth;
+const firebaseConfig = {
+    apiKey: "AIzaSyB7r0f2iRNUU3n9nUc0QRDn0-4vPwmmrK8",
+    authDomain: "consignaciones-94d35.firebaseapp.com",
+    projectId: "consignaciones-94d35",
+    storageBucket: "consignaciones-94d35.appspot.com",
+    messagingSenderId: "324135136642",
+    appId: "1:324135136642:web:0e4cafb3b8940a5a3e8d3c"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+const auth = firebase.auth();
 
 let currentPage = 1;
 const recordsPerPage = 10;
@@ -171,6 +180,10 @@ async function registerRecord() {
     try {
         showLoading(true);
         const user = auth.currentUser;
+        if (!user) {
+            showMessage('Usuario no autenticado', 'error');
+            return;
+        }
         const registro = {
             admision,
             paciente,
@@ -185,15 +198,14 @@ async function registerRecord() {
             atributo,
             totalItems,
             createdAt: new Date(),
-            createdBy: user ? user.email : 'Anónimo',
+            createdBy: user.email || 'Anónimo',
             updatedAt: new Date(),
-            updatedBy: user ? user.email : 'Anónimo'
+            updatedBy: user.email || 'Anónimo'
         };
 
         await db.collection('registrar_consignacion').add(registro);
         showToast('Registro guardado exitosamente', 'success');
 
-        // Limpiar solo los campos especificados
         document.getElementById('codigo').value = '';
         document.getElementById('descripcion').value = '';
         document.getElementById('cantidad').value = '';
@@ -206,7 +218,7 @@ async function registerRecord() {
         await loadRecords();
     } catch (error) {
         console.error('Error al registrar:', error);
-        showMessage('Error al registrar', 'error');
+        showMessage('Error al registrar: ' + error.message, 'error');
     } finally {
         showLoading(false);
     }
@@ -237,7 +249,7 @@ async function loadRecords() {
         applyFilters();
     } catch (error) {
         console.error('Error al cargar registros:', error);
-        showMessage('Error al cargar registros', 'error');
+        showMessage('Error al cargar registros: ' + error.message, 'error');
     } finally {
         showLoading(false);
     }
@@ -402,7 +414,7 @@ async function openEditModal(id) {
         }
     } catch (error) {
         console.error('Error al cargar registro para editar:', error);
-        showMessage('Error al cargar registro', 'error');
+        showMessage('Error al cargar registro: ' + error.message, 'error');
     } finally {
         showLoading(false);
     }
@@ -435,6 +447,10 @@ async function saveEdit() {
     try {
         showLoading(true);
         const user = auth.currentUser;
+        if (!user) {
+            showMessage('Usuario no autenticado', 'error');
+            return;
+        }
         const updatedData = {
             admision,
             paciente,
@@ -449,14 +465,14 @@ async function saveEdit() {
             atributo,
             totalItems,
             updatedAt: new Date(),
-            updatedBy: user ? user.email : 'Anónimo'
+            updatedBy: user.email || 'Anónimo'
         };
 
         await db.collection('registrar_consignacion').doc(currentEditId).update(updatedData);
         await db.collection('registrar_consignacion').doc(currentEditId).collection('history').add({
             ...updatedData,
             timestamp: new Date(),
-            user: user ? user.email : 'Anónimo',
+            user: user.email || 'Anónimo',
             action: 'update'
         });
         showToast('Registro actualizado exitosamente', 'success');
@@ -464,7 +480,7 @@ async function saveEdit() {
         await loadRecords();
     } catch (error) {
         console.error('Error al actualizar registro:', error);
-        showMessage('Error al actualizar registro', 'error');
+        showMessage('Error al actualizar registro: ' + error.message, 'error');
     } finally {
         showLoading(false);
     }
@@ -479,12 +495,16 @@ async function confirmDelete() {
     try {
         showLoading(true);
         const user = auth.currentUser;
+        if (!user) {
+            showMessage('Usuario no autenticado', 'error');
+            return;
+        }
         const doc = await db.collection('registrar_consignacion').doc(currentDeleteId).get();
         if (doc.exists) {
             await db.collection('registrar_consignacion').doc(currentDeleteId).collection('history').add({
                 ...doc.data(),
                 timestamp: new Date(),
-                user: user ? user.email : 'Anónimo',
+                user: user.email || 'Anónimo',
                 action: 'delete'
             });
             await db.collection('registrar_consignacion').doc(currentDeleteId).delete();
@@ -494,7 +514,7 @@ async function confirmDelete() {
         }
     } catch (error) {
         console.error('Error al eliminar registro:', error);
-        showMessage('Error al eliminar registro', 'error');
+        showMessage('Error al eliminar registro: ' + error.message, 'error');
     } finally {
         showLoading(false);
     }
@@ -531,7 +551,7 @@ async function openHistoryModal(id) {
         historyModal.style.display = 'block';
     } catch (error) {
         console.error('Error al cargar historial:', error);
-        showMessage('Error al cargar historial', 'error');
+        showMessage('Error al cargar historial: ' + error.message, 'error');
     } finally {
         showLoading(false);
     }
