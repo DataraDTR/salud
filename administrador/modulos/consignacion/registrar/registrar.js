@@ -3,12 +3,13 @@ import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/
 import { getFirestore, collection, getDocs, addDoc, doc, getDoc, updateDoc, deleteDoc, orderBy, query, where, Timestamp } from 'https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js';
 
 const firebaseConfig = {
-    apiKey: "AIzaSyB7r0f2iRNUU3n9nUc0QRDn0-4vPwmmrK8",
-    authDomain: "consignaciones-94d35.firebaseapp.com",
-    projectId: "consignaciones-94d35",
-    storageBucket: "consignaciones-94d35.appspot.com",
-    messagingSenderId: "324135136642",
-    appId: "1:324135136642:web:0e4cafb3b8940a5a3e8d3c"
+    apiKey: "AIzaSyD6JY7FaRqjZoN6OzbFHoIXxd-IJL3H-Ek",
+    authDomain: "datara-salud.firebaseapp.com",
+    projectId: "datara-salud",
+    storageBucket: "datara-salud.firebasestorage.app",
+    messagingSenderId: "198886910481",
+    appId: "1:198886910481:web:abbc345203a423a6329fb0",
+    measurementId: "G-MLYVTZPPLD"
 };
 
 const app = initializeApp(firebaseConfig);
