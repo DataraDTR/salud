@@ -5,8 +5,37 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Registrar Consignación</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <link rel="stylesheet" href="registrar.css">
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, setPersistence, browserSessionPersistence } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
+        import { 
+            getFirestore, collection, addDoc, getDocs, query, where, doc, 
+            updateDoc, deleteDoc, orderBy, getDoc, limit, startAfter 
+        } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+        
+        window.firebaseModules = {
+            initializeApp,
+            getAuth, 
+            onAuthStateChanged,
+            setPersistence,
+            browserSessionPersistence,
+            getFirestore,
+            collection,
+            addDoc,
+            getDocs,
+            query,
+            where,
+            doc,
+            updateDoc,
+            deleteDoc,
+            orderBy,
+            getDoc,
+            limit,
+            startAfter
+        };
+    </script>
     <script src="https://cdn.sheetjs.com/xlsx-0.18.5/package/dist/xlsx.full.min.js"></script>
+    <link rel="stylesheet" href="registrar.css">
 </head>
 <body>
     <div class="registrar-main-container">
@@ -181,7 +210,6 @@
             <div class="registrar-loading-text">Cargando...</div>
         </div>
     </div>
-
     <div id="editModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -256,7 +284,6 @@
             </div>
         </div>
     </div>
-
     <div id="deleteModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -272,7 +299,6 @@
             </div>
         </div>
     </div>
-
     <div id="historyModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -283,7 +309,6 @@
             </div>
         </div>
     </div>
-
     <div class="registrar-toast-container" id="toastContainer"></div>
     <script type="module" src="registrar.js"></script>
 </body>
