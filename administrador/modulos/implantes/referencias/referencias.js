@@ -162,7 +162,6 @@ function setupColumnResize() {
     const table = document.querySelector('.referencias-table');
     const headers = document.querySelectorAll('.referencias-table th');
 
-    // Anchos iniciales en píxeles (deben coincidir con el CSS)
     const initialWidths = [
         100, // Acciones
         130, // Referencia
@@ -176,7 +175,6 @@ function setupColumnResize() {
         80   // Estado
     ];
 
-    // Inicializar anchos de todas las columnas para que sean fijos
     headers.forEach((header, index) => {
         header.style.width = `${initialWidths[index]}px`;
         header.style.minWidth = `${initialWidths[index]}px`;
@@ -190,7 +188,6 @@ function setupColumnResize() {
     });
 
     headers.forEach((header, index) => {
-        // Eliminar manejador existente si hay
         const existingHandle = header.querySelector('.resize-handle');
         if (existingHandle) existingHandle.remove();
 
@@ -215,10 +212,8 @@ function setupColumnResize() {
             const clientX = e.pageX || (e.touches && e.touches[0].pageX);
             if (!clientX) return;
 
-            // Calcular nuevo ancho con límites (20px min, 2000px max)
             const newWidth = Math.max(20, Math.min(2000, startWidth + (clientX - startX)));
-
-            // Actualizar SOLO esta columna (header y celdas)
+            
             header.style.width = `${newWidth}px`;
             header.style.minWidth = `${newWidth}px`;
             header.style.maxWidth = `${newWidth}px`;

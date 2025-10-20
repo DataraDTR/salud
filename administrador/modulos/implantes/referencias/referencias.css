@@ -260,7 +260,6 @@ html, body {
     background-color: #f8f9fa;
 }
 
-/* Anchos iniciales de las columnas - fijos e independientes */
 .referencias-table th:nth-child(1), .referencias-table td:nth-child(1) { width: 100px; min-width: 100px; max-width: 100px; }
 .referencias-table th:nth-child(2), .referencias-table td:nth-child(2) { width: 130px; min-width: 130px; max-width: 130px; }
 .referencias-table th:nth-child(3), .referencias-table td:nth-child(3) { width: 300px; min-width: 300px; max-width: 300px; }
@@ -499,7 +498,6 @@ html, body {
     color: #333;
 }
 
-/* Contenedor para los toasts - crece hacia abajo (nuevos mensajes abajo) */
 .referencias-toast-container {
     position: fixed;
     bottom: 20px;
@@ -511,7 +509,6 @@ html, body {
     max-width: 350px;
 }
 
-/* Estilo base para cada mensaje */
 .referencias-toast {
     background-color: #333;
     color: white;
@@ -527,18 +524,15 @@ html, body {
     word-wrap: break-word;
 }
 
-/* Animación de entrada: aparece deslizándose desde abajo */
 .referencias-toast.show {
     opacity: 1;
     transform: translateY(0);
 }
 
-/* Mensaje de éxito */
 .referencias-toast.success {
     background-color: #28a745;
 }
 
-/* Mensaje de error */
 .referencias-toast.error {
     background-color: #dc3545;
 }
