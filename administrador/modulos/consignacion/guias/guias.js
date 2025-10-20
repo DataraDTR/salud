@@ -120,6 +120,28 @@ function setupColumnResize() {
     }
     const headers = document.querySelectorAll('.guias-table th');
 
+    // Anchos iniciales en píxeles (deben coincidir con el CSS)
+    const initialWidths = [
+        150, // Acciones
+        300, // Empresa
+        100, // Folio
+        120, // Fecha Emisión
+        120  // Folio Referencia
+    ];
+
+    // Inicializar anchos de todas las columnas para que sean fijos
+    headers.forEach((header, index) => {
+        header.style.width = `${initialWidths[index]}px`;
+        header.style.minWidth = `${initialWidths[index]}px`;
+        header.style.maxWidth = `${initialWidths[index]}px`;
+        const cells = document.querySelectorAll(`.guias-table td:nth-child(${index + 1})`);
+        cells.forEach(cell => {
+            cell.style.width = `${initialWidths[index]}px`;
+            cell.style.minWidth = `${initialWidths[index]}px`;
+            cell.style.maxWidth = `${initialWidths[index]}px`;
+        });
+    });
+
     headers.forEach((header, index) => {
         const existingHandle = header.querySelector('.resize-handle');
         if (existingHandle) existingHandle.remove();
@@ -135,7 +157,7 @@ function setupColumnResize() {
         const startResize = (e) => {
             isResizing = true;
             startX = e.pageX || (e.touches && e.touches[0].pageX);
-            startWidth = header.getBoundingClientRect().width;
+            startWidth = parseFloat(getComputedStyle(header).width);
             resizeHandle.classList.add('active');
             e.preventDefault();
         };
@@ -144,8 +166,11 @@ function setupColumnResize() {
             if (!isResizing) return;
             const clientX = e.pageX || (e.touches && e.touches[0].pageX);
             if (!clientX) return;
-            const newWidth = Math.max(20, startWidth + (clientX - startX));
 
+            // Calcular nuevo ancho con límites (20px min, 2000px max)
+            const newWidth = Math.max(20, Math.min(2000, startWidth + (clientX - startX)));
+
+            // Actualizar SOLO esta columna (header y celdas)
             header.style.width = `${newWidth}px`;
             header.style.minWidth = `${newWidth}px`;
             header.style.maxWidth = `${newWidth}px`;
