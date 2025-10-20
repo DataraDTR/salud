@@ -50,9 +50,13 @@
                 <label for="paciente" class="registrar-label">Paciente:</label>
                 <input type="text" id="paciente" autocomplete="off">
             </div>
-            <div class="registrar-form-group">
+            <div class="registrar-form-group medico-input-container">
                 <label for="medico" class="registrar-label">Médico:</label>
-                <input type="text" id="medico" autocomplete="off">
+                <div class="medico-input-wrapper">
+                    <input type="text" id="medico" autocomplete="off">
+                    <i class="fas fa-list medico-icon" id="medicoListBtn"></i>
+                </div>
+                <div id="medicoDropdown" class="medico-dropdown"></div>
             </div>
             <div class="registrar-form-group">
                 <label for="fechaCX" class="registrar-label">Fecha CX:</label>
@@ -216,9 +220,13 @@
                             <label for="editPaciente">Paciente:</label>
                             <input type="text" id="editPaciente" required autocomplete="off">
                         </div>
-                        <div class="modal-form-group">
+                        <div class="modal-form-group medico-input-container">
                             <label for="editMedico">Médico:</label>
-                            <input type="text" id="editMedico" required autocomplete="off">
+                            <div class="medico-input-wrapper">
+                                <input type="text" id="editMedico" required autocomplete="off">
+                                <i class="fas fa-list medico-icon" id="editMedicoListBtn"></i>
+                            </div>
+                            <div id="editMedicoDropdown" class="medico-dropdown"></div>
                         </div>
                         <div class="modal-form-group">
                             <label for="editFechaCX">Fecha CX:</label>

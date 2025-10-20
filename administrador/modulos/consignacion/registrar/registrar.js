@@ -1,4 +1,5 @@
-const { initializeApp, getAuth, onAuthStateChanged, setPersistence, browserSessionPersistence, getFirestore, collection, addDoc, getDocs, query, where, doc, updateDoc, deleteDoc, orderBy, getDoc, limit, startAfter, endBefore } = window.firebaseModules;
+const { initializeApp, getAuth, onAuthStateChanged, setPersistence, browserSessionPersistence } = window.firebaseModules;
+const { getFirestore, collection, addDoc, getDocs, query, where, doc, updateDoc, deleteDoc, orderBy, getDoc, limit, startAfter, endBefore } = window.firebaseModules;
 
 const firebaseConfig = {
     apiKey: "AIzaSyD6JY7FaRqjZoN6OzbFHoIXxd-IJL3H-Ek",
@@ -17,305 +18,203 @@ const db = getFirestore(app);
 setPersistence(auth, browserSessionPersistence);
 
 let registros = [];
+let medicos = [];
 let currentPage = 1;
-const PAGE_SIZE = 50;
-let lastVisible = null;
-let firstVisible = null;
+const PAGE_SIZE = 10;
 let searchAdmision = '';
 let searchPaciente = '';
+let searchMedico = '';
 let searchDescripcion = '';
 let searchProveedor = '';
-let searchMedico = '';
-let searchFechaTipo = 'day';
-let searchFechaDia = '';
-let searchFechaDesde = '';
-let searchFechaHasta = '';
-let searchMes = '';
-let searchAnio = '';
-let totalRecords = 0;
-
-function formatNumberWithThousandsSeparator(number) {
-    if (!number) return '';
-    const cleaned = String(number).replace(/[^\d]/g, '');
-    return cleaned ? Number(cleaned).toLocaleString('es-CL') : '';
-}
-
-async function getRegistroByUniqueKey(admision, excludeId = null) {
-    if (!admision) return null;
-    const q = query(collection(db, "registrar_consignacion"), where("admision", "==", admision.trim().toUpperCase()));
-    const querySnapshot = await getDocs(q);
-    if (!querySnapshot.empty) {
-        const doc = querySnapshot.docs[0];
-        if (excludeId && doc.id === excludeId) return null;
-        return { id: doc.id, ...doc.data() };
-    }
-    return null;
-}
-
-async function logAction(registroId, action, oldData = null, newData = null) {
-    if (!window.currentUserData) return;
-    await addDoc(collection(db, "registrar_consignacion_historial"), {
-        registroId,
-        action,
-        timestamp: new Date(),
-        userId: auth.currentUser ? auth.currentUser.uid : null,
-        userFullName: window.currentUserData.fullName || 'Usuario Invitado',
-        username: window.currentUserData.username || 'invitado',
-        oldData,
-        newData
-    });
-}
-
-function setupColumnResize() {
-    const table = document.querySelector('.registrar-table');
-    const headers = document.querySelectorAll('.registrar-table th');
-
-    const initialWidths = [
-        100, // Acciones
-        130, // Admisión
-        200, // Paciente
-        200, // Médico
-        120, // Fecha CX
-        100, // Código
-        300, // Descripción
-        80,  // Cantidad
-        130, // Referencia
-        150, // Proveedor
-        100, // Precio Unitario
-        120, // Atributo
-        100  // Total Items
-    ];
-
-    headers.forEach((header, index) => {
-        header.style.width = `${initialWidths[index]}px`;
-        header.style.minWidth = `${initialWidths[index]}px`;
-        header.style.maxWidth = `${initialWidths[index]}px`;
-        const cells = document.querySelectorAll(`.registrar-table td:nth-child(${index + 1})`);
-        cells.forEach(cell => {
-            cell.style.width = `${initialWidths[index]}px`;
-            cell.style.minWidth = `${initialWidths[index]}px`;
-            cell.style.maxWidth = `${initialWidths[index]}px`;
-        });
-    });
-
-    headers.forEach((header, index) => {
-        const existingHandle = header.querySelector('.resize-handle');
-        if (existingHandle) existingHandle.remove();
-
-        const resizeHandle = document.createElement('div');
-        resizeHandle.className = 'resize-handle';
-        header.appendChild(resizeHandle);
-        header.style.position = 'relative';
-
-        let isResizing = false;
-        let startX, startWidth;
-
-        const startResize = (e) => {
-            isResizing = true;
-            startX = e.pageX || (e.touches && e.touches[0].pageX);
-            startWidth = header.getBoundingClientRect().width;
-            resizeHandle.classList.add('active');
-            e.preventDefault();
-        };
-
-        const resize = (e) => {
-            if (!isResizing) return;
-            const clientX = e.pageX || (e.touches && e.touches[0].pageX);
-            if (!clientX) return;
-            const newWidth = Math.max(20, Math.min(2000, startWidth + (clientX - startX)));
-
-            header.style.width = `${newWidth}px`;
-            header.style.minWidth = `${newWidth}px`;
-            header.style.maxWidth = `${newWidth}px`;
-
-            const cells = document.querySelectorAll(`.registrar-table td:nth-child(${index + 1})`);
-            cells.forEach(cell => {
-                cell.style.width = `${newWidth}px`;
-                cell.style.minWidth = `${newWidth}px`;
-                cell.style.maxWidth = `${newWidth}px`;
-            });
-
-            e.preventDefault();
-        };
-
-        const stopResize = () => {
-            if (isResizing) {
-                isResizing = false;
-                resizeHandle.classList.remove('active');
-            }
-        };
-
-        resizeHandle.addEventListener('mousedown', startResize);
-        resizeHandle.addEventListener('touchstart', startResize, { passive: false });
-        document.addEventListener('mousemove', resize);
-        document.addEventListener('touchmove', resize, { passive: false });
-        document.addEventListener('mouseup', stopResize);
-        document.addEventListener('touchend', stopResize);
-    });
-}
-
-function debounce(func, wait) {
-    let timeout;
-    return function (...args) {
-        clearTimeout(timeout);
-        timeout = setTimeout(() => func.apply(this, args), wait);
-    };
-}
-
-function showToast(text, type = 'success') {
-    const toastContainer = document.getElementById('registrar-toast-container');
-    if (!toastContainer) return;
-
-    const toast = document.createElement('div');
-    toast.className = `registrar-toast ${type}`;
-    toast.textContent = text;
-
-    toastContainer.appendChild(toast);
-
-    setTimeout(() => {
-        toast.classList.add('show');
-    }, 100);
-
-    setTimeout(() => {
-        toast.classList.remove('show');
-        setTimeout(() => {
-            toast.remove();
-        }, 300);
-    }, 5000);
-}
+let dateType = 'day';
+let fechaDia = '';
+let fechaDesde = '';
+let fechaHasta = '';
+let mesSelect = '';
+let anioSelect = '';
+let lastDoc = null;
+let firstDoc = null;
 
 document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('editForm');
+    const registrarBtn = document.getElementById('registrarBtn');
     const loading = document.getElementById('registrar-loading');
+    const toastContainer = document.getElementById('registrar-toast-container');
     const registrarBody = document.getElementById('registrarBody');
     const prevBtn = document.getElementById('prevBtn');
     const nextBtn = document.getElementById('nextBtn');
     const pageNumbers = document.getElementById('pageNumbers');
     const paginationInfo = document.getElementById('paginationInfo');
-    const admisionInput = document.getElementById('admision');
-    const pacienteInput = document.getElementById('paciente');
-    const medicoInput = document.getElementById('medico');
-    const fechaCXInput = document.getElementById('fechaCX');
-    const codigoInput = document.getElementById('codigo');
-    const descripcionInput = document.getElementById('descripcion');
-    const cantidadInput = document.getElementById('cantidad');
-    const referenciaInput = document.getElementById('referencia');
-    const proveedorInput = document.getElementById('proveedor');
-    const precioUnitarioInput = document.getElementById('precioUnitario');
-    const atributoInput = document.getElementById('atributo');
-    const totalItemsInput = document.getElementById('totalItems');
-    const registrarBtn = document.getElementById('registrarBtn');
     const buscarAdmisionInput = document.getElementById('buscarAdmision');
     const buscarPacienteInput = document.getElementById('buscarPaciente');
     const buscarDescripcionInput = document.getElementById('buscarDescripcion');
     const buscarProveedorInput = document.getElementById('buscarProveedor');
     const buscarMedicoInput = document.getElementById('buscarMedico');
-    const dateDay = document.getElementById('dateDay');
-    const dateWeek = document.getElementById('dateWeek');
-    const dateMonth = document.getElementById('dateMonth');
     const fechaDiaInput = document.getElementById('fechaDia');
     const fechaDesdeInput = document.getElementById('fechaDesde');
     const fechaHastaInput = document.getElementById('fechaHasta');
-    const mesSelect = document.getElementById('mesSelect');
-    const anioSelect = document.getElementById('anioSelect');
+    const mesSelectInput = document.getElementById('mesSelect');
+    const anioSelectInput = document.getElementById('anioSelect');
+    const dateTypeRadios = document.getElementsByName('dateType');
+    const dateDayDiv = document.getElementById('dateDay');
+    const dateWeekDiv = document.getElementById('dateWeek');
+    const dateMonthDiv = document.getElementById('dateMonth');
+    const editModal = document.getElementById('editModal');
+    const deleteModal = document.getElementById('deleteModal');
+    const historyModal = document.getElementById('historyModal');
+    const closeEditSpan = document.getElementById('closeEditModal');
+    const cancelEdit = document.getElementById('cancelEdit');
+    const closeDeleteSpan = document.getElementById('closeDeleteModal');
+    const cancelDelete = document.getElementById('cancelDelete');
+    const confirmDelete = document.getElementById('confirmDelete');
+    const deleteText = document.getElementById('deleteText');
+    const closeHistorySpan = document.getElementById('closeHistory');
+    const closeHistoryBtn = document.getElementById('closeHistoryBtn');
+    const historyTitle = document.getElementById('historyTitle');
+    const historyContent = document.getElementById('historyContent');
     const actionsBtn = document.getElementById('actionsBtn');
     const actionsMenu = document.getElementById('actionsMenu');
     const downloadAll = document.getElementById('downloadAll');
     const downloadPage = document.getElementById('downloadPage');
-    const editModal = document.getElementById('editModal');
-    const deleteModal = document.getElementById('deleteModal');
-    const historyModal = document.getElementById('historyModal');
-    const closeEditModal = document.getElementById('closeEditModal');
-    const cancelEdit = document.getElementById('cancelEdit');
-    const editForm = document.getElementById('editForm');
-    const closeDeleteModal = document.getElementById('closeDeleteModal');
-    const cancelDelete = document.getElementById('cancelDelete');
-    const confirmDelete = document.getElementById('confirmDelete');
-    const deleteText = document.getElementById('deleteText');
-    const closeHistory = document.getElementById('closeHistory');
-    const closeHistoryBtn = document.getElementById('closeHistoryBtn');
-    const historyTitle = document.getElementById('historyTitle');
-    const historyContent = document.getElementById('historyContent');
+    const medicoInput = document.getElementById('medico');
+    const medicoListBtn = document.getElementById('medicoListBtn');
+    const medicoDropdown = document.getElementById('medicoDropdown');
+    const editMedicoInput = document.getElementById('editMedico');
+    const editMedicoListBtn = document.getElementById('editMedicoListBtn');
+    const editMedicoDropdown = document.getElementById('editMedicoDropdown');
 
     let currentEditId = null;
-    let currentEditOldData = null;
     let currentDeleteId = null;
     let currentDeleteAdmision = null;
 
-    function formatMontoInput(input) {
-        input.addEventListener('input', (e) => {
-            const value = e.target.value.replace(/[^\d]/g, '');
-            e.target.value = formatNumberWithThousandsSeparator(value);
-        });
-    }
-
-    formatMontoInput(precioUnitarioInput);
-    formatMontoInput(document.getElementById('editPrecioUnitario'));
-
-    function enforceUpperCase(input) {
-        input.addEventListener('input', (e) => {
-            e.target.value = e.target.value.toUpperCase();
-        });
-    }
-
-    [admisionInput, pacienteInput, medicoInput, codigoInput, descripcionInput,
-        buscarAdmisionInput, buscarPacienteInput, buscarDescripcionInput, buscarProveedorInput, buscarMedicoInput,
-        document.getElementById('editAdmision'), document.getElementById('editPaciente'), document.getElementById('editMedico'),
-        document.getElementById('editCodigo'), document.getElementById('editDescripcion')]
-        .forEach(input => input && enforceUpperCase(input));
-
-    document.querySelectorAll('input[name="dateType"]').forEach(radio => {
-        radio.addEventListener('change', (e) => {
-            searchFechaTipo = e.target.value;
-            dateDay.style.display = searchFechaTipo === 'day' ? 'flex' : 'none';
-            dateWeek.style.display = searchFechaTipo === 'week' ? 'flex' : 'none';
-            dateMonth.style.display = searchFechaTipo === 'month' ? 'flex' : 'none';
-            currentPage = 1;
-            lastVisible = null;
-            firstVisible = null;
-            loadRegistros();
-        });
-    });
-
-    window.showLoading = function () {
+    window.showLoading = function() {
         if (loading) loading.classList.add('show');
     };
 
-    window.hideLoading = function () {
+    window.hideLoading = function() {
         if (loading) loading.classList.remove('show');
     };
 
-    window.openEditModal = function (id, registro) {
+    function showToast(text, type = 'success') {
+        const toast = document.createElement('div');
+        toast.className = `registrar-toast ${type}`;
+        toast.textContent = text;
+        toastContainer.appendChild(toast);
+        setTimeout(() => {
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => {
+                    toast.remove();
+                }, 300);
+            }, 5000);
+        }, 100);
+    }
+
+    async function loadMedicos() {
+        try {
+            const querySnapshot = await getDocs(collection(db, "medicos"));
+            medicos = [];
+            querySnapshot.forEach((doc) => {
+                medicos.push({ id: doc.id, nombre: doc.data().nombre, especialidad: doc.data().especialidad || '' });
+            });
+            medicos.sort((a, b) => a.nombre.localeCompare(b.nombre));
+        } catch (error) {
+            showToast('Error al cargar médicos: ' + error.message, 'error');
+        }
+    }
+
+    function showMedicoDropdown(input, dropdown, filter = '') {
+        dropdown.innerHTML = '';
+        const filteredMedicos = filter
+            ? medicos.filter(m => m.nombre.toLowerCase().includes(filter.toLowerCase()))
+            : medicos;
+        if (filteredMedicos.length === 0) {
+            dropdown.style.display = 'none';
+            return;
+        }
+        filteredMedicos.forEach(medico => {
+            const option = document.createElement('div');
+            option.textContent = medico.nombre;
+            option.addEventListener('click', () => {
+                input.value = medico.nombre;
+                dropdown.style.display = 'none';
+            });
+            dropdown.appendChild(option);
+        });
+        dropdown.style.display = 'block';
+    }
+
+    function setupMedicoAutocomplete(input, listBtn, dropdown) {
+        input.addEventListener('input', () => {
+            const value = input.value.trim();
+            showMedicoDropdown(input, dropdown, value);
+        });
+        input.addEventListener('focus', () => {
+            showMedicoDropdown(input, dropdown, input.value.trim());
+        });
+        listBtn.addEventListener('click', () => {
+            showMedicoDropdown(input, dropdown);
+        });
+        window.addEventListener('click', (e) => {
+            if (!input.contains(e.target) && !dropdown.contains(e.target) && !listBtn.contains(e.target)) {
+                dropdown.style.display = 'none';
+            }
+        });
+    }
+
+    async function logAction(registroId, action, oldData = null, newData = null) {
+        if (!window.currentUserData) {
+            console.warn('Datos del usuario no disponibles para log');
+            return;
+        }
+        await addDoc(collection(db, "registrar_consignacion_historial"), {
+            registroId,
+            action,
+            timestamp: new Date(),
+            userId: auth.currentUser ? auth.currentUser.uid : null,
+            userFullName: window.currentUserData.fullName || 'Usuario Invitado',
+            username: window.currentUserData.username || 'invitado',
+            oldData,
+            newData
+        });
+    }
+
+    async function isDuplicate(admision, excludeId = null) {
+        const admisionQuery = query(collection(db, "registrar_consignacion"), where("admision", "==", admision.trim()));
+        const querySnapshot = await getDocs(admisionQuery);
+        return querySnapshot.docs.some(doc => doc.id !== excludeId);
+    }
+
+    function openEditModal(id, data) {
         currentEditId = id;
-        currentEditOldData = { ...registro };
-        document.getElementById('editId').value = id;
-        document.getElementById('editAdmision').value = registro.admision || '';
-        document.getElementById('editPaciente').value = registro.paciente || '';
-        document.getElementById('editMedico').value = registro.medico || '';
-        document.getElementById('editFechaCX').value = registro.fechaCX || '';
-        document.getElementById('editCodigo').value = registro.codigo || '';
-        document.getElementById('editDescripcion').value = registro.descripcion || '';
-        document.getElementById('editCantidad').value = registro.cantidad || '';
-        document.getElementById('editReferencia').value = registro.referencia || '';
-        document.getElementById('editProveedor').value = registro.proveedor || '';
-        document.getElementById('editPrecioUnitario').value = registro.precioUnitario ? formatNumberWithThousandsSeparator(registro.precioUnitario) : '';
-        document.getElementById('editAtributo').value = registro.atributo || '';
-        document.getElementById('editTotalItems').value = registro.totalItems || '';
+        document.getElementById('editAdmision').value = data.admision;
+        document.getElementById('editPaciente').value = data.paciente;
+        document.getElementById('editMedico').value = data.medico;
+        document.getElementById('editFechaCX').value = data.fechaCX;
+        document.getElementById('editCodigo').value = data.codigo;
+        document.getElementById('editDescripcion').value = data.descripcion;
+        document.getElementById('editCantidad').value = data.cantidad;
+        document.getElementById('editReferencia').value = data.referencia || '';
+        document.getElementById('editProveedor').value = data.proveedor || '';
+        document.getElementById('editPrecioUnitario').value = data.precioUnitario || '';
+        document.getElementById('editAtributo').value = data.atributo || '';
+        document.getElementById('editTotalItems').value = data.totalItems || '';
         editModal.style.display = 'block';
-    };
+    }
 
     function closeEditModalHandler() {
         editModal.style.display = 'none';
         currentEditId = null;
-        currentEditOldData = null;
-        editForm.reset();
+        form.reset();
     }
 
-    window.openDeleteModal = function (id, admision) {
+    function openDeleteModal(id, admision) {
         currentDeleteId = id;
         currentDeleteAdmision = admision;
         deleteText.textContent = `¿Desea eliminar el registro con admisión "${admision}"?`;
         deleteModal.style.display = 'block';
-    };
+    }
 
     function closeDeleteModalHandler() {
         deleteModal.style.display = 'none';
@@ -323,7 +222,7 @@ document.addEventListener('DOMContentLoaded', () => {
         currentDeleteAdmision = null;
     }
 
-    window.openHistoryModal = function (id, admision) {
+    function openHistoryModal(id, admision) {
         historyTitle.textContent = `Historial Registro ${admision}`;
         showLoading();
         const q = query(collection(db, "registrar_consignacion_historial"), where("registroId", "==", id), orderBy("timestamp", "desc"));
@@ -336,7 +235,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (log.action === 'create') {
                     html += `<div class="history-entry">Creado | ${log.userFullName || 'Desconocido'} | ${log.username || 'desconocido'} | ${date}</div>`;
                 } else if (log.action === 'update') {
-                    html += `<div class="history-entry">Modificado | ${log.userFullName || 'Desconocido'} | ${log.username || 'desconocido'} | ${date} | Admisión: ${log.oldData ? log.oldData.admision : 'N/A'} → ${log.newData ? log.newData.admision : 'N/A'}</div>`;
+                    html += `<div class="history-entry">Modificado | ${log.userFullName || 'Desconocido'} | ${log.username || 'desconocido'} | ${date} | Modificado de ${log.oldData ? log.oldData.admision : 'N/A'} a ${log.newData ? log.newData.admision : 'N/A'}</div>`;
                 } else if (log.action === 'delete') {
                     html += `<div class="history-entry">Eliminado | ${log.userFullName || 'Desconocido'} | ${log.username || 'desconocido'} | ${date}</div>`;
                 }
@@ -347,73 +246,83 @@ document.addEventListener('DOMContentLoaded', () => {
             hideLoading();
             showToast('Error al cargar el historial: ' + error.message, 'error');
         });
-    };
+    }
 
     function closeHistoryModalHandler() {
         historyModal.style.display = 'none';
         historyContent.innerHTML = '';
     }
 
-    closeEditModal.addEventListener('click', closeEditModalHandler);
+    closeEditSpan.addEventListener('click', closeEditModalHandler);
     cancelEdit.addEventListener('click', closeEditModalHandler);
     window.addEventListener('click', (e) => {
         if (e.target === editModal) closeEditModalHandler();
     });
 
-    closeDeleteModal.addEventListener('click', closeDeleteModalHandler);
+    closeDeleteSpan.addEventListener('click', closeDeleteModalHandler);
     cancelDelete.addEventListener('click', closeDeleteModalHandler);
     window.addEventListener('click', (e) => {
         if (e.target === deleteModal) closeDeleteModalHandler();
     });
 
-    closeHistory.addEventListener('click', closeHistoryModalHandler);
+    closeHistorySpan.addEventListener('click', closeHistoryModalHandler);
     closeHistoryBtn.addEventListener('click', closeHistoryModalHandler);
     window.addEventListener('click', (e) => {
         if (e.target === historyModal) closeHistoryModalHandler();
     });
 
-    editForm.addEventListener('submit', async (e) => {
+    form.addEventListener('submit', async (e) => {
         e.preventDefault();
         if (!currentEditId) return;
 
-        let processedRow = {
-            admision: document.getElementById('editAdmision').value.trim().toUpperCase(),
-            paciente: document.getElementById('editPaciente').value.trim().toUpperCase(),
-            medico: document.getElementById('editMedico').value.trim().toUpperCase(),
-            fechaCX: document.getElementById('editFechaCX').value,
-            codigo: document.getElementById('editCodigo').value.trim().toUpperCase(),
-            descripcion: document.getElementById('editDescripcion').value.trim().toUpperCase(),
-            cantidad: parseInt(document.getElementById('editCantidad').value) || 0,
-            referencia: document.getElementById('editReferencia').value.trim().toUpperCase(),
-            proveedor: document.getElementById('editProveedor').value.trim().toUpperCase(),
-            precioUnitario: document.getElementById('editPrecioUnitario').value.replace(/[^\d]/g, ''),
-            atributo: document.getElementById('editAtributo').value.trim().toUpperCase(),
-            totalItems: document.getElementById('editTotalItems').value.trim().toUpperCase(),
-            fullName: window.currentUserData.fullName,
-            createdAt: new Date()
-        };
+        const admision = document.getElementById('editAdmision').value.trim();
+        const paciente = document.getElementById('editPaciente').value.trim();
+        const medico = document.getElementById('editMedico').value.trim();
+        const fechaCX = document.getElementById('editFechaCX').value;
+        const codigo = document.getElementById('editCodigo').value.trim();
+        const descripcion = document.getElementById('editDescripcion').value.trim();
+        const cantidad = document.getElementById('editCantidad').value;
 
-        if (processedRow.admision) {
+        if (admision && paciente && medico && fechaCX && codigo && descripcion && cantidad) {
             showLoading();
             try {
-                const existingReg = await getRegistroByUniqueKey(processedRow.admision, currentEditId);
-                if (existingReg) {
+                const admisionExists = await isDuplicate(admision, currentEditId);
+                if (admisionExists) {
                     hideLoading();
-                    showToast('La admisión ya existe.', 'error');
+                    showToast('El número de admisión ya existe.', 'error');
                     return;
                 }
-                await updateDoc(doc(db, "registrar_consignacion", currentEditId), processedRow);
-                await logAction(currentEditId, 'update', currentEditOldData, processedRow);
+
+                const oldData = registros.find(r => r.id === currentEditId);
+                const newData = {
+                    admision,
+                    paciente,
+                    medico,
+                    fechaCX,
+                    codigo,
+                    descripcion,
+                    cantidad: parseInt(cantidad),
+                    referencia: document.getElementById('editReferencia').value || null,
+                    proveedor: document.getElementById('editProveedor').value || null,
+                    precioUnitario: document.getElementById('editPrecioUnitario').value || null,
+                    atributo: document.getElementById('editAtributo').value || null,
+                    totalItems: document.getElementById('editTotalItems').value || null
+                };
+                await updateDoc(doc(db, "registrar_consignacion", currentEditId), {
+                    ...newData,
+                    updatedAt: new Date()
+                });
+                await logAction(currentEditId, 'update', oldData, newData);
                 hideLoading();
-                showToast(`Registro ${processedRow.admision} actualizado exitosamente`, 'success');
+                showToast('Registro editado con éxito.', 'success');
                 closeEditModalHandler();
                 await loadRegistros();
             } catch (error) {
                 hideLoading();
-                showToast('Error al actualizar el registro: ' + error.message, 'error');
+                showToast('Error al editar el registro: ' + error.message, 'error');
             }
         } else {
-            showToast('Falta la admisión', 'error');
+            showToast('Por favor, completa todos los campos obligatorios.', 'error');
         }
     });
 
@@ -422,125 +331,185 @@ document.addEventListener('DOMContentLoaded', () => {
 
         showLoading();
         try {
-            const registroDoc = await getDoc(doc(db, "registrar_consignacion", currentDeleteId));
-            if (registroDoc.exists()) {
-                const registroData = registroDoc.data();
-                await logAction(currentDeleteId, 'delete', registroData);
-                await deleteDoc(doc(db, "registrar_consignacion", currentDeleteId));
-                hideLoading();
-                showToast(`Registro ${currentDeleteAdmision} eliminado exitosamente`, 'success');
-                closeDeleteModalHandler();
-                await loadRegistros();
-            } else {
-                hideLoading();
-                showToast('El registro no existe.', 'error');
-                closeDeleteModalHandler();
-            }
+            const registro = registros.find(r => r.id === currentDeleteId);
+            await deleteDoc(doc(db, "registrar_consignacion", currentDeleteId));
+            await logAction(currentDeleteId, 'delete', registro);
+            hideLoading();
+            showToast(`Registro con admisión ${currentDeleteAdmision} eliminado con éxito.`, 'success');
+            closeDeleteModalHandler();
+            await loadRegistros();
         } catch (error) {
             hideLoading();
             showToast('Error al eliminar el registro: ' + error.message, 'error');
         }
     });
 
-    const debouncedLoadRegistros = debounce(loadRegistros, 300);
+    onAuthStateChanged(auth, async (user) => {
+        if (!user) {
+            window.location.replace('../../../index.html');
+            return;
+        }
+        try {
+            const userDocRef = doc(db, 'users', user.uid);
+            const userDoc = await getDoc(userDocRef);
+            if (userDoc.exists()) {
+                window.currentUserData = userDoc.data();
+            } else {
+                window.currentUserData = { fullName: 'Usuario Invitado', username: 'invitado' };
+            }
+            await loadMedicos();
+            await loadRegistros();
+            setupMedicoAutocomplete(medicoInput, medicoListBtn, medicoDropdown);
+            setupMedicoAutocomplete(editMedicoInput, editMedicoListBtn, editMedicoDropdown);
+        } catch (error) {
+            showToast('Error al cargar datos del usuario: ' + error.message, 'error');
+        }
+    });
+
+    registrarBtn.addEventListener('click', async () => {
+        const admision = document.getElementById('admision').value.trim();
+        const paciente = document.getElementById('paciente').value.trim();
+        const medico = document.getElementById('medico').value.trim();
+        const fechaCX = document.getElementById('fechaCX').value;
+        const codigo = document.getElementById('codigo').value.trim();
+        const descripcion = document.getElementById('descripcion').value.trim();
+        const cantidad = document.getElementById('cantidad').value;
+
+        if (admision && paciente && medico && fechaCX && codigo && descripcion && cantidad) {
+            showLoading();
+            try {
+                const admisionExists = await isDuplicate(admision);
+                if (admisionExists) {
+                    hideLoading();
+                    showToast('El número de admisión ya existe.', 'error');
+                    return;
+                }
+
+                const docRef = await addDoc(collection(db, "registrar_consignacion"), {
+                    admision,
+                    paciente,
+                    medico,
+                    fechaCX,
+                    codigo,
+                    descripcion,
+                    cantidad: parseInt(cantidad),
+                    referencia: null,
+                    proveedor: null,
+                    precioUnitario: null,
+                    atributo: null,
+                    totalItems: null,
+                    createdAt: new Date()
+                });
+                await logAction(docRef.id, 'create', null, { admision, paciente, medico, fechaCX, codigo, descripcion, cantidad });
+                hideLoading();
+                showToast('Registro creado con éxito.', 'success');
+                document.getElementById('admision').value = '';
+                document.getElementById('paciente').value = '';
+                document.getElementById('medico').value = '';
+                document.getElementById('fechaCX').value = '';
+                document.getElementById('codigo').value = '';
+                document.getElementById('descripcion').value = '';
+                document.getElementById('cantidad').value = '';
+                await loadRegistros();
+            } catch (error) {
+                hideLoading();
+                showToast('Error al registrar: ' + error.message, 'error');
+            }
+        } else {
+            showToast('Por favor, completa todos los campos obligatorios.', 'error');
+        }
+    });
 
     if (buscarAdmisionInput) {
         buscarAdmisionInput.addEventListener('input', (e) => {
-            searchAdmision = e.target.value.trim().toUpperCase();
+            searchAdmision = e.target.value.trim();
             currentPage = 1;
-            lastVisible = null;
-            firstVisible = null;
-            debouncedLoadRegistros();
+            loadRegistros();
         });
     }
 
     if (buscarPacienteInput) {
         buscarPacienteInput.addEventListener('input', (e) => {
-            searchPaciente = e.target.value.trim().toUpperCase();
+            searchPaciente = e.target.value.trim();
             currentPage = 1;
-            lastVisible = null;
-            firstVisible = null;
-            debouncedLoadRegistros();
+            loadRegistros();
         });
     }
 
     if (buscarDescripcionInput) {
         buscarDescripcionInput.addEventListener('input', (e) => {
-            searchDescripcion = e.target.value.trim().toUpperCase();
+            searchDescripcion = e.target.value.trim();
             currentPage = 1;
-            lastVisible = null;
-            firstVisible = null;
-            debouncedLoadRegistros();
+            loadRegistros();
         });
     }
 
     if (buscarProveedorInput) {
         buscarProveedorInput.addEventListener('input', (e) => {
-            searchProveedor = e.target.value.trim().toUpperCase();
+            searchProveedor = e.target.value.trim();
             currentPage = 1;
-            lastVisible = null;
-            firstVisible = null;
-            debouncedLoadRegistros();
+            loadRegistros();
         });
     }
 
     if (buscarMedicoInput) {
         buscarMedicoInput.addEventListener('input', (e) => {
-            searchMedico = e.target.value.trim().toUpperCase();
+            searchMedico = e.target.value.trim();
             currentPage = 1;
-            lastVisible = null;
-            firstVisible = null;
-            debouncedLoadRegistros();
+            loadRegistros();
         });
     }
 
     if (fechaDiaInput) {
-        fechaDiaInput.addEventListener('change', (e) => {
-            searchFechaDia = e.target.value;
+        fechaDiaInput.addEventListener('input', (e) => {
+            fechaDia = e.target.value;
             currentPage = 1;
-            lastVisible = null;
-            firstVisible = null;
-            debouncedLoadRegistros();
+            loadRegistros();
         });
     }
 
     if (fechaDesdeInput) {
-        fechaDesdeInput.addEventListener('change', (e) => {
-            searchFechaDesde = e.target.value;
+        fechaDesdeInput.addEventListener('input', (e) => {
+            fechaDesde = e.target.value;
             currentPage = 1;
-            lastVisible = null;
-            firstVisible = null;
-            debouncedLoadRegistros();
+            loadRegistros();
         });
     }
 
     if (fechaHastaInput) {
-        fechaHastaInput.addEventListener('change', (e) => {
-            searchFechaHasta = e.target.value;
+        fechaHastaInput.addEventListener('input', (e) => {
+            fechaHasta = e.target.value;
             currentPage = 1;
-            lastVisible = null;
-            firstVisible = null;
-            debouncedLoadRegistros();
+            loadRegistros();
         });
     }
 
-    if (mesSelect) {
-        mesSelect.addEventListener('change', (e) => {
-            searchMes = e.target.value;
+    if (mesSelectInput) {
+        mesSelectInput.addEventListener('change', (e) => {
+            mesSelect = e.target.value;
             currentPage = 1;
-            lastVisible = null;
-            firstVisible = null;
-            debouncedLoadRegistros();
+            loadRegistros();
         });
     }
 
-    if (anioSelect) {
-        anioSelect.addEventListener('change', (e) => {
-            searchAnio = e.target.value;
+    if (anioSelectInput) {
+        anioSelectInput.addEventListener('input', (e) => {
+            anioSelect = e.target.value;
             currentPage = 1;
-            lastVisible = null;
-            firstVisible = null;
-            debouncedLoadRegistros();
+            loadRegistros();
+        });
+    }
+
+    if (dateTypeRadios) {
+        dateTypeRadios.forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                dateType = e.target.value;
+                dateDayDiv.style.display = dateType === 'day' ? 'flex' : 'none';
+                dateWeekDiv.style.display = dateType === 'week' ? 'flex' : 'none';
+                dateMonthDiv.style.display = dateType === 'month' ? 'flex' : 'none';
+                currentPage = 1;
+                loadRegistros();
+            });
         });
     }
 
@@ -548,90 +517,32 @@ document.addEventListener('DOMContentLoaded', () => {
         showLoading();
         try {
             let q = query(collection(db, "registrar_consignacion"), orderBy("createdAt", "desc"));
-            const conditions = [];
-
-            if (searchAdmision) {
-                conditions.push(where("admision", ">=", searchAdmision));
-                conditions.push(where("admision", "<=", searchAdmision + '\uf8ff'));
+            if (searchAdmision) q = query(q, where("admision", ">=", searchAdmision), where("admision", "<=", searchAdmision + '\uf8ff'));
+            if (searchPaciente) q = query(q, where("paciente", ">=", searchPaciente), where("paciente", "<=", searchPaciente + '\uf8ff'));
+            if (searchMedico) q = query(q, where("medico", ">=", searchMedico), where("medico", "<=", searchMedico + '\uf8ff'));
+            if (searchDescripcion) q = query(q, where("descripcion", ">=", searchDescripcion), where("descripcion", "<=", searchDescripcion + '\uf8ff'));
+            if (searchProveedor && searchProveedor !== 'null') q = query(q, where("proveedor", ">=", searchProveedor), where("proveedor", "<=", searchProveedor + '\uf8ff'));
+            if (dateType === 'day' && fechaDia) {
+                const start = new Date(fechaDia);
+                const end = new Date(fechaDia);
+                end.setDate(end.getDate() + 1);
+                q = query(q, where("fechaCX", ">=", start.toISOString().split('T')[0]), where("fechaCX", "<", end.toISOString().split('T')[0]));
             }
-            if (searchPaciente) {
-                conditions.push(where("paciente", ">=", searchPaciente));
-                conditions.push(where("paciente", "<=", searchPaciente + '\uf8ff'));
+            if (dateType === 'week' && fechaDesde && fechaHasta) {
+                q = query(q, where("fechaCX", ">=", fechaDesde), where("fechaCX", "<=", fechaHasta));
             }
-            if (searchDescripcion) {
-                conditions.push(where("descripcion", ">=", searchDescripcion));
-                conditions.push(where("descripcion", "<=", searchDescripcion + '\uf8ff'));
+            if (dateType === 'month' && mesSelect && anioSelect) {
+                const start = new Date(`${anioSelect}-${mesSelect}-01`);
+                const end = new Date(start);
+                end.setMonth(end.getMonth() + 1);
+                q = query(q, where("fechaCX", ">=", start.toISOString().split('T')[0]), where("fechaCX", "<", end.toISOString().split('T')[0]));
             }
-            if (searchProveedor) {
-                conditions.push(where("proveedor", ">=", searchProveedor));
-                conditions.push(where("proveedor", "<=", searchProveedor + '\uf8ff'));
-            }
-            if (searchMedico) {
-                conditions.push(where("medico", ">=", searchMedico));
-                conditions.push(where("medico", "<=", searchMedico + '\uf8ff'));
-            }
-
-            if (searchFechaTipo === 'day' && searchFechaDia) {
-                conditions.push(where("fechaCX", "==", searchFechaDia));
-            } else if (searchFechaTipo === 'week' && searchFechaDesde && searchFechaHasta) {
-                conditions.push(where("fechaCX", ">=", searchFechaDesde));
-                conditions.push(where("fechaCX", "<=", searchFechaHasta));
-            } else if (searchFechaTipo === 'month' && searchMes && searchAnio) {
-                const fechaInicioMes = `${searchAnio}-${searchMes}-01`;
-                const fechaFinMes = new Date(searchAnio, parseInt(searchMes), 0).toISOString().split('T')[0];
-                conditions.push(where("fechaCX", ">=", fechaInicioMes));
-                conditions.push(where("fechaCX", "<=", fechaFinMes));
-            }
-
-            if (currentPage > 1 && lastVisible) {
-                conditions.push(startAfter(lastVisible));
-            }
-            conditions.push(limit(PAGE_SIZE));
-
-            q = query(q, ...conditions);
 
             const querySnapshot = await getDocs(q);
             registros = [];
             querySnapshot.forEach((doc) => {
                 registros.push({ id: doc.id, ...doc.data() });
             });
-
-            if (querySnapshot.docs.length > 0) {
-                lastVisible = querySnapshot.docs[querySnapshot.docs.length - 1];
-                firstVisible = querySnapshot.docs[0];
-            } else {
-                lastVisible = null;
-                firstVisible = null;
-            }
-
-            let countQuery = query(collection(db, "registrar_consignacion"));
-            if (searchAdmision) {
-                countQuery = query(countQuery, where("admision", ">=", searchAdmision), where("admision", "<=", searchAdmision + '\uf8ff'));
-            }
-            if (searchPaciente) {
-                countQuery = query(countQuery, where("paciente", ">=", searchPaciente), where("paciente", "<=", searchPaciente + '\uf8ff'));
-            }
-            if (searchDescripcion) {
-                countQuery = query(countQuery, where("descripcion", ">=", searchDescripcion), where("descripcion", "<=", searchDescripcion + '\uf8ff'));
-            }
-            if (searchProveedor) {
-                countQuery = query(countQuery, where("proveedor", ">=", searchProveedor), where("proveedor", "<=", searchProveedor + '\uf8ff'));
-            }
-            if (searchMedico) {
-                countQuery = query(countQuery, where("medico", ">=", searchMedico), where("medico", "<=", searchMedico + '\uf8ff'));
-            }
-            if (searchFechaTipo === 'day' && searchFechaDia) {
-                countQuery = query(countQuery, where("fechaCX", "==", searchFechaDia));
-            } else if (searchFechaTipo === 'week' && searchFechaDesde && searchFechaHasta) {
-                countQuery = query(countQuery, where("fechaCX", ">=", searchFechaDesde), where("fechaCX", "<=", searchFechaHasta));
-            } else if (searchFechaTipo === 'month' && searchMes && searchAnio) {
-                const fechaInicioMes = `${searchAnio}-${searchMes}-01`;
-                const fechaFinMes = new Date(searchAnio, parseInt(searchMes), 0).toISOString().split('T')[0];
-                countQuery = query(countQuery, where("fechaCX", ">=", fechaInicioMes), where("fechaCX", "<=", fechaFinMes));
-            }
-
-            const countSnapshot = await getDocs(countQuery);
-            totalRecords = countSnapshot.size;
 
             renderTable();
             hideLoading();
@@ -642,92 +553,67 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function renderTable() {
+        const start = (currentPage - 1) * PAGE_SIZE;
+        const end = start + PAGE_SIZE;
+        const pageRegistros = registros.slice(start, end);
+
         if (registrarBody) {
             registrarBody.innerHTML = '';
-            if (registros.length === 0) {
-                registrarBody.innerHTML = '<tr><td colspan="13">No hay registros para mostrar.</td></tr>';
-            } else {
-                registros.forEach(registro => {
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td class="registrar-actions">
-                            <button title="Editar" class="registrar-btn-edit" onclick="openEditModal('${registro.id}', ${JSON.stringify(registro).replace(/"/g, '&quot;')})"><i class="fas fa-edit"></i></button>
-                            <button title="Eliminar" class="registrar-btn-delete" onclick="openDeleteModal('${registro.id}', '${registro.admision}')"><i class="fas fa-trash"></i></button>
-                            <button title="Ver Historial" class="registrar-btn-history" onclick="openHistoryModal('${registro.id}', '${registro.admision}')"><i class="fas fa-history"></i></button>
-                        </td>
-                        <td>${registro.admision || ''}</td>
-                        <td>${registro.paciente || ''}</td>
-                        <td>${registro.medico || ''}</td>
-                        <td>${registro.fechaCX || ''}</td>
-                        <td>${registro.codigo || ''}</td>
-                        <td>${registro.descripcion || ''}</td>
-                        <td>${registro.cantidad || ''}</td>
-                        <td>${registro.referencia || ''}</td>
-                        <td>${registro.proveedor || ''}</td>
-                        <td>${formatNumberWithThousandsSeparator(registro.precioUnitario)}</td>
-                        <td>${registro.atributo || ''}</td>
-                        <td>${registro.totalItems || ''}</td>
-                    `;
-                    registrarBody.appendChild(row);
-                });
-            }
+            pageRegistros.forEach(registro => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="registrar-actions">
+                        <button title="Editar" class="registrar-btn-edit" onclick="openEditModal('${registro.id}', ${JSON.stringify(registro)})"><i class="fas fa-edit"></i></button>
+                        <button title="Eliminar" class="registrar-btn-delete" onclick="openDeleteModal('${registro.id}', '${registro.admision}')"><i class="fas fa-trash"></i></button>
+                        <button title="Ver Historial" class="registrar-btn-history" onclick="openHistoryModal('${registro.id}', '${registro.admision}')"><i class="fas fa-history"></i></button>
+                    </td>
+                    <td>${registro.admision}</td>
+                    <td>${registro.paciente}</td>
+                    <td>${registro.medico}</td>
+                    <td>${registro.fechaCX}</td>
+                    <td>${registro.codigo}</td>
+                    <td>${registro.descripcion}</td>
+                    <td>${registro.cantidad}</td>
+                    <td>${registro.referencia || ''}</td>
+                    <td>${registro.proveedor || ''}</td>
+                    <td>${registro.precioUnitario || ''}</td>
+                    <td>${registro.atributo || ''}</td>
+                    <td>${registro.totalItems || ''}</td>
+                `;
+                registrarBody.appendChild(row);
+            });
         }
 
-        updatePagination(totalRecords);
-        setupColumnResize();
+        updatePagination(registros.length);
     }
 
     function updatePagination(total) {
         const totalPages = Math.ceil(total / PAGE_SIZE);
+        const startPage = Math.max(1, currentPage - 2);
+        const endPage = Math.min(totalPages, startPage + 4);
+
         const startRecord = (currentPage - 1) * PAGE_SIZE + 1;
         const endRecord = Math.min(currentPage * PAGE_SIZE, total);
         const recordsThisPage = endRecord - startRecord + 1;
-
-        if (paginationInfo) {
-            paginationInfo.textContent = `Página ${currentPage} de ${totalPages} | ${recordsThisPage} registros en esta página de ${total}`;
-        }
+        if (paginationInfo) paginationInfo.textContent = `Página ${currentPage} de ${totalPages} | ${recordsThisPage} registros en esta página de ${total}`;
 
         if (prevBtn) prevBtn.disabled = currentPage === 1;
         if (nextBtn) nextBtn.disabled = currentPage === totalPages;
 
         if (pageNumbers) {
             pageNumbers.innerHTML = '';
-            const startPage = Math.max(1, currentPage - 2);
-            const endPage = Math.min(totalPages, startPage + 4);
-
-            if (startPage > 1) {
-                const btn = document.createElement('button');
-                btn.textContent = '1';
-                btn.className = 1 === currentPage ? 'active' : '';
-                btn.addEventListener('click', () => goToPage(1));
-                pageNumbers.appendChild(btn);
-                if (startPage > 2) {
+            for (let i = startPage; i <= endPage; i++) {
+                if (i > startPage && i <= endPage - 1 && endPage - startPage > 3) {
                     const dots = document.createElement('span');
                     dots.textContent = '...';
                     dots.className = 'registrar-dots';
                     pageNumbers.appendChild(dots);
+                    continue;
                 }
-            }
-
-            for (let i = startPage; i <= endPage; i++) {
                 const btn = document.createElement('button');
                 btn.textContent = i;
                 btn.className = i === currentPage ? 'active' : '';
                 btn.addEventListener('click', () => goToPage(i));
-                pageNumbers.appendChild(btn);
-            }
-
-            if (endPage < totalPages) {
-                if (endPage < totalPages - 1) {
-                    const dots = document.createElement('span');
-                    dots.textContent = '...';
-                    dots.className = 'registrar-dots';
-                    pageNumbers.appendChild(dots);
-                }
-                const btn = document.createElement('button');
-                btn.textContent = totalPages;
-                btn.className = totalPages === currentPage ? 'active' : '';
-                btn.addEventListener('click', () => goToPage(totalPages));
                 pageNumbers.appendChild(btn);
             }
         }
@@ -735,7 +621,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function goToPage(page) {
         currentPage = page;
-        loadRegistros();
+        renderTable();
     }
 
     if (prevBtn) {
@@ -749,7 +635,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (nextBtn) {
         nextBtn.addEventListener('click', () => {
-            const totalPages = Math.ceil(totalRecords / PAGE_SIZE);
+            const totalPages = Math.ceil(registros.length / PAGE_SIZE);
             if (currentPage < totalPages) {
                 currentPage++;
                 loadRegistros();
@@ -757,143 +643,65 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    if (actionsBtn) {
-        actionsBtn.addEventListener('click', () => {
-            actionsMenu.style.display = actionsMenu.style.display === 'block' ? 'none' : 'block';
-        });
-    }
+    actionsBtn.addEventListener('click', () => {
+        actionsMenu.style.display = actionsMenu.style.display === 'block' ? 'none' : 'block';
+    });
 
     window.addEventListener('click', (e) => {
-        if (actionsBtn && actionsMenu && !actionsBtn.contains(e.target) && !actionsMenu.contains(e.target)) {
+        if (!actionsBtn.contains(e.target) && !actionsMenu.contains(e.target)) {
             actionsMenu.style.display = 'none';
         }
     });
 
-    if (downloadAll) {
-        downloadAll.addEventListener('click', async (e) => {
-            e.preventDefault();
-            showLoading();
-            try {
-                const q = query(collection(db, "registrar_consignacion"));
-                const querySnapshot = await getDocs(q);
-                const allRegistros = [];
-                querySnapshot.forEach((doc) => {
-                    allRegistros.push({ id: doc.id, ...doc.data() });
-                });
-                const data = allRegistros.map(reg => ({
-                    Admisión: reg.admision || '',
-                    Paciente: reg.paciente || '',
-                    Médico: reg.medico || '',
-                    'Fecha CX': reg.fechaCX || '',
-                    Código: reg.codigo || '',
-                    Descripción: reg.descripcion || '',
-                    Cantidad: reg.cantidad || '',
-                    Referencia: reg.referencia || '',
-                    Proveedor: reg.proveedor || '',
-                    'Precio Unitario': reg.precioUnitario ? formatNumberWithThousandsSeparator(reg.precioUnitario) : '',
-                    Atributo: reg.atributo || '',
-                    'Total Items': reg.totalItems || ''
-                }));
-                const ws = XLSX.utils.json_to_sheet(data);
-                const wb = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(wb, ws, "Registros");
-                XLSX.writeFile(wb, 'registrar_consignacion_todos.xlsx');
-                actionsMenu.style.display = 'none';
-                hideLoading();
-            } catch (error) {
-                hideLoading();
-                showToast('Error al descargar los registros: ' + error.message, 'error');
-            }
-        });
-    }
-
-    if (downloadPage) {
-        downloadPage.addEventListener('click', (e) => {
-            e.preventDefault();
-            const data = registros.map(reg => ({
-                Admisión: reg.admision || '',
-                Paciente: reg.paciente || '',
-                Médico: reg.medico || '',
-                'Fecha CX': reg.fechaCX || '',
-                Código: reg.codigo || '',
-                Descripción: reg.descripcion || '',
-                Cantidad: reg.cantidad || '',
-                Referencia: reg.referencia || '',
-                Proveedor: reg.proveedor || '',
-                'Precio Unitario': reg.precioUnitario ? formatNumberWithThousandsSeparator(reg.precioUnitario) : '',
-                Atributo: reg.atributo || '',
-                'Total Items': reg.totalItems || ''
-            }));
-            const ws = XLSX.utils.json_to_sheet(data);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Registros");
-            XLSX.writeFile(wb, `registrar_consignacion_pagina_${currentPage}.xlsx`);
-            actionsMenu.style.display = 'none';
-        });
-    }
-
-    if (registrarBtn) {
-        registrarBtn.addEventListener('click', async () => {
-            let processedRow = {
-                admision: admisionInput.value.trim().toUpperCase(),
-                paciente: pacienteInput.value.trim().toUpperCase(),
-                medico: medicoInput.value.trim().toUpperCase(),
-                fechaCX: fechaCXInput.value,
-                codigo: codigoInput.value.trim().toUpperCase(),
-                descripcion: descripcionInput.value.trim().toUpperCase(),
-                cantidad: parseInt(cantidadInput.value) || 0,
-                referencia: referenciaInput.value.trim().toUpperCase(),
-                proveedor: proveedorInput.value.trim().toUpperCase(),
-                precioUnitario: precioUnitarioInput.value.replace(/[^\d]/g, ''),
-                atributo: atributoInput.value.trim().toUpperCase(),
-                totalItems: totalItemsInput.value.trim().toUpperCase(),
-                fullName: window.currentUserData ? window.currentUserData.fullName : 'Usuario Invitado',
-                createdAt: new Date()
-            };
-
-            if (processedRow.admision) {
-                showLoading();
-                try {
-                    const existingReg = await getRegistroByUniqueKey(processedRow.admision);
-                    if (existingReg) {
-                        hideLoading();
-                        showToast('La admisión ya existe.', 'error');
-                        return;
-                    }
-                    const docRef = await addDoc(collection(db, "registrar_consignacion"), processedRow);
-                    await logAction(docRef.id, 'create', null, processedRow);
-                    hideLoading();
-                    showToast(`Registro ${processedRow.admision} ingresado exitosamente`, 'success');
-                    [admisionInput, pacienteInput, medicoInput, fechaCXInput, codigoInput, descripcionInput, cantidadInput,
-                        referenciaInput, proveedorInput, precioUnitarioInput, atributoInput, totalItemsInput].forEach(input => input.value = '');
-                    await loadRegistros();
-                } catch (error) {
-                    hideLoading();
-                    showToast('Error al ingresar el registro: ' + error.message, 'error');
-                }
-            } else {
-                showToast('Falta la admisión', 'error');
-            }
-        });
-    }
-
-    onAuthStateChanged(auth, async (user) => {
-        if (!user) {
-            window.location.replace('../index.html');
-            return;
-        }
-        try {
-            const userDocRef = doc(db, 'users', user.uid);
-            const userDoc = await getDoc(userDocRef);
-            if (userDoc.exists()) {
-                window.currentUserData = userDoc.data();
-            } else {
-                window.currentUserData = { fullName: user.displayName || 'Usuario Invitado', username: user.email || 'invitado' };
-            }
-            await loadRegistros();
-        } catch (error) {
-            window.currentUserData = { fullName: 'Usuario Invitado', username: 'invitado' };
-            showToast('Error al cargar datos del usuario: ' + error.message, 'error');
-        }
+    downloadAll.addEventListener('click', (e) => {
+        e.preventDefault();
+        exportToExcel(registros.map(r => ({
+            Admisión: r.admision,
+            Paciente: r.paciente,
+            Médico: r.medico,
+            'Fecha CX': r.fechaCX,
+            Código: r.codigo,
+            Descripción: r.descripcion,
+            Cantidad: r.cantidad,
+            Referencia: r.referencia || '',
+            Proveedor: r.proveedor || '',
+            'Precio Unitario': r.precioUnitario || '',
+            Atributo: r.atributo || '',
+            'Total Items': r.totalItems || ''
+        })), 'todos_registros');
+        actionsMenu.style.display = 'none';
     });
+
+    downloadPage.addEventListener('click', (e) => {
+        e.preventDefault();
+        const start = (currentPage - 1) * PAGE_SIZE;
+        const end = start + PAGE_SIZE;
+        const pageData = registros.slice(start, end).map(r => ({
+            Admisión: r.admision,
+            Paciente: r.paciente,
+            Médico: r.medico,
+            'Fecha CX': r.fechaCX,
+            Código: r.codigo,
+            Descripción: r.descripcion,
+            Cantidad: r.cantidad,
+            Referencia: r.referencia || '',
+            Proveedor: r.proveedor || '',
+            'Precio Unitario': r.precioUnitario || '',
+            Atributo: r.atributo || '',
+            'Total Items': r.totalItems || ''
+        }));
+        exportToExcel(pageData, 'pagina_actual_registros');
+        actionsMenu.style.display = 'none';
+    });
+
+    function exportToExcel(data, filename) {
+        const ws = XLSX.utils.json_to_sheet(data);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Registros");
+        XLSX.writeFile(wb, filename + '.xlsx');
+    }
+
+    window.openEditModal = openEditModal;
+    window.openDeleteModal = openDeleteModal;
+    window.openHistoryModal = openHistoryModal;
 });
