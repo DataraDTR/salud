@@ -77,6 +77,27 @@ async function loadReferencias() {
     }
 }
 
+// *** NUEVA FUNCIÓN: BUSCAR POR DESCRIPCIÓN ***
+async function getReferenciaByDescripcion(descripcion) {
+    if (!descripcion?.trim()) return null;
+    
+    try {
+        const q = query(
+            collection(db, "referencias_implantes"), 
+            where("descripcion", "==", descripcion.trim().toUpperCase())
+        );
+        const querySnapshot = await getDocs(q);
+        
+        if (querySnapshot.empty) return null;
+        
+        const doc = querySnapshot.docs[0];
+        return { id: doc.id, ...doc.data() };
+    } catch (error) {
+        console.error('Error getting referencia by descripcion:', error);
+        return null;
+    }
+}
+
 function setupAutocomplete(inputId, iconId, listId, data, key, isDescripcion = false) {
     const input = document.getElementById(inputId);
     const icon = document.getElementById(iconId);
@@ -200,6 +221,7 @@ function setupAutocomplete(inputId, iconId, listId, data, key, isDescripcion = f
     });
 }
 
+// *** FUNCIÓN fillFields MODIFICADA ***
 function fillFields(item, inputId) {
     const isEdit = inputId.startsWith('edit');
     const codigoInput = isEdit ? document.getElementById('editCodigo') : document.getElementById('codigo');
@@ -211,22 +233,28 @@ function fillFields(item, inputId) {
     const cantidadInput = isEdit ? document.getElementById('editCantidad') : document.getElementById('cantidad');
     const totalItemsInput = isEdit ? document.getElementById('editTotalItems') : document.getElementById('totalItems');
 
-    if (inputId.includes('Codigo')) {
+    // *** SI VIENE DE DESCRIPCIÓN ***
+    if (inputId.includes('Descripcion')) {
+        // Buscar en referencias_implantes por descripción
+        getReferenciaByDescripcion(item.descripcion).then(referencia => {
+            if (referencia) {
+                codigoInput.value = referencia.codigo || '';
+                referenciaInput.value = referencia.referencia || '';
+                proveedorInput.value = referencia.proveedor || '';
+                precioUnitarioInput.value = referencia.precioUnitario ? formatNumberWithThousandsSeparator(referencia.precioUnitario) : '';
+                atributoInput.value = referencia.atributo || '';
+                updateTotalItems(isEdit);
+            }
+        });
+    }
+    // *** SI VIENE DE CÓDIGO ***
+    else if (inputId.includes('Codigo')) {
         descripcionInput.value = item.descripcion || '';
         referenciaInput.value = item.referencia || '';
         proveedorInput.value = item.proveedor || '';
         precioUnitarioInput.value = item.precioUnitario ? formatNumberWithThousandsSeparator(item.precioUnitario) : '';
         atributoInput.value = item.atributo || '';
-    }
-    else if (inputId.includes('Descripcion')) {
-        const matchingRef = referencias.find(r => r.descripcion === item.descripcion || r.codigo === item.codigo);
-        if (matchingRef) {
-            codigoInput.value = matchingRef.codigo || '';
-            referenciaInput.value = matchingRef.referencia || '';
-            proveedorInput.value = matchingRef.proveedor || '';
-            precioUnitarioInput.value = matchingRef.precioUnitario ? formatNumberWithThousandsSeparator(matchingRef.precioUnitario) : '';
-            atributoInput.value = matchingRef.atributo || '';
-        }
+        updateTotalItems(isEdit);
     }
 
     updateTotalItems(isEdit);
@@ -1177,6 +1205,15 @@ document.addEventListener('DOMContentLoaded', () => {
                         atributo = producto.atributo || '';
                         descripcion = producto.descripcion || descripcion;
                     }
+                } else if (descripcion) {
+                    const refData = await getReferenciaByDescripcion(descripcion);
+                    if (refData) {
+                        precioUnitario = refData.precioUnitario || 0;
+                        referencia = refData.referencia || '';
+                        proveedor = refData.proveedor || '';
+                        atributo = refData.atributo || '';
+                        codigo = refData.codigo || codigo;
+                    }
                 }
 
                 const totalItems = cantidad * precioUnitario;
@@ -1360,6 +1397,15 @@ document.addEventListener('DOMContentLoaded', () => {
                         atributo = producto.atributo || atributo;
                         descripcion = producto.descripcion || descripcion;
                     }
+                } else if (descripcion) {
+                    const refData = await getReferenciaByDescripcion(descripcion);
+                    if (refData) {
+                        precioUnitario = refData.precioUnitario || precioUnitario;
+                        referencia = refData.referencia || referencia;
+                        proveedor = refData.proveedor || proveedor;
+                        atributo = refData.atributo || atributo;
+                        codigo = refData.codigo || codigo;
+                    }
                 }
 
                 const totalItems = cantidad * precioUnitario;
@@ -1443,6 +1489,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     setupTotalCalculators();
 
+    // *** EVENTO BLUR PARA CÓDIGO (EXISTENTE) ***
     if (codigoInput) {
         codigoInput.addEventListener('blur', async () => {
             const codigo = codigoInput.value.trim().toUpperCase();
@@ -1462,6 +1509,27 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // *** NUEVO EVENTO BLUR PARA DESCRIPCIÓN ***
+    if (descripcionInput) {
+        descripcionInput.addEventListener('blur', async () => {
+            const descripcion = descripcionInput.value.trim().toUpperCase();
+            if (!descripcion) return;
+
+            const referencia = await getReferenciaByDescripcion(descripcion);
+            if (referencia) {
+                codigoInput.value = referencia.codigo || '';
+                referenciaInput.value = referencia.referencia || '';
+                proveedorInput.value = referencia.proveedor || '';
+                precioUnitarioInput.value = referencia.precioUnitario ? formatNumberWithThousandsSeparator(referencia.precioUnitario) : '';
+                atributoInput.value = referencia.atributo || '';
+                updateTotalItems(false);
+            } else {
+                showToast(`Descripción "${descripcion}" no encontrada`, 'error');
+            }
+        });
+    }
+
+    // *** EVENTO BLUR PARA CÓDIGO EN EDITAR (EXISTENTE) ***
     if (editCodigoInput) {
         editCodigoInput.addEventListener('blur', async () => {
             const codigo = editCodigoInput.value.trim().toUpperCase();
@@ -1477,6 +1545,26 @@ document.addEventListener('DOMContentLoaded', () => {
                 updateTotalItems(true);
             } else {
                 showToast(`Código ${codigo} no encontrado`, 'error');
+            }
+        });
+    }
+
+    // *** NUEVO EVENTO BLUR PARA DESCRIPCIÓN EN EDITAR ***
+    if (editDescripcionInput) {
+        editDescripcionInput.addEventListener('blur', async () => {
+            const descripcion = editDescripcionInput.value.trim().toUpperCase();
+            if (!descripcion) return;
+
+            const referencia = await getReferenciaByDescripcion(descripcion);
+            if (referencia) {
+                editCodigoInput.value = referencia.codigo || '';
+                editReferenciaInput.value = referencia.referencia || '';
+                editProveedorInput.value = referencia.proveedor || '';
+                editPrecioUnitarioInput.value = referencia.precioUnitario ? formatNumberWithThousandsSeparator(referencia.precioUnitario) : '';
+                editAtributoInput.value = referencia.atributo || '';
+                updateTotalItems(true);
+            } else {
+                showToast(`Descripción "${descripcion}" no encontrada`, 'error');
             }
         });
     }
