@@ -263,7 +263,7 @@ html, body {
 /* Anchos iniciales de las columnas - fijos e independientes */
 .referencias-table th:nth-child(1), .referencias-table td:nth-child(1) { width: 100px; min-width: 100px; max-width: 100px; }
 .referencias-table th:nth-child(2), .referencias-table td:nth-child(2) { width: 130px; min-width: 130px; max-width: 130px; }
-.referencias-table th:nth-child(3), .referencias-table td:nth-child(3) { width: 200px; min-width: 200px; max-width: 200px; }
+.referencias-table th:nth-child(3), .referencias-table td:nth-child(3) { width: 300px; min-width: 300px; max-width: 300px; }
 .referencias-table th:nth-child(4), .referencias-table td:nth-child(4) { width: 80px; min-width: 80px; max-width: 80px; }
 .referencias-table th:nth-child(5), .referencias-table td:nth-child(5) { width: 80px; min-width: 80px; max-width: 80px; }
 .referencias-table th:nth-child(6), .referencias-table td:nth-child(6) { width: 150px; min-width: 150px; max-width: 150px; }
