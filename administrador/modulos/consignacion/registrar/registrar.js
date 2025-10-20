@@ -1,3 +1,7 @@
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js';
+import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js';
+import { getFirestore, collection, getDocs, addDoc, doc, getDoc, updateDoc, deleteDoc, orderBy, query, where, Timestamp } from 'https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js';
+
 const firebaseConfig = {
     apiKey: "AIzaSyB7r0f2iRNUU3n9nUc0QRDn0-4vPwmmrK8",
     authDomain: "consignaciones-94d35.firebaseapp.com",
@@ -7,14 +11,15 @@ const firebaseConfig = {
     appId: "1:324135136642:web:0e4cafb3b8940a5a3e8d3c"
 };
 
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
-const auth = firebase.auth();
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
 
 let currentPage = 1;
 const recordsPerPage = 10;
 let allRecords = [];
 let filteredRecords = [];
+let medicos = [];
 
 const registrarBtn = document.getElementById('registrarBtn');
 const limpiarBtn = document.getElementById('limpiarBtn');
@@ -58,7 +63,6 @@ const historyModal = document.getElementById('historyModal');
 const historyContent = document.getElementById('historyContent');
 let currentEditId = null;
 let currentDeleteId = null;
-let medicos = [];
 
 function showLoading(show) {
     loading.classList.toggle('show', show);
@@ -91,7 +95,7 @@ function showToast(message, type) {
 
 async function loadMedicos() {
     try {
-        const snapshot = await db.collection('medicos').get();
+        const snapshot = await getDocs(collection(db, 'medicos'));
         medicos = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         showMedicoDropdown(medicoInput, medicoDropdown);
         showMedicoDropdown(editMedicoInput, editMedicoDropdown);
@@ -126,7 +130,8 @@ function toggleMedicoDropdown(input, dropdown, toggle) {
 
 async function fetchProductoData(codigo) {
     try {
-        const snapshot = await db.collection('productos').where('codigo', '==', codigo.toUpperCase()).get();
+        const q = query(collection(db, 'productos'), where('codigo', '==', codigo.toUpperCase()));
+        const snapshot = await getDocs(q);
         if (!snapshot.empty) {
             const producto = snapshot.docs[0].data();
             document.getElementById('referencia').value = producto.referencia || '';
@@ -197,13 +202,13 @@ async function registerRecord() {
             precioUnitario,
             atributo,
             totalItems,
-            createdAt: new Date(),
+            createdAt: Timestamp.fromDate(new Date()),
             createdBy: user.email || 'Anónimo',
-            updatedAt: new Date(),
+            updatedAt: Timestamp.fromDate(new Date()),
             updatedBy: user.email || 'Anónimo'
         };
 
-        await db.collection('registrar_consignacion').add(registro);
+        await addDoc(collection(db, 'registrar_consignacion'), registro);
         showToast('Registro guardado exitosamente', 'success');
 
         document.getElementById('codigo').value = '';
@@ -243,7 +248,8 @@ function clearAllFields() {
 async function loadRecords() {
     try {
         showLoading(true);
-        const snapshot = await db.collection('registrar_consignacion').orderBy('createdAt', 'desc').get();
+        const q = query(collection(db, 'registrar_consignacion'), orderBy('createdAt', 'desc'));
+        const snapshot = await getDocs(q);
         allRecords = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         filteredRecords = [...allRecords];
         applyFilters();
@@ -275,22 +281,22 @@ function applyFilters() {
     if (dateFilter === 'day' && fechaDia.value) {
         const selectedDate = new Date(fechaDia.value);
         filtered = filtered.filter(record => {
-            const recordDate = new Date(record.fechaCX);
-            return recordDate.toDateString() === selectedDate.toDateString();
+            const recordDate = record.fechaCX ? new Date(record.fechaCX) : null;
+            return recordDate && recordDate.toDateString() === selectedDate.toDateString();
         });
     } else if (dateFilter === 'week' && fechaDesde.value && fechaHasta.value) {
         const startDate = new Date(fechaDesde.value);
         const endDate = new Date(fechaHasta.value);
         filtered = filtered.filter(record => {
-            const recordDate = new Date(record.fechaCX);
-            return recordDate >= startDate && recordDate <= endDate;
+            const recordDate = record.fechaCX ? new Date(record.fechaCX) : null;
+            return recordDate && recordDate >= startDate && recordDate <= endDate;
         });
     } else if (dateFilter === 'month' && mesSelect.value && anioSelect.value) {
         const selectedMonth = mesSelect.value;
         const selectedYear = anioSelect.value;
         filtered = filtered.filter(record => {
-            const recordDate = new Date(record.fechaCX);
-            return recordDate.getMonth() + 1 === parseInt(selectedMonth) && recordDate.getFullYear() === parseInt(selectedYear);
+            const recordDate = record.fechaCX ? new Date(record.fechaCX) : null;
+            return recordDate && recordDate.getMonth() + 1 === parseInt(selectedMonth) && recordDate.getFullYear() === parseInt(selectedYear);
         });
     }
 
@@ -394,9 +400,10 @@ function updatePagination() {
 async function openEditModal(id) {
     try {
         showLoading(true);
-        const doc = await db.collection('registrar_consignacion').doc(id).get();
-        if (doc.exists) {
-            const record = doc.data();
+        const docRef = doc(db, 'registrar_consignacion', id);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+            const record = docSnap.data();
             document.getElementById('editAdmision').value = record.admision;
             document.getElementById('editPaciente').value = record.paciente;
             document.getElementById('editMedico').value = record.medico;
@@ -464,14 +471,15 @@ async function saveEdit() {
             precioUnitario,
             atributo,
             totalItems,
-            updatedAt: new Date(),
+            updatedAt: Timestamp.fromDate(new Date()),
             updatedBy: user.email || 'Anónimo'
         };
 
-        await db.collection('registrar_consignacion').doc(currentEditId).update(updatedData);
-        await db.collection('registrar_consignacion').doc(currentEditId).collection('history').add({
+        const docRef = doc(db, 'registrar_consignacion', currentEditId);
+        await updateDoc(docRef, updatedData);
+        await addDoc(collection(db, `registrar_consignacion/${currentEditId}/history`), {
             ...updatedData,
-            timestamp: new Date(),
+            timestamp: Timestamp.fromDate(new Date()),
             user: user.email || 'Anónimo',
             action: 'update'
         });
@@ -499,15 +507,16 @@ async function confirmDelete() {
             showMessage('Usuario no autenticado', 'error');
             return;
         }
-        const doc = await db.collection('registrar_consignacion').doc(currentDeleteId).get();
-        if (doc.exists) {
-            await db.collection('registrar_consignacion').doc(currentDeleteId).collection('history').add({
-                ...doc.data(),
-                timestamp: new Date(),
+        const docRef = doc(db, 'registrar_consignacion', currentDeleteId);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+            await addDoc(collection(db, `registrar_consignacion/${currentDeleteId}/history`), {
+                ...docSnap.data(),
+                timestamp: Timestamp.fromDate(new Date()),
                 user: user.email || 'Anónimo',
                 action: 'delete'
             });
-            await db.collection('registrar_consignacion').doc(currentDeleteId).delete();
+            await deleteDoc(docRef);
             showToast('Registro eliminado exitosamente', 'success');
             deleteModal.style.display = 'none';
             await loadRecords();
@@ -523,7 +532,8 @@ async function confirmDelete() {
 async function openHistoryModal(id) {
     try {
         showLoading(true);
-        const snapshot = await db.collection('registrar_consignacion').doc(id).collection('history').orderBy('timestamp', 'desc').get();
+        const q = query(collection(db, `registrar_consignacion/${id}/history`), orderBy('timestamp', 'desc'));
+        const snapshot = await getDocs(q);
         historyContent.innerHTML = '';
         snapshot.forEach(doc => {
             const history = doc.data();
@@ -532,7 +542,7 @@ async function openHistoryModal(id) {
             entry.innerHTML = `
                 <p><strong>Acción:</strong> ${history.action === 'update' ? 'Actualización' : 'Eliminación'}</p>
                 <p><strong>Usuario:</strong> ${history.user}</p>
-                <p><strong>Fecha:</strong> ${new Date(history.timestamp).toLocaleString()}</p>
+                <p><strong>Fecha:</strong> ${history.timestamp.toDate().toLocaleString()}</p>
                 <p><strong>Admisión:</strong> ${history.admision}</p>
                 <p><strong>Paciente:</strong> ${history.paciente}</p>
                 <p><strong>Médico:</strong> ${history.medico}</p>
@@ -571,9 +581,9 @@ function exportToExcel(records, filename) {
         'Precio Unitario': record.precioUnitario,
         Atributo: record.atributo,
         'Total Items': record.totalItems,
-        'Creado': new Date(record.createdAt).toLocaleString(),
+        'Creado': record.createdAt ? record.createdAt.toDate().toLocaleString() : '',
         'Creado por': record.createdBy,
-        'Actualizado': new Date(record.updatedAt).toLocaleString(),
+        'Actualizado': record.updatedAt ? record.updatedAt.toDate().toLocaleString() : '',
         'Actualizado por': record.updatedBy
     }));
 
@@ -719,7 +729,7 @@ window.addEventListener('click', (e) => {
     }
 });
 
-auth.onAuthStateChanged(user => {
+onAuthStateChanged(auth, user => {
     if (user) {
         loadMedicos();
         loadRecords();
