@@ -1,15 +1,6 @@
-const firebaseConfig = {
-    apiKey: "AIzaSyB7r0f2iRNUU3n9nUc0QRDn0-4vPwmmrK8",
-    authDomain: "consignaciones-94d35.firebaseapp.com",
-    projectId: "consignaciones-94d35",
-    storageBucket: "consignaciones-94d35.appspot.com",
-    messagingSenderId: "324135136642",
-    appId: "1:324135136642:web:0e4cafb3b8940a5a3e8d3c"
-};
-
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
-const auth = firebase.auth();
+// Acceder a auth y db desde window.firebaseApp
+const db = window.firebaseApp.db;
+const auth = window.firebaseApp.auth;
 
 let currentPage = 1;
 const recordsPerPage = 10;
