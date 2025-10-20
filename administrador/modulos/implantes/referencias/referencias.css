@@ -211,20 +211,16 @@ html, body {
     flex-grow: 1;
 }
 
-.referencias-grid {
-    display: grid;
-    grid-template-columns: 100px 130px 200px 100px 80px 150px 250px 120px 120px 80px;
+.referencias-table {
+    table-layout: auto;
+    border-collapse: collapse;
     font-size: 11px;
-    width: 100%;
+    width: max-content;
+    min-width: 100%;
     box-sizing: border-box;
 }
 
-.referencias-grid-header {
-    display: contents;
-}
-
-.referencias-grid-header > div {
-    background-color: #f2f2f2;
+.referencias-table th, .referencias-table td {
     padding: 4px;
     text-align: left;
     border: 1px solid #ddd;
@@ -232,55 +228,49 @@ html, body {
     overflow: hidden;
     text-overflow: ellipsis;
     box-sizing: border-box;
+}
+
+.referencias-table th {
+    background-color: #f2f2f2;
     font-size: 11px;
     position: sticky;
     top: 0;
     z-index: 10;
+    cursor: default;
     user-select: none;
-    position: relative;
-    width: 100%;
 }
 
-.referencias-grid-row {
-    display: contents;
+.referencias-table th .resize-handle {
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 5px;
+    height: 100%;
+    cursor: col-resize;
+    background: transparent;
+    z-index: 11;
 }
 
-.referencias-grid-row > div {
-    padding: 4px;
-    text-align: left;
-    border: 1px solid #ddd;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    box-sizing: border-box;
-    width: 100%;
+.referencias-table th .resize-handle:hover,
+.referencias-table th .resize-handle.active {
+    background: #007bff;
+    width: 5px;
 }
 
-.referencias-grid-row:hover > div {
+.referencias-table tbody tr:hover {
     background-color: #f8f9fa;
 }
 
-.resize-handle {
-    position: absolute;
-    right: -5px;
-    top: 0;
-    width: 10px;
-    height: 100%;
-    cursor: col-resize;
-    z-index: 11;
-    background: transparent;
-}
-
-.referencias-grid-header > div:nth-child(1), .referencias-grid-row > div:nth-child(1) { width: 100px; min-width: 80px; max-width: 100px; }
-.referencias-grid-header > div:nth-child(2), .referencias-grid-row > div:nth-child(2) { width: 130px; min-width: 80px; max-width: 130px; }
-.referencias-grid-header > div:nth-child(3), .referencias-grid-row > div:nth-child(3) { width: 200px; min-width: 150px; max-width: 200px; }
-.referencias-grid-header > div:nth-child(4), .referencias-grid-row > div:nth-child(4) { width: 100px; min-width: 80px; max-width: 100px; }
-.referencias-grid-header > div:nth-child(5), .referencias-grid-row > div:nth-child(5) { width: 80px; min-width: 60px; max-width: 80px; }
-.referencias-grid-header > div:nth-child(6), .referencias-grid-row > div:nth-child(6) { width: 150px; min-width: 100px; max-width: 150px; }
-.referencias-grid-header > div:nth-child(7), .referencias-grid-row > div:nth-child(7) { width: 250px; min-width: 200px; max-width: 250px; }
-.referencias-grid-header > div:nth-child(8), .referencias-grid-row > div:nth-child(8) { width: 120px; min-width: 80px; max-width: 120px; }
-.referencias-grid-header > div:nth-child(9), .referencias-grid-row > div:nth-child(9) { width: 120px; min-width: 80px; max-width: 120px; }
-.referencias-grid-header > div:nth-child(10), .referencias-grid-row > div:nth-child(10) { width: 80px; min-width: 60px; max-width: 80px; }
+.referencias-table th:nth-child(1), .referencias-table td:nth-child(1) { width: 100px; min-width: 20px; max-width: 2000px; }
+.referencias-table th:nth-child(2), .referencias-table td:nth-child(2) { width: 130px; min-width: 20px; max-width: 2000px; }
+.referencias-table th:nth-child(3), .referencias-table td:nth-child(3) { width: 200px; min-width: 20px; max-width: 2000px; }
+.referencias-table th:nth-child(4), .referencias-table td:nth-child(4) { width: 80px; min-width: 20px; max-width: 2000px; }
+.referencias-table th:nth-child(5), .referencias-table td:nth-child(5) { width: 80px; min-width: 20px; max-width: 2000px; }
+.referencias-table th:nth-child(6), .referencias-table td:nth-child(6) { width: 150px; min-width: 20px; max-width: 2000px; }
+.referencias-table th:nth-child(7), .referencias-table td:nth-child(7) { width: 250px; min-width: 20px; max-width: 2000px; }
+.referencias-table th:nth-child(8), .referencias-table td:nth-child(8) { width: 120px; min-width: 20px; max-width: 2000px; }
+.referencias-table th:nth-child(9), .referencias-table td:nth-child(9) { width: 120px; min-width: 20px; max-width: 2000px; }
+.referencias-table th:nth-child(10), .referencias-table td:nth-child(10) { width: 80px; min-width: 20px; max-width: 2000px; }
 
 .referencias-actions {
     display: flex;
@@ -509,6 +499,7 @@ html, body {
     color: #333;
 }
 
+/* Contenedor para los toasts - crece hacia abajo (nuevos mensajes abajo) */
 .referencias-toast-container {
     position: fixed;
     bottom: 20px;
@@ -520,6 +511,7 @@ html, body {
     max-width: 350px;
 }
 
+/* Estilo base para cada mensaje */
 .referencias-toast {
     background-color: #333;
     color: white;
@@ -535,15 +527,18 @@ html, body {
     word-wrap: break-word;
 }
 
+/* Animación de entrada: aparece deslizándose desde abajo */
 .referencias-toast.show {
     opacity: 1;
     transform: translateY(0);
 }
 
+/* Mensaje de éxito */
 .referencias-toast.success {
     background-color: #28a745;
 }
 
+/* Mensaje de error */
 .referencias-toast.error {
     background-color: #dc3545;
 }
@@ -551,67 +546,23 @@ html, body {
 .modal {
     display: none;
     position: fixed;
-    z-index: 1300;
+    z-index: 1000;
     left: 0;
     top: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
+    background-color: rgba(0,0,0,0.5);
     overflow: auto;
 }
 
 .modal-content {
     background-color: white;
-    margin: 15% auto;
+    margin: 5% auto;
     padding: 20px;
     border-radius: 8px;
     width: 90%;
-    max-width: 400px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-}
-
-.modal-content h2 {
-    margin-top: 0;
-    font-size: 16px;
-    color: #3A5795;
-}
-
-.modal-content p {
-    font-size: 14px;
-    color: #333;
-    margin-bottom: 20px;
-}
-
-.modal-buttons {
-    display: flex;
-    justify-content: flex-end;
-    gap: 10px;
-}
-
-.modal-btn {
-    padding: 8px 16px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 13px;
-}
-
-.modal-btn-primary {
-    background-color: #3A5795;
-    color: white;
-}
-
-.modal-btn-primary:hover {
-    background-color: #2a4373;
-}
-
-.modal-btn-secondary {
-    background-color: #6c757d;
-    color: white;
-}
-
-.modal-btn-secondary:hover {
-    background-color: #5a6268;
+    max-width: 600px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
 }
 
 .close {
@@ -628,8 +579,87 @@ html, body {
     text-decoration: none;
 }
 
-.resizing {
-    user-select: none;
+.modal h2 {
+    margin-top: 0;
+    font-size: 16px;
+    color: #333;
+}
+
+.modal-form-group {
+    margin-bottom: 12px;
+}
+
+.modal-form-group label {
+    display: block;
+    font-size: 12px;
+    font-weight: bold;
+    margin-bottom: 4px;
+    color: #333;
+}
+
+.modal-form-group input,
+.modal-form-group select {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 11px;
+    box-sizing: border-box;
+    text-transform: uppercase;
+}
+
+.modal-form-group input:focus,
+.modal-form-group select:focus {
+    box-shadow: 0 0 12px rgba(0, 123, 255, 0.5);
+    outline: none;
+}
+
+.modal-buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.modal-btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.modal-btn-primary {
+    background-color: #007bff;
+    color: white;
+}
+
+.modal-btn-primary:hover {
+    background-color: #0056b3;
+}
+
+.modal-btn-secondary {
+    background-color: #6c757d;
+    color: white;
+}
+
+.modal-btn-secondary:hover {
+    background-color: #5a6268;
+}
+
+.modal-btn-danger {
+    background-color: #dc3545;
+    color: white;
+}
+
+.modal-btn-danger:hover {
+    background-color: #c82333;
+}
+
+.delete-modal-text {
+    font-size: 12px;
+    margin-bottom: 20px;
+    color: #333;
 }
 
 .history-entry {

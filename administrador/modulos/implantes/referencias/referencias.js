@@ -158,56 +158,63 @@ async function logAction(referenciaId, action, oldData = null, newData = null) {
     });
 }
 
-function enableColumnResizing() {
-    const grid = document.getElementById('referenciasGrid');
-    const headers = grid.querySelectorAll('.referencias-grid-header > div');
-    const colWidths = Array.from(headers).map(header => parseInt(header.style.width) || header.offsetWidth);
+function setupColumnResize() {
+    const table = document.querySelector('.referencias-table');
+    const headers = document.querySelectorAll('.referencias-table th');
 
     headers.forEach((header, index) => {
+        const existingHandle = header.querySelector('.resize-handle');
+        if (existingHandle) existingHandle.remove();
+
         const resizeHandle = document.createElement('div');
         resizeHandle.className = 'resize-handle';
         header.appendChild(resizeHandle);
+        header.style.position = 'relative';
 
-        resizeHandle.addEventListener('mousedown', (e) => {
+        let isResizing = false;
+        let startX, startWidth;
+
+        const startResize = (e) => {
+            isResizing = true;
+            startX = e.pageX || (e.touches && e.touches[0].pageX);
+            startWidth = header.getBoundingClientRect().width;
+            resizeHandle.classList.add('active');
             e.preventDefault();
-            document.body.classList.add('resizing');
+        };
 
-            const startX = e.clientX;
-            const startWidth = header.offsetWidth;
-            const minWidth = parseInt(getComputedStyle(header).minWidth) || 50;
-            const maxWidth = parseInt(getComputedStyle(header).maxWidth) || 2000;
+        const resize = (e) => {
+            if (!isResizing) return;
+            const clientX = e.pageX || (e.touches && e.touches[0].pageX);
+            if (!clientX) return;
+            const newWidth = Math.max(20, startWidth + (clientX - startX));
 
-            const onMouseMove = (moveEvent) => {
-                let newWidth = startWidth + (moveEvent.clientX - startX);
-                newWidth = Math.max(minWidth, Math.min(newWidth, maxWidth));
+            header.style.width = `${newWidth}px`;
+            header.style.minWidth = `${newWidth}px`;
+            header.style.maxWidth = `${newWidth}px`;
 
-                // Actualizar la plantilla de columnas del grid
-                const gridTemplateColumns = colWidths.map((w, i) => i === index ? `${newWidth}px` : `${w}px`).join(' ');
-                grid.style.gridTemplateColumns = gridTemplateColumns;
+            const cells = document.querySelectorAll(`.referencias-table td:nth-child(${index + 1})`);
+            cells.forEach(cell => {
+                cell.style.width = `${newWidth}px`;
+                cell.style.minWidth = `${newWidth}px`;
+                cell.style.maxWidth = `${newWidth}px`;
+            });
 
-                // Actualizar el ancho de la columna seleccionada
-                header.style.width = `${newWidth}px`;
-                const cells = grid.querySelectorAll(`.referencias-grid-row > div:nth-child(${index + 1})`);
-                cells.forEach(cell => {
-                    cell.style.width = `${newWidth}px`;
-                    cell.style.minWidth = `${minWidth}px`;
-                    cell.style.maxWidth = `${maxWidth}px`;
-                });
+            e.preventDefault();
+        };
 
-                colWidths[index] = newWidth;
-            };
+        const stopResize = () => {
+            if (isResizing) {
+                isResizing = false;
+                resizeHandle.classList.remove('active');
+            }
+        };
 
-            const onMouseUp = () => {
-                document.body.classList.remove('resizing');
-                document.removeEventListener('mousemove', onMouseMove);
-                document.removeEventListener('mouseup', onMouseUp);
-                document.removeEventListener('mouseleave', onMouseUp);
-            };
-
-            document.addEventListener('mousemove', onMouseMove);
-            document.addEventListener('mouseup', onMouseUp);
-            document.addEventListener('mouseleave', onMouseUp);
-        });
+        resizeHandle.addEventListener('mousedown', startResize);
+        resizeHandle.addEventListener('touchstart', startResize, { passive: false });
+        document.addEventListener('mousemove', resize);
+        document.addEventListener('touchmove', resize, { passive: false });
+        document.addEventListener('mouseup', stopResize);
+        document.addEventListener('touchend', stopResize);
     });
 }
 
@@ -720,7 +727,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 totalRecords = referencias.length;
             }
 
-            renderGrid();
+            renderTable();
             hideLoading();
         } catch (error) {
             hideLoading();
@@ -728,31 +735,29 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function renderGrid() {
-        const referenciasBody = document.getElementById('referenciasBody');
+    function renderTable() {
         if (referenciasBody) {
             referenciasBody.innerHTML = '';
             if (referencias.length === 0) {
-                referenciasBody.innerHTML = '<div class="referencias-grid-row"><div style="grid-column: span 10;">No hay registros para mostrar.</div></div>';
+                referenciasBody.innerHTML = '<tr><td colspan="10">No hay registros para mostrar.</td></tr>';
             } else {
                 referencias.forEach(referencia => {
-                    const row = document.createElement('div');
-                    row.className = 'referencias-grid-row';
+                    const row = document.createElement('tr');
                     row.innerHTML = `
-                        <div class="referencias-actions">
+                        <td class="referencias-actions">
                             <button title="Editar" class="referencias-btn-edit" onclick="openEditModal('${referencia.id}', ${JSON.stringify(referencia).replace(/"/g, '&quot;')})"><i class="fas fa-edit"></i></button>
                             <button title="Eliminar" class="referencias-btn-delete" onclick="openDeleteModal('${referencia.id}', '${referencia.referencia}')"><i class="fas fa-trash"></i></button>
                             <button title="Ver Historial" class="referencias-btn-history" onclick="openHistoryModal('${referencia.id}', '${referencia.referencia}')"><i class="fas fa-history"></i></button>
-                        </div>
-                        <div>${referencia.referencia || ''}</div>
-                        <div>${referencia.detalles || ''}</div>
-                        <div>${formatNumberWithThousandsSeparator(referencia.precioUnitario)}</div>
-                        <div>${referencia.codigo || ''}</div>
-                        <div>${referencia.proveedor || ''}</div>
-                        <div>${referencia.descripcion || ''}</div>
-                        <div>${referencia.tipo || ''}</div>
-                        <div>${referencia.atributo || ''}</div>
-                        <div>${referencia.estado || 'ACTIVO'}</div>
+                        </td>
+                        <td>${referencia.referencia || ''}</td>
+                        <td>${referencia.detalles || ''}</td>
+                        <td>${formatNumberWithThousandsSeparator(referencia.precioUnitario)}</td>
+                        <td>${referencia.codigo || ''}</td>
+                        <td>${referencia.proveedor || ''}</td>
+                        <td>${referencia.descripcion || ''}</td>
+                        <td>${referencia.tipo || ''}</td>
+                        <td>${referencia.atributo || ''}</td>
+                        <td>${referencia.estado || 'ACTIVO'}</td>
                     `;
                     referenciasBody.appendChild(row);
                 });
@@ -760,7 +765,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         updatePagination(totalRecords);
-        enableColumnResizing();
+        setupColumnResize();
     }
 
     function updatePagination(total) {
@@ -1027,15 +1032,22 @@ document.addEventListener('DOMContentLoaded', () => {
             window.location.replace('../index.html');
             return;
         }
-
-        const userDoc = await getDoc(doc(db, 'users', user.uid));
-        if (userDoc.exists()) {
-            window.currentUserData = userDoc.data();
+        try {
+            const userDocRef = doc(db, 'users', user.uid);
+            const userDoc = await getDoc(userDocRef);
+            if (userDoc.exists()) {
+                window.currentUserData = userDoc.data();
+            } else {
+                window.currentUserData = { fullName: user.displayName || 'Usuario Invitado', username: user.email || 'invitado' };
+            }
+            await loadProveedores();
+            setupAutocomplete('proveedor', 'proveedorIcon', 'proveedorList');
+            setupAutocomplete('existProveedor', 'existProveedorIcon', 'existProveedorList');
+            setupAutocomplete('editProveedor', 'editProveedorIcon', 'editProveedorList');
+            await loadReferencias();
+        } catch (error) {
+            window.currentUserData = { fullName: 'Usuario Invitado', username: 'invitado' };
+            showToast('Error al cargar datos del usuario.', 'error');
         }
-        await loadProveedores();
-        setupAutocomplete('proveedor', 'proveedorIcon', 'proveedorList');
-        setupAutocomplete('existProveedor', 'existProveedorIcon', 'existProveedorList');
-        setupAutocomplete('editProveedor', 'editProveedorIcon', 'editProveedorList');
-        await loadReferencias();
     });
 });
