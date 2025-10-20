@@ -4,18 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Registrar Consignación</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="registrar.css">
-    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body>
     <div class="registrar-main-container">
         <h1 class="registrar-title">Registrar Consignación</h1>
         <div id="registrar-message"></div>
-        <div id="toastContainer"></div>
         <div class="registrar-fields-container">
             <div class="registrar-first-row">
                 <div class="registrar-form-group">
@@ -132,16 +131,17 @@
                         </div>
                     </div>
                 </div>
+                <div class="registrar-actions-menu">
+                    <button id="actionsBtn">Acciones <i class="fas fa-caret-down"></i></button>
+                    <div class="registrar-dropdown-menu" id="actionsMenu">
+                        <div class="menu-title">Acciones</div>
+                        <a href="#" id="downloadAll">Descargar todos los registros</a>
+                        <a href="#" id="downloadCurrent">Descargar hoja actual</a>
+                    </div>
+                </div>
             </div>
         </div>
         <div class="registrar-table-container">
-            <div class="registrar-actions-container">
-                <button id="actionsBtn" class="modal-btn modal-btn-primary">Acciones</button>
-                <div id="actionsMenu" class="actions-menu">
-                    <a href="#" id="downloadAll">Descargar todos los registros</a>
-                    <a href="#" id="downloadCurrent">Descargar página actual</a>
-                </div>
-            </div>
             <table class="registrar-table" id="registrarTable">
                 <thead>
                     <tr>
@@ -162,95 +162,116 @@
                 </thead>
                 <tbody></tbody>
             </table>
-            <div class="registrar-pagination">
-                <button id="prevPage" class="modal-btn modal-btn-secondary">Anterior</button>
-                <div id="pageNumbers"></div>
-                <button id="nextPage" class="modal-btn modal-btn-secondary">Siguiente</button>
-                <span id="paginationInfo"></span>
+        </div>
+        <div class="registrar-pagination">
+            <div class="registrar-pagination-info" id="paginationInfo"></div>
+            <div class="registrar-pagination-controls">
+                <button id="prevPage">Anterior</button>
+                <div class="registrar-page-numbers" id="pageNumbers"></div>
+                <button id="nextPage">Siguiente</button>
             </div>
         </div>
-        <div id="loading" class="loading">Cargando...</div>
-        <div id="editModal" class="modal">
-            <div class="modal-content">
-                <span class="close">&times;</span>
+        <div class="registrar-loading" id="loading">
+            <div class="registrar-loading-spinner"></div>
+            <div class="registrar-loading-text">Cargando...</div>
+        </div>
+    </div>
+
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
                 <h2>Editar Registro</h2>
-                <div class="registrar-form-group">
-                    <label class="registrar-label" for="editAdmision">Admisión:</label>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-content-body">
+                <div class="modal-form-group">
+                    <label for="editAdmision">Admisión:</label>
                     <input type="text" id="editAdmision" maxlength="10">
                 </div>
-                <div class="registrar-form-group">
-                    <label class="registrar-label" for="editPaciente">Paciente:</label>
+                <div class="modal-form-group">
+                    <label for="editPaciente">Paciente:</label>
                     <input type="text" id="editPaciente">
                 </div>
-                <div class="registrar-form-group medico-input-container">
-                    <label class="registrar-label" for="editMedico">Médico:</label>
+                <div class="modal-form-group medico-input-container">
+                    <label for="editMedico">Médico:</label>
                     <div class="medico-input-wrapper">
                         <input type="text" id="editMedico">
                         <i class="fas fa-clipboard-list medico-icon" id="editMedicoToggle"></i>
                     </div>
                     <div class="medico-dropdown" id="editMedicoDropdown"></div>
                 </div>
-                <div class="registrar-form-group">
-                    <label class="registrar-label" for="editFechaCX">Fecha CX:</label>
+                <div class="modal-form-group">
+                    <label for="editFechaCX">Fecha CX:</label>
                     <input type="date" id="editFechaCX">
                 </div>
-                <div class="registrar-form-group">
-                    <label class="registrar-label" for="editCodigo">Código:</label>
+                <div class="modal-form-group">
+                    <label for="editCodigo">Código:</label>
                     <input type="text" id="editCodigo">
                 </div>
-                <div class="registrar-form-group">
-                    <label class="registrar-label" for="editDescripcion">Descripción:</label>
+                <div class="modal-form-group">
+                    <label for="editDescripcion">Descripción:</label>
                     <input type="text" id="editDescripcion">
                 </div>
-                <div class="registrar-form-group">
-                    <label class="registrar-label" for="editCantidad">Cantidad:</label>
+                <div class="modal-form-group">
+                    <label for="editCantidad">Cantidad:</label>
                     <input type="number" id="editCantidad" min="1">
                 </div>
-                <div class="registrar-form-group">
-                    <label class="registrar-label" for="editReferencia">Referencia:</label>
+                <div class="modal-form-group">
+                    <label for="editReferencia">Referencia:</label>
                     <input type="text" id="editReferencia" disabled>
                 </div>
-                <div class="registrar-form-group">
-                    <label class="registrar-label" for="editProveedor">Proveedor:</label>
+                <div class="modal-form-group">
+                    <label for="editProveedor">Proveedor:</label>
                     <input type="text" id="editProveedor" disabled>
                 </div>
-                <div class="registrar-form-group">
-                    <label class="registrar-label" for="editPrecioUnitario">Precio Unitario:</label>
+                <div class="modal-form-group">
+                    <label for="editPrecioUnitario">Precio Unitario:</label>
                     <input type="number" id="editPrecioUnitario" disabled>
                 </div>
-                <div class="registrar-form-group">
-                    <label class="registrar-label" for="editAtributo">Atributo:</label>
+                <div class="modal-form-group">
+                    <label for="editAtributo">Atributo:</label>
                     <input type="text" id="editAtributo" disabled>
                 </div>
-                <div class="registrar-form-group">
-                    <label class="registrar-label" for="editTotalItems">Total Items:</label>
+                <div class="modal-form-group">
+                    <label for="editTotalItems">Total Items:</label>
                     <input type="number" id="editTotalItems" disabled>
                 </div>
                 <div class="modal-buttons">
-                    <button id="saveEditBtn" class="modal-btn modal-btn-primary">Guardar</button>
-                    <button id="cancelEditBtn" class="modal-btn modal-btn-secondary">Cancelar</button>
+                    <button class="modal-btn modal-btn-primary" id="saveEditBtn">Guardar</button>
+                    <button class="modal-btn modal-btn-secondary" id="cancelEditBtn">Cancelar</button>
                 </div>
-            </div>
-        </div>
-        <div id="deleteModal" class="modal">
-            <div class="modal-content">
-                <span class="close">&times;</span>
-                <h2>Confirmar Eliminación</h2>
-                <p>¿Está seguro de que desea eliminar este registro?</p>
-                <div class="modal-buttons">
-                    <button id="confirmDeleteBtn" class="modal-btn modal-btn-primary">Eliminar</button>
-                    <button id="cancelDeleteBtn" class="modal-btn modal-btn-secondary">Cancelar</button>
-                </div>
-            </div>
-        </div>
-        <div id="historyModal" class="modal">
-            <div class="modal-content">
-                <span class="close">&times;</span>
-                <h2>Historial del Registro</h2>
-                <div id="historyContent"></div>
             </div>
         </div>
     </div>
+
+    <div id="deleteModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Confirmar Eliminación</h2>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-content-body">
+                <p class="delete-modal-text">¿Estás seguro de que deseas eliminar este registro?</p>
+                <div class="modal-buttons">
+                    <button class="modal-btn modal-btn-danger" id="confirmDeleteBtn">Eliminar</button>
+                    <button class="modal-btn modal-btn-secondary" id="cancelDeleteBtn">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="historyModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Historial de Cambios</h2>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-content-body" id="historyContent">
+            </div>
+        </div>
+    </div>
+
+    <div class="registrar-toast-container" id="toastContainer"></div>
     <script src="registrar.js"></script>
 </body>
 </html>
