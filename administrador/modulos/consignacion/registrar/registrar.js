@@ -77,7 +77,6 @@ async function loadReferencias() {
     }
 }
 
-// *** NUEVA FUNCIÓN: BUSCAR POR DESCRIPCIÓN ***
 async function getReferenciaByDescripcion(descripcion) {
     if (!descripcion?.trim()) return null;
     
@@ -129,11 +128,17 @@ function setupAutocomplete(inputId, iconId, listId, data, key, isDescripcion = f
             div.className = 'autocomplete-item';
             div.textContent = item[key];
             div.title = item[key];
-            div.addEventListener('click', () => {
+            div.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                
                 input.value = item[key];
                 list.style.display = 'none';
-                input.dispatchEvent(new Event('change'));
+                
                 fillFields(item, inputId);
+                
+                input.dispatchEvent(new Event('change'));
+                input.focus();
             });
             list.appendChild(div);
         });
@@ -149,11 +154,17 @@ function setupAutocomplete(inputId, iconId, listId, data, key, isDescripcion = f
             div.className = 'autocomplete-item';
             div.textContent = item[key];
             div.title = item[key];
-            div.addEventListener('click', () => {
+            div.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                
                 input.value = item[key];
                 list.style.display = 'none';
-                input.dispatchEvent(new Event('change'));
+                
                 fillFields(item, inputId);
+                
+                input.dispatchEvent(new Event('change'));
+                input.focus();
             });
             list.appendChild(div);
         });
@@ -209,10 +220,14 @@ function setupAutocomplete(inputId, iconId, listId, data, key, isDescripcion = f
                 items[currentIndex - 1].scrollIntoView({ block: 'nearest' });
             }
         } else if (e.key === 'Enter' || e.key === 'Tab') {
+            e.preventDefault();
             const highlighted = list.querySelector('.highlighted');
             if (highlighted) {
                 highlighted.click();
-                e.preventDefault();
+            } else {
+                if (items.length > 0) {
+                    items[0].click();
+                }
             }
         } else if (e.key === 'Escape') {
             list.style.display = 'none';
@@ -221,7 +236,6 @@ function setupAutocomplete(inputId, iconId, listId, data, key, isDescripcion = f
     });
 }
 
-// *** FUNCIÓN fillFields MODIFICADA ***
 function fillFields(item, inputId) {
     const isEdit = inputId.startsWith('edit');
     const codigoInput = isEdit ? document.getElementById('editCodigo') : document.getElementById('codigo');
@@ -230,34 +244,28 @@ function fillFields(item, inputId) {
     const proveedorInput = isEdit ? document.getElementById('editProveedor') : document.getElementById('proveedor');
     const precioUnitarioInput = isEdit ? document.getElementById('editPrecioUnitario') : document.getElementById('precioUnitario');
     const atributoInput = isEdit ? document.getElementById('editAtributo') : document.getElementById('atributo');
-    const cantidadInput = isEdit ? document.getElementById('editCantidad') : document.getElementById('cantidad');
-    const totalItemsInput = isEdit ? document.getElementById('editTotalItems') : document.getElementById('totalItems');
 
-    // *** SI VIENE DE DESCRIPCIÓN ***
-    if (inputId.includes('Descripcion')) {
-        // Buscar en referencias_implantes por descripción
-        getReferenciaByDescripcion(item.descripcion).then(referencia => {
-            if (referencia) {
-                codigoInput.value = referencia.codigo || '';
-                referenciaInput.value = referencia.referencia || '';
-                proveedorInput.value = referencia.proveedor || '';
-                precioUnitarioInput.value = referencia.precioUnitario ? formatNumberWithThousandsSeparator(referencia.precioUnitario) : '';
-                atributoInput.value = referencia.atributo || '';
-                updateTotalItems(isEdit);
-            }
-        });
+    if (inputId.includes('Descripcion') || inputId.includes('descripcion')) {
+        if (codigoInput) codigoInput.value = item.codigo || '';
+        if (descripcionInput) descripcionInput.value = item.descripcion || '';
+        if (referenciaInput) referenciaInput.value = item.referencia || '';
+        if (proveedorInput) proveedorInput.value = item.proveedor || '';
+        if (precioUnitarioInput) {
+            precioUnitarioInput.value = item.precioUnitario ? formatNumberWithThousandsSeparator(item.precioUnitario) : '';
+        }
+        if (atributoInput) atributoInput.value = item.atributo || '';
     }
-    // *** SI VIENE DE CÓDIGO ***
-    else if (inputId.includes('Codigo')) {
-        descripcionInput.value = item.descripcion || '';
-        referenciaInput.value = item.referencia || '';
-        proveedorInput.value = item.proveedor || '';
-        precioUnitarioInput.value = item.precioUnitario ? formatNumberWithThousandsSeparator(item.precioUnitario) : '';
-        atributoInput.value = item.atributo || '';
-        updateTotalItems(isEdit);
+    else if (inputId.includes('Codigo') || inputId.includes('codigo')) {
+        if (descripcionInput) descripcionInput.value = item.descripcion || '';
+        if (referenciaInput) referenciaInput.value = item.referencia || '';
+        if (proveedorInput) proveedorInput.value = item.proveedor || '';
+        if (precioUnitarioInput) {
+            precioUnitarioInput.value = item.precioUnitario ? formatNumberWithThousandsSeparator(item.precioUnitario) : '';
+        }
+        if (atributoInput) atributoInput.value = item.atributo || '';
     }
 
-    updateTotalItems(isEdit);
+    setTimeout(() => updateTotalItems(isEdit), 100);
 }
 
 function updateTotalItems(isEdit = false) {
@@ -1434,7 +1442,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 await loadRegistros();
             } catch (error) {
                 console.error('Error updating registro:', error);
-                showToast('❌ Error al actualizar: ' + error.message, 'error');
+                showToast('❌ Error al actualizar registro: ' + error.message, 'error');
             } finally {
                 window.hideLoading();
             }
@@ -1447,204 +1455,66 @@ document.addEventListener('DOMContentLoaded', () => {
 
             window.showLoading();
             try {
-                const registroData = registros.find(r => r.id === currentDeleteId);
-                
-                await deleteDoc(doc(db, "registrar_consignacion", currentDeleteId));
+                const registroRef = doc(db, "registrar_consignacion", currentDeleteId);
+                const registroSnap = await getDoc(registroRef);
+                const registroData = registroSnap.data();
+
+                await deleteDoc(registroRef);
                 await logAction(currentDeleteId, 'ELIMINADO', registroData, null);
 
-                showToast('🗑️ Registro eliminado exitosamente', 'success');
+                showToast('✅ Registro eliminado exitosamente', 'success');
                 closeModal(deleteModal);
-                currentPage = 1;
-                lastVisible = null;
                 await loadRegistros();
             } catch (error) {
                 console.error('Error deleting registro:', error);
-                showToast('❌ Error al eliminar: ' + error.message, 'error');
+                showToast('❌ Error al eliminar registro: ' + error.message, 'error');
             } finally {
                 window.hideLoading();
             }
         });
     }
 
-    function setupTotalCalculators() {
-        const quantityInputs = [cantidadInput, editCantidadInput];
-        const priceInputs = [precioUnitarioInput, editPrecioUnitarioInput];
-
-        quantityInputs.forEach((qtyInput, index) => {
-            if (qtyInput) {
-                qtyInput.addEventListener('input', () => {
-                    updateTotalItems(index === 1);
-                });
-            }
-        });
-
-        priceInputs.forEach((priceInput, index) => {
-            if (priceInput) {
-                priceInput.addEventListener('input', () => {
-                    updateTotalItems(index === 1);
-                });
-            }
+    if (medicoToggle) {
+        medicoToggle.addEventListener('click', (e) => {
+            e.stopPropagation();
+            medicoDropdown.style.display = medicoDropdown.style.display === 'block' ? 'none' : 'block';
         });
     }
 
-    setupTotalCalculators();
-
-    // *** EVENTO BLUR PARA CÓDIGO (EXISTENTE) ***
-    if (codigoInput) {
-        codigoInput.addEventListener('blur', async () => {
-            const codigo = codigoInput.value.trim().toUpperCase();
-            if (!codigo) return;
-
-            const producto = await getProductoByCodigo(codigo);
-            if (producto) {
-                descripcionInput.value = producto.descripcion || '';
-                if (referenciaInput) referenciaInput.value = producto.referencia || '';
-                if (proveedorInput) proveedorInput.value = producto.proveedor || '';
-                if (precioUnitarioInput) precioUnitarioInput.value = producto.precioUnitario ? formatNumberWithThousandsSeparator(producto.precioUnitario) : '';
-                if (atributoInput) atributoInput.value = producto.atributo || '';
-                updateTotalItems(false);
-            } else {
-                showToast(`Código ${codigo} no encontrado`, 'error');
-            }
+    if (editMedicoToggle) {
+        editMedicoToggle.addEventListener('click', (e) => {
+            e.stopPropagation();
+            editMedicoDropdown.style.display = editMedicoDropdown.style.display === 'block' ? 'none' : 'block';
         });
     }
 
-    // *** NUEVO EVENTO BLUR PARA DESCRIPCIÓN ***
-    if (descripcionInput) {
-        descripcionInput.addEventListener('blur', async () => {
-            const descripcion = descripcionInput.value.trim().toUpperCase();
-            if (!descripcion) return;
+    document.addEventListener('click', (e) => {
+        if (!medicoToggle?.contains(e.target) && !medicoDropdown?.contains(e.target)) {
+            medicoDropdown.style.display = 'none';
+        }
+        if (!editMedicoToggle?.contains(e.target) && !editMedicoDropdown?.contains(e.target)) {
+            editMedicoDropdown.style.display = 'none';
+        }
+    });
 
-            const referencia = await getReferenciaByDescripcion(descripcion);
-            if (referencia) {
-                codigoInput.value = referencia.codigo || '';
-                referenciaInput.value = referencia.referencia || '';
-                proveedorInput.value = referencia.proveedor || '';
-                precioUnitarioInput.value = referencia.precioUnitario ? formatNumberWithThousandsSeparator(referencia.precioUnitario) : '';
-                atributoInput.value = referencia.atributo || '';
-                updateTotalItems(false);
-            } else {
-                showToast(`Descripción "${descripcion}" no encontrada`, 'error');
-            }
-        });
-    }
+    cantidadInput?.addEventListener('input', () => updateTotalItems(false));
+    editCantidadInput?.addEventListener('input', () => updateTotalItems(true));
+    precioUnitarioInput?.addEventListener('input', () => updateTotalItems(false));
+    editPrecioUnitarioInput?.addEventListener('input', () => updateTotalItems(true));
 
-    // *** EVENTO BLUR PARA CÓDIGO EN EDITAR (EXISTENTE) ***
-    if (editCodigoInput) {
-        editCodigoInput.addEventListener('blur', async () => {
-            const codigo = editCodigoInput.value.trim().toUpperCase();
-            if (!codigo) return;
-
-            const producto = await getProductoByCodigo(codigo);
-            if (producto) {
-                editDescripcionInput.value = producto.descripcion || '';
-                editReferenciaInput.value = producto.referencia || '';
-                editProveedorInput.value = producto.proveedor || '';
-                editPrecioUnitarioInput.value = producto.precioUnitario ? formatNumberWithThousandsSeparator(producto.precioUnitario) : '';
-                editAtributoInput.value = producto.atributo || '';
-                updateTotalItems(true);
-            } else {
-                showToast(`Código ${codigo} no encontrado`, 'error');
-            }
-        });
-    }
-
-    // *** NUEVO EVENTO BLUR PARA DESCRIPCIÓN EN EDITAR ***
-    if (editDescripcionInput) {
-        editDescripcionInput.addEventListener('blur', async () => {
-            const descripcion = editDescripcionInput.value.trim().toUpperCase();
-            if (!descripcion) return;
-
-            const referencia = await getReferenciaByDescripcion(descripcion);
-            if (referencia) {
-                editCodigoInput.value = referencia.codigo || '';
-                editReferenciaInput.value = referencia.referencia || '';
-                editProveedorInput.value = referencia.proveedor || '';
-                editPrecioUnitarioInput.value = referencia.precioUnitario ? formatNumberWithThousandsSeparator(referencia.precioUnitario) : '';
-                editAtributoInput.value = referencia.atributo || '';
-                updateTotalItems(true);
-            } else {
-                showToast(`Descripción "${descripcion}" no encontrada`, 'error');
-            }
-        });
-    }
-
-    async function initializeAutocomplete() {
-        await loadMedicos();
-        await loadReferencias();
-
+    async function initialize() {
+        await Promise.all([loadMedicos(), loadReferencias()]);
+        
         if (medicos.length > 0) {
             setupAutocomplete('medico', 'medicoToggle', 'medicoDropdown', medicos, 'nombre');
-            setupAutocomplete('editMedico', 'editMedicoToggle', 'editMedicoDropdown', medicos, 'nombre');
         }
-
         if (referencias.length > 0) {
             setupAutocomplete('codigo', 'codigoToggle', 'codigoDropdown', referencias, 'codigo');
             setupAutocomplete('descripcion', 'descripcionToggle', 'descripcionDropdown', referencias, 'descripcion');
-            setupAutocomplete('editCodigo', 'editCodigoToggle', 'editCodigoDropdown', referencias, 'codigo');
-            setupAutocomplete('editDescripcion', 'editDescripcionToggle', 'editDescripcionDropdown', referencias, 'descripcion');
         }
+
+        await loadRegistros();
     }
 
-    onAuthStateChanged(auth, async (user) => {
-        if (user) {
-            try {
-                const userDoc = await getDoc(doc(db, "users", user.uid));
-                window.currentUserData = userDoc.exists() ? userDoc.data() : {
-                    fullName: 'Usuario Invitado',
-                    username: 'invitado'
-                };
-
-                await initializeAutocomplete();
-                
-                await loadRegistros();
-                
-                console.log('✅ Sistema Registrar inicializado correctamente');
-            } catch (error) {
-                console.error('Error initializing registrar:', error);
-                showToast('Error al inicializar: ' + error.message, 'error');
-            }
-        } else {
-            window.location.href = 'index.html';
-        }
-    });
-
-    document.addEventListener('keydown', (e) => {
-        if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
-            e.preventDefault();
-            clearForm();
-            admisionInput?.focus();
-        }
-        
-        if (e.key === 'Escape') {
-            const openModal = document.querySelector('.modal[style*="block"]');
-            if (openModal) {
-                closeModal(openModal);
-            }
-        }
-        
-        if ((e.ctrlKey || e.metaKey) && e.key === 's' && currentEditId) {
-            e.preventDefault();
-            saveEditBtn?.click();
-        }
-    });
-
-    console.log('🎯 registrar.js cargado completamente');
+    initialize();
 });
-
-window.goToPage = function(page) {
-    if (typeof page === 'number' && page > 0) {
-        currentPage = page;
-        loadRegistros();
-    }
-};
-
-window.searchRegistros = function(filters) {
-    if (filters.admision) searchAdmision = filters.admision.toUpperCase();
-    if (filters.paciente) searchPaciente = filters.paciente.toUpperCase();
-    if (filters.medico) searchMedico = filters.medico.toUpperCase();
-    if (filters.descripcion) searchDescripcion = filters.descripcion.toUpperCase();
-    
-    currentPage = 1;
-    loadRegistros();
-};
