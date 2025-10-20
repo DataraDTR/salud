@@ -96,13 +96,21 @@ function showToast(message, type) {
 
 async function loadMedicos() {
     try {
+        showLoading(true);
         const snapshot = await getDocs(collection(db, 'medicos'));
+        if (snapshot.empty) {
+            console.warn('No se encontraron médicos en la colección "medicos".');
+            showMessage('No se encontraron médicos', 'error');
+            return;
+        }
         medicos = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         showMedicoDropdown(medicoInput, medicoDropdown);
         showMedicoDropdown(editMedicoInput, editMedicoDropdown);
     } catch (error) {
-        console.error('Error al cargar médicos:', error);
-        showMessage('Error al cargar médicos', 'error');
+        console.error('Error al cargar médicos:', error.code, error.message);
+        showMessage(`Error al cargar médicos: ${error.message}`, 'error');
+    } finally {
+        showLoading(false);
     }
 }
 
@@ -253,10 +261,14 @@ async function loadRecords() {
         const snapshot = await getDocs(q);
         allRecords = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         filteredRecords = [...allRecords];
+        if (allRecords.length === 0) {
+            console.warn('No se encontraron registros en la colección "registrar_consignacion".');
+            showMessage('No se encontraron registros', 'info');
+        }
         applyFilters();
     } catch (error) {
-        console.error('Error al cargar registros:', error);
-        showMessage('Error al cargar registros: ' + error.message, 'error');
+        console.error('Error al cargar registros:', error.code, error.message);
+        showMessage(`Error al cargar registros: ${error.message}`, 'error');
     } finally {
         showLoading(false);
     }
@@ -336,10 +348,10 @@ function renderTable() {
         tableBody.appendChild(row);
     });
 
-    updatePagination();
+    updatePagination(start, end);
 }
 
-function updatePagination() {
+function updatePagination(start, end) {
     const totalPages = Math.ceil(filteredRecords.length / recordsPerPage);
     pageNumbersDiv.innerHTML = '';
     const maxPagesToShow = 5;
@@ -731,6 +743,7 @@ window.addEventListener('click', (e) => {
 });
 
 onAuthStateChanged(auth, user => {
+    console.log('Estado de autenticación:', user ? `Usuario autenticado: ${user.email}` : 'No autenticado');
     if (user) {
         loadMedicos();
         loadRecords();
