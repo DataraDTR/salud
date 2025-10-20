@@ -212,6 +212,7 @@ html, body {
 }
 
 .referencias-table {
+    table-layout: fixed; /* ← Importante */
     width: 100%;
     border-collapse: collapse;
     font-size: 11px;
@@ -236,16 +237,6 @@ html, body {
     cursor: col-resize;
     user-select: none;
     position: relative;
-}
-
-.referencias-table th::after {
-    content: '';
-    position: absolute;
-    right: -5px;
-    top: 0;
-    width: 10px;
-    height: 100%;
-    cursor: col-resize;
 }
 
 .referencias-table tbody tr:hover {
