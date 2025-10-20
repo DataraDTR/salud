@@ -212,11 +212,11 @@ html, body {
 }
 
 .referencias-table {
-    width: 100%;
+    table-layout: fixed;
     border-collapse: collapse;
     font-size: 11px;
-    border: 1px solid #ddd;
-    table-layout: fixed; /* ←←← ESTA LÍNEA ES CLAVE */
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .referencias-table th, .referencias-table td {
@@ -226,6 +226,7 @@ html, body {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    box-sizing: border-box;
 }
 
 .referencias-table th {
@@ -234,9 +235,18 @@ html, body {
     position: sticky;
     top: 0;
     z-index: 10;
-    cursor: col-resize;
     user-select: none;
     position: relative;
+}
+
+.resize-handle {
+    position: absolute;
+    right: -5px;
+    top: 0;
+    width: 10px;
+    height: 100%;
+    cursor: col-resize;
+    z-index: 11;
 }
 
 .referencias-table tbody tr:hover {

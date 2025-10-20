@@ -160,66 +160,48 @@ async function logAction(referenciaId, action, oldData = null, newData = null) {
 
 function enableColumnResizing() {
     const table = document.getElementById('referenciasTable');
-    if (!table) return;
-
     const headers = table.querySelectorAll('th');
+
     headers.forEach((header, index) => {
-        // Evitar múltiples listeners
-        if (header.dataset.resizerAttached) return;
-        header.dataset.resizerAttached = 'true';
+        const resizeHandle = document.createElement('div');
+        resizeHandle.className = 'resize-handle';
+        header.appendChild(resizeHandle);
 
-        // Asegurar que el header tenga posición relativa para el grip
-        header.style.position = 'relative';
-
-        // Crear grip visual (mejora UX y precisión)
-        let resizer = header.querySelector('.column-resizer');
-        if (!resizer) {
-            resizer = document.createElement('div');
-            resizer.className = 'column-resizer';
-            resizer.style.cssText = `
-                position: absolute;
-                top: 0;
-                right: -3px;
-                width: 6px;
-                height: 100%;
-                cursor: col-resize;
-                z-index: 10;
-                user-select: none;
-            `;
-            header.appendChild(resizer);
-        }
-
-        let startX, startWidth;
-
-        const onMouseDown = (e) => {
+        resizeHandle.addEventListener('mousedown', (e) => {
             e.preventDefault();
-            startX = e.clientX;
-            startWidth = header.offsetWidth;
+            document.body.classList.add('resizing');
+
+            const startX = e.clientX;
+            const startWidth = header.offsetWidth;
+            const minWidth = parseInt(getComputedStyle(header).minWidth) || 50;
+            const maxWidth = parseInt(getComputedStyle(header).maxWidth) || 2000;
+
+            const cells = table.querySelectorAll(`td:nth-child(${index + 1})`);
 
             const onMouseMove = (moveEvent) => {
-                const dx = moveEvent.clientX - startX;
-                const newWidth = Math.max(50, startWidth + dx); // mínimo 50px
-                header.style.width = `${newWidth}px`;
+                let newWidth = startWidth + (moveEvent.clientX - startX);
+                newWidth = Math.max(minWidth, Math.min(newWidth, maxWidth));
 
-                // Aplicar a todas las celdas de la misma columna
-                const rows = table.querySelectorAll('tr');
-                rows.forEach(row => {
-                    if (row.cells[index]) {
-                        row.cells[index].style.width = `${newWidth}px`;
-                    }
+                // Ajustar solo la columna seleccionada
+                header.style.width = `${newWidth}px`;
+                header.style.maxWidth = `${newWidth}px`;
+                cells.forEach(cell => {
+                    cell.style.width = `${newWidth}px`;
+                    cell.style.maxWidth = `${newWidth}px`;
                 });
             };
 
             const onMouseUp = () => {
+                document.body.classList.remove('resizing');
                 document.removeEventListener('mousemove', onMouseMove);
                 document.removeEventListener('mouseup', onMouseUp);
+                document.removeEventListener('mouseleave', onMouseUp);
             };
 
             document.addEventListener('mousemove', onMouseMove);
             document.addEventListener('mouseup', onMouseUp);
-        };
-
-        resizer.addEventListener('mousedown', onMouseDown);
+            document.addEventListener('mouseleave', onMouseUp);
+        });
     });
 }
 
