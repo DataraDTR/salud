@@ -45,8 +45,6 @@ let fechaHasta = null;
 let mes = null;
 let anio = null;
 
-// ==================== FUNCIONES ORIGINALES (MANTENIDAS) ====================
-
 function formatNumberWithThousandsSeparator(number) {
     if (!number) return '';
     const cleaned = String(number).replace(/[^\d]/g, '');
@@ -79,8 +77,6 @@ async function loadReferencias() {
     }
 }
 
-// ==================== NUEVAS FUNCIONES MEJORADAS ====================
-
 function setupAutocomplete(inputId, iconId, listId, data, key, isDescripcion = false) {
     const input = document.getElementById(inputId);
     const icon = document.getElementById(iconId);
@@ -107,15 +103,15 @@ function setupAutocomplete(inputId, iconId, listId, data, key, isDescripcion = f
             return;
         }
 
-        filtered.slice(0, 10).forEach(item => { // Limitar a 10 sugerencias
+        filtered.slice(0, 10).forEach(item => {
             const div = document.createElement('div');
             div.className = 'autocomplete-item';
             div.textContent = item[key];
-            div.title = item[key]; // Tooltip con texto completo
+            div.title = item[key];
             div.addEventListener('click', () => {
                 input.value = item[key];
                 list.style.display = 'none';
-                input.dispatchEvent(new Event('change')); // Trigger change event
+                input.dispatchEvent(new Event('change'));
                 fillFields(item, inputId);
             });
             list.appendChild(div);
@@ -127,7 +123,7 @@ function setupAutocomplete(inputId, iconId, listId, data, key, isDescripcion = f
 
     function showAll() {
         list.innerHTML = '';
-        data.slice(0, 20).forEach(item => { // Limitar a 20 items
+        data.slice(0, 20).forEach(item => {
             const div = document.createElement('div');
             div.className = 'autocomplete-item';
             div.textContent = item[key];
@@ -165,14 +161,12 @@ function setupAutocomplete(inputId, iconId, listId, data, key, isDescripcion = f
         }
     });
 
-    // Close dropdown when clicking outside
     document.addEventListener('click', (e) => {
         if (!input.contains(e.target) && !icon.contains(e.target) && !list.contains(e.target)) {
             list.style.display = 'none';
         }
     });
 
-    // Keyboard navigation
     list.addEventListener('keydown', (e) => {
         const items = list.querySelectorAll('.autocomplete-item');
         let currentIndex = -1;
@@ -217,7 +211,6 @@ function fillFields(item, inputId) {
     const cantidadInput = isEdit ? document.getElementById('editCantidad') : document.getElementById('cantidad');
     const totalItemsInput = isEdit ? document.getElementById('editTotalItems') : document.getElementById('totalItems');
 
-    // Si se selecciona desde código
     if (inputId.includes('Codigo')) {
         descripcionInput.value = item.descripcion || '';
         referenciaInput.value = item.referencia || '';
@@ -225,7 +218,6 @@ function fillFields(item, inputId) {
         precioUnitarioInput.value = item.precioUnitario ? formatNumberWithThousandsSeparator(item.precioUnitario) : '';
         atributoInput.value = item.atributo || '';
     }
-    // Si se selecciona desde descripción
     else if (inputId.includes('Descripcion')) {
         const matchingRef = referencias.find(r => r.descripcion === item.descripcion || r.codigo === item.codigo);
         if (matchingRef) {
@@ -269,8 +261,6 @@ async function logAction(registroId, action, oldData = null, newData = null) {
     }
 }
 
-// ==================== FUNCIONES ORIGINALES CONTINUADAS ====================
-
 function setupColumnResize() {
     const table = document.querySelector('.registrar-table');
     const headers = document.querySelectorAll('.registrar-table th');
@@ -279,7 +269,6 @@ function setupColumnResize() {
         100, 130, 200, 120, 100, 300, 80, 130, 150, 120, 120, 100, 100
     ];
 
-    // Aplicar anchos iniciales
     headers.forEach((header, index) => {
         if (initialWidths[index]) {
             header.style.width = `${initialWidths[index]}px`;
@@ -295,9 +284,7 @@ function setupColumnResize() {
         }
     });
 
-    // Crear handles de resize
     headers.forEach((header, index) => {
-        // Remover handle existente
         const existingHandle = header.querySelector('.resize-handle');
         if (existingHandle) existingHandle.remove();
 
@@ -336,18 +323,15 @@ function setupColumnResize() {
             const delta = clientX - startX;
             const newWidth = Math.max(50, Math.min(400, startWidth + delta));
 
-            // Actualizar header
             header.style.width = `${newWidth}px`;
             header.style.minWidth = `${newWidth}px`;
 
-            // Actualizar todas las celdas de la columna
             const cells = document.querySelectorAll(`.registrar-table td:nth-child(${index + 1})`);
             cells.forEach(cell => {
                 cell.style.width = `${newWidth}px`;
                 cell.style.minWidth = `${newWidth}px`;
             });
 
-            // Actualizar handle
             resizeHandle.style.left = `${newWidth - 5}px`;
         };
 
@@ -384,7 +368,6 @@ function showToast(text, type = 'success') {
         return;
     }
 
-    // Remover toasts anteriores del mismo tipo
     const existingToasts = toastContainer.querySelectorAll(`.registrar-toast.${type}`);
     existingToasts.forEach(toast => toast.remove());
 
@@ -397,10 +380,8 @@ function showToast(text, type = 'success') {
     
     toastContainer.appendChild(toast);
 
-    // Animación de entrada
     setTimeout(() => toast.classList.add('show'), 100);
 
-    // Animación de salida
     setTimeout(() => {
         toast.classList.remove('show');
         setTimeout(() => {
@@ -410,8 +391,6 @@ function showToast(text, type = 'success') {
         }, 300);
     }, 4000);
 }
-
-// ==================== FUNCIONES DE VALIDACIÓN ====================
 
 async function validateAdmision(admision, excludeId = null) {
     if (!admision?.trim()) return null;
@@ -464,10 +443,7 @@ function parseFechaCX(fecha) {
     return new Date(fecha);
 }
 
-// ==================== DOMContentLoaded - TODO EL CÓDIGO ORIGINAL + MEJORAS ====================
-
 document.addEventListener('DOMContentLoaded', () => {
-    // Elementos DOM
     const loading = document.getElementById('loading');
     const registrarTable = document.getElementById('registrarTable');
     const registrarBody = registrarTable?.querySelector('tbody');
@@ -478,7 +454,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const registrarBtn = document.getElementById('registrarBtn');
     const limpiarBtn = document.getElementById('limpiarBtn');
     
-    // Form inputs principales
     const admisionInput = document.getElementById('admision');
     const pacienteInput = document.getElementById('paciente');
     const medicoInput = document.getElementById('medico');
@@ -492,14 +467,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const atributoInput = document.getElementById('atributo');
     const totalItemsInput = document.getElementById('totalItems');
 
-    // Filtros de búsqueda
     const buscarAdmisionInput = document.getElementById('buscarAdmision');
     const buscarPacienteInput = document.getElementById('buscarPaciente');
     const buscarMedicoInput = document.getElementById('buscarMedico');
     const buscarDescripcionInput = document.getElementById('buscarDescripcion');
     const buscarProveedorInput = document.getElementById('buscarProveedor');
 
-    // Filtros de fecha
     const dateDay = document.getElementById('dateDay');
     const dateWeek = document.getElementById('dateWeek');
     const dateMonth = document.getElementById('dateMonth');
@@ -509,18 +482,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const mesSelect = document.getElementById('mesSelect');
     const anioSelect = document.getElementById('anioSelect');
 
-    // Acciones y menús
     const actionsBtn = document.getElementById('actionsBtn');
     const actionsMenu = document.getElementById('actionsMenu');
     const downloadAll = document.getElementById('downloadAll');
     const downloadCurrent = document.getElementById('downloadCurrent');
 
-    // Modales
     const editModal = document.getElementById('editModal');
     const deleteModal = document.getElementById('deleteModal');
     const historyModal = document.getElementById('historyModal');
     
-    // Inputs del modal de edición
     const editAdmisionInput = document.getElementById('editAdmision');
     const editPacienteInput = document.getElementById('editPaciente');
     const editMedicoInput = document.getElementById('editMedico');
@@ -534,28 +504,22 @@ document.addEventListener('DOMContentLoaded', () => {
     const editAtributoInput = document.getElementById('editAtributo');
     const editTotalItemsInput = document.getElementById('editTotalItems');
 
-    // Botones de modales
     const saveEditBtn = document.getElementById('saveEditBtn');
     const cancelEditBtn = document.getElementById('cancelEditBtn');
     const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
     const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
 
-    // Autocomplete toggles y dropdowns
     const medicoToggle = document.getElementById('medicoToggle');
     const medicoDropdown = document.getElementById('medicoDropdown');
     const editMedicoToggle = document.getElementById('editMedicoToggle');
     const editMedicoDropdown = document.getElementById('editMedicoDropdown');
     const historyContent = document.getElementById('historyContent');
 
-    // Variables de estado
     let currentEditId = null;
     let currentEditOldData = null;
     let currentDeleteId = null;
     let currentDeleteAdmision = null;
 
-    // ==================== CONFIGURACIÓN DE INPUTS ====================
-
-    // Formato de montos monetarios
     function formatMontoInput(input) {
         if (!input) return;
         input.addEventListener('input', (e) => {
@@ -577,7 +541,6 @@ document.addEventListener('DOMContentLoaded', () => {
     formatMontoInput(precioUnitarioInput);
     formatMontoInput(editPrecioUnitarioInput);
 
-    // Mayúsculas automáticas
     function enforceUpperCase(inputs) {
         inputs.forEach(input => {
             if (input) {
@@ -598,8 +561,6 @@ document.addEventListener('DOMContentLoaded', () => {
         editDescripcionInput, editReferenciaInput, editProveedorInput, editAtributoInput
     ];
     enforceUpperCase(upperCaseInputs.filter(Boolean));
-
-    // ==================== FUNCIONES DE FORMULARIO ====================
 
     function clearForm() {
         [admisionInput, pacienteInput, medicoInput, codigoInput, descripcionInput, 
@@ -642,7 +603,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Event listeners para cerrar modales
     document.querySelectorAll('.modal .close, .modal-btn-secondary').forEach(closeBtn => {
         closeBtn.addEventListener('click', (e) => {
             e.preventDefault();
@@ -659,15 +619,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if (cancelEditBtn) cancelEditBtn.addEventListener('click', () => closeModal(editModal));
     if (cancelDeleteBtn) cancelDeleteBtn.addEventListener('click', () => closeModal(deleteModal));
 
-    // ==================== FUNCIONES DE TABLA ====================
-
     async function loadRegistros() {
         window.showLoading();
         try {
             let q = query(collection(db, "registrar_consignacion"), orderBy("fechaCX", "desc"));
             const conditions = [];
 
-            // Filtros de texto
             if (searchAdmision) {
                 conditions.push(where("admision", ">=", searchAdmision));
                 conditions.push(where("admision", "<=", searchAdmision + '\uf8ff'));
@@ -685,7 +642,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 conditions.push(where("proveedor", "<=", searchProveedor + '\uf8ff'));
             }
 
-            // Filtros de fecha
             if (dateFilter === 'day' && fechaDia) {
                 const start = new Date(fechaDia);
                 const end = new Date(start);
@@ -703,7 +659,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 conditions.push(where("fechaCX", "<=", end));
             }
 
-            // Paginación
             if (currentPage > 1 && lastVisible) {
                 conditions.push(startAfter(lastVisible));
             }
@@ -720,7 +675,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 tempRegistros.push(registro);
             });
 
-            // Filtro de descripción (cliente-side porque puede ser muy específico)
             if (searchDescripcion) {
                 tempRegistros = tempRegistros.filter(reg => 
                     reg.descripcion?.toUpperCase().includes(searchDescripcion.toUpperCase())
@@ -729,7 +683,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
             registros = tempRegistros;
 
-            // Actualizar paginación
             if (querySnapshot.docs.length > 0) {
                 lastVisible = querySnapshot.docs[querySnapshot.docs.length - 1];
                 firstVisible = querySnapshot.docs[0];
@@ -738,7 +691,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 firstVisible = null;
             }
 
-            // Contar total de registros con filtros
             totalRecords = await getTotalRecordsCount();
 
             renderTable();
@@ -900,7 +852,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (pageNumbers) {
             pageNumbers.innerHTML = '';
             
-            // Primera página
             if (totalPages > 1) {
                 const firstBtn = document.createElement('button');
                 firstBtn.innerHTML = '1';
@@ -909,7 +860,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 pageNumbers.appendChild(firstBtn);
             }
 
-            // Puntos suspensivos
             const startPage = Math.max(2, currentPage - 2);
             const endPage = Math.min(totalPages - 1, currentPage + 2);
             
@@ -920,7 +870,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 pageNumbers.appendChild(dots);
             }
 
-            // Páginas intermedias
             for (let i = startPage; i <= endPage; i++) {
                 const btn = document.createElement('button');
                 btn.textContent = i;
@@ -929,7 +878,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 pageNumbers.appendChild(btn);
             }
 
-            // Puntos suspensivos finales
             if (endPage < totalPages - 1) {
                 const dots = document.createElement('span');
                 dots.textContent = '...';
@@ -937,7 +885,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 pageNumbers.appendChild(dots);
             }
 
-            // Última página
             if (totalPages > 1 && currentPage !== totalPages) {
                 const lastBtn = document.createElement('button');
                 lastBtn.innerHTML = totalPages;
@@ -955,7 +902,6 @@ document.addEventListener('DOMContentLoaded', () => {
         loadRegistros();
     }
 
-    // Event listeners para paginación
     if (prevPage) {
         prevPage.addEventListener('click', () => {
             if (currentPage > 1) {
@@ -975,15 +921,12 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // ==================== FILTROS Y BÚSQUEDA ====================
-
     const debouncedLoadRegistros = debounce(() => {
         currentPage = 1;
         lastVisible = null;
         loadRegistros();
     }, 500);
 
-    // Search inputs
     const searchInputs = [
         { input: buscarAdmisionInput, filter: 'searchAdmision' },
         { input: buscarPacienteInput, filter: 'searchPaciente' },
@@ -1001,7 +944,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Date filters
     function setupDateFilters() {
         if (dateDay) {
             dateDay.addEventListener('change', (e) => {
@@ -1074,7 +1016,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (anioSelect) {
-            // Poblar años automáticamente
             const currentYear = new Date().getFullYear();
             anioSelect.innerHTML = '';
             for (let year = currentYear - 5; year <= currentYear + 5; year++) {
@@ -1096,8 +1037,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     setupDateFilters();
 
-    // ==================== ACTIONS MENU ====================
-
     if (actionsBtn && actionsMenu) {
         actionsBtn.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -1111,8 +1050,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // ==================== EXPORTACIÓN EXCEL ====================
-
     if (downloadAll) {
         downloadAll.addEventListener('click', async (e) => {
             e.preventDefault();
@@ -1120,17 +1057,14 @@ document.addEventListener('DOMContentLoaded', () => {
             
             window.showLoading();
             try {
-                // Obtener todos los registros (sin paginación)
                 let allQuery = query(collection(db, "registrar_consignacion"), orderBy("fechaCX", "desc"));
                 
-                // Aplicar filtros activos
                 if (searchAdmision) {
                     allQuery = query(allQuery,
                         where("admision", ">=", searchAdmision),
                         where("admision", "<=", searchAdmision + '\uf8ff')
                     );
                 }
-                // ... otros filtros similares
 
                 const snapshot = await getDocs(allQuery);
                 const allRegistros = snapshot.docs.map(doc => {
@@ -1190,7 +1124,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const ws = XLSX.utils.aoa_to_sheet([headers, ...exportData]);
         
-        // Auto-ajustar columnas
         const colWidths = headers.map((header, i) => {
             const maxLength = Math.max(
                 header.length,
@@ -1206,8 +1139,6 @@ document.addEventListener('DOMContentLoaded', () => {
         XLSX.writeFile(wb, filename + '.xlsx');
     }
 
-    // ==================== BOTÓN REGISTRAR ====================
-
     if (registrarBtn) {
         registrarBtn.addEventListener('click', async () => {
             const admision = admisionInput?.value?.trim().toUpperCase();
@@ -1218,13 +1149,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const descripcion = descripcionInput?.value?.trim().toUpperCase();
             const cantidad = parseInt(cantidadInput?.value) || 0;
 
-            // Validaciones
             if (!admision || !paciente || !medico || !fechaCX || (!codigo && !descripcion) || !cantidad || cantidad <= 0) {
                 showToast('❌ Completa todos los campos obligatorios', 'error');
                 return;
             }
 
-            // Validar admisión única
             const existing = await validateAdmision(admision);
             if (existing) {
                 showToast(`❌ La admisión ${admision} ya existe`, 'error');
@@ -1239,7 +1168,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 let proveedor = '';
                 let atributo = '';
 
-                // Buscar producto si hay código
                 if (codigo) {
                     const producto = await getProductoByCodigo(codigo);
                     if (producto) {
@@ -1272,7 +1200,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 const docRef = await addDoc(collection(db, "registrar_consignacion"), registroData);
                 
-                // Log de acción
                 await logAction(docRef.id, 'CREADO', null, registroData);
 
                 showToast('✅ Registro creado exitosamente', 'success');
@@ -1289,8 +1216,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // ==================== BOTÓN LIMPIAR ====================
-
     if (limpiarBtn) {
         limpiarBtn.addEventListener('click', (e) => {
             e.preventDefault();
@@ -1299,13 +1224,10 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // ==================== FUNCIONES GLOBALES (PARA BOTONES DE TABLA) ====================
-
     window.openEditModal = async function(id, registro) {
         currentEditId = id;
         currentEditOldData = { ...registro };
 
-        // Llenar formulario de edición
         if (editAdmisionInput) editAdmisionInput.value = registro.admision || '';
         if (editPacienteInput) editPacienteInput.value = registro.paciente || '';
         if (editMedicoInput) editMedicoInput.value = registro.medico || '';
@@ -1315,11 +1237,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (editCantidadInput) editCantidadInput.value = registro.cantidad || '';
         if (editReferenciaInput) editReferenciaInput.value = registro.referencia || '';
         if (editProveedorInput) editProveedorInput.value = registro.proveedor || '';
-        if (editPrecioUnitarioInput) editPrecioUnitInput.value = registro.precioUnitario ? formatNumberWithThousandsSeparator(registro.precioUnitario) : '';
+        if (editPrecioUnitarioInput) editPrecioUnitarioInput.value = registro.precioUnitario ? formatNumberWithThousandsSeparator(registro.precioUnitario) : '';
         if (editAtributoInput) editAtributoInput.value = registro.atributo || '';
         if (editTotalItemsInput) editTotalItemsInput.value = formatNumberWithThousandsSeparator(registro.totalItems);
 
-        // Configurar autocompletado para modal de edición
         if (medicos.length > 0) {
             setupAutocomplete('editMedico', 'editMedicoToggle', 'editMedicoDropdown', medicos, 'nombre');
         }
@@ -1400,8 +1321,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // ==================== GUARDAR EDICIÓN ====================
-
     if (saveEditBtn) {
         saveEditBtn.addEventListener('click', async () => {
             if (!currentEditId) return;
@@ -1414,13 +1333,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const descripcion = editDescripcionInput?.value?.trim().toUpperCase();
             const cantidad = parseInt(editCantidadInput?.value) || 0;
 
-            // Validaciones
             if (!admision || !paciente || !medico || !fechaCX || (!codigo && !descripcion) || !cantidad || cantidad <= 0) {
                 showToast('❌ Completa todos los campos obligatorios', 'error');
                 return;
             }
 
-            // Validar admisión única (excluyendo el registro actual)
             const existing = await validateAdmision(admision, currentEditId);
             if (existing) {
                 showToast(`❌ La admisión ${admision} ya existe en otro registro`, 'error');
@@ -1434,7 +1351,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 let proveedor = editProveedorInput?.value?.trim() || '';
                 let atributo = editAtributoInput?.value?.trim() || '';
 
-                // Actualizar desde producto si hay código
                 if (codigo) {
                     const producto = await getProductoByCodigo(codigo);
                     if (producto) {
@@ -1479,15 +1395,12 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // ==================== ELIMINAR REGISTRO ====================
-
     if (confirmDeleteBtn) {
         confirmDeleteBtn.addEventListener('click', async () => {
             if (!currentDeleteId) return;
 
             window.showLoading();
             try {
-                // Encontrar datos del registro para el log
                 const registroData = registros.find(r => r.id === currentDeleteId);
                 
                 await deleteDoc(doc(db, "registrar_consignacion", currentDeleteId));
@@ -1507,9 +1420,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // ==================== EVENT LISTENERS ADICIONALES ====================
-
-    // Actualizar total al cambiar cantidad o precio
     function setupTotalCalculators() {
         const quantityInputs = [cantidadInput, editCantidadInput];
         const priceInputs = [precioUnitarioInput, editPrecioUnitarioInput];
@@ -1533,7 +1443,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     setupTotalCalculators();
 
-    // Auto-complete al salir del campo código
     if (codigoInput) {
         codigoInput.addEventListener('blur', async () => {
             const codigo = codigoInput.value.trim().toUpperCase();
@@ -1572,9 +1481,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // ==================== AUTOCOMPLETADO INICIAL ====================
-
-    // Configurar autocompletado después de cargar datos
     async function initializeAutocomplete() {
         await loadMedicos();
         await loadReferencias();
@@ -1592,8 +1498,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // ==================== AUTH STATE ====================
-
     onAuthStateChanged(auth, async (user) => {
         if (user) {
             try {
@@ -1603,10 +1507,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     username: 'invitado'
                 };
 
-                // Inicializar todo
                 await initializeAutocomplete();
                 
-                // Cargar primera página
                 await loadRegistros();
                 
                 console.log('✅ Sistema Registrar inicializado correctamente');
@@ -1615,22 +1517,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 showToast('Error al inicializar: ' + error.message, 'error');
             }
         } else {
-            // Redirigir a login si no hay usuario autenticado
             window.location.href = 'index.html';
         }
     });
 
-    // ==================== SHORTCUTS DE TECLADO ====================
-
     document.addEventListener('keydown', (e) => {
-        // Ctrl/Cmd + N = Nuevo registro (limpiar formulario)
         if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
             e.preventDefault();
             clearForm();
             admisionInput?.focus();
         }
         
-        // Escape = cerrar modales
         if (e.key === 'Escape') {
             const openModal = document.querySelector('.modal[style*="block"]');
             if (openModal) {
@@ -1638,7 +1535,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
         
-        // Ctrl/Cmd + S = guardar edición
         if ((e.ctrlKey || e.metaKey) && e.key === 's' && currentEditId) {
             e.preventDefault();
             saveEditBtn?.click();
@@ -1648,9 +1544,6 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log('🎯 registrar.js cargado completamente');
 });
 
-// ==================== FUNCIONES UTILITARIAS GLOBALES ====================
-
-// Función para ir a página específica desde consola o URL
 window.goToPage = function(page) {
     if (typeof page === 'number' && page > 0) {
         currentPage = page;
@@ -1658,7 +1551,6 @@ window.goToPage = function(page) {
     }
 };
 
-// Función para buscar directamente
 window.searchRegistros = function(filters) {
     if (filters.admision) searchAdmision = filters.admision.toUpperCase();
     if (filters.paciente) searchPaciente = filters.paciente.toUpperCase();
