@@ -237,36 +237,6 @@ function setupAutocomplete(inputId, iconId, listId, data, key, isDescripcion = f
 }
 
 function fillFields(item, inputId) {
-    const isEdit = inputId.startsWith('edit');
-    const codigoInput = isEdit ? document.getElementById('editCodigo') : document.getElementById('codigo');
-    const descripcionInput = isEdit ? document.getElementById('editDescripcion') : document.getElementById('descripcion');
-    const referenciaInput = isEdit ? document.getElementById('editReferencia') : document.getElementById('referencia');
-    const proveedorInput = isEdit ? document.getElementById('editProveedor') : document.getElementById('proveedor');
-    const precioUnitarioInput = isEdit ? document.getElementById('editPrecioUnitario') : document.getElementById('precioUnitario');
-    const atributoInput = isEdit ? document.getElementById('editAtributo') : document.getElementById('atributo');
-
-    if (inputId.includes('Descripcion') || inputId.includes('descripcion')) {
-        if (codigoInput) codigoInput.value = item.codigo || '';
-        if (descripcionInput) descripcionInput.value = item.descripcion || '';
-        if (referenciaInput) referenciaInput.value = item.referencia || '';
-        if (proveedorInput) proveedorInput.value = item.proveedor || '';
-        if (precioUnitarioInput) {
-            precioUnitarioInput.value = item.precioUnitario ? formatNumberWithThousandsSeparator(item.precioUnitario) : '';
-        }
-        if (atributoInput) atributoInput.value = item.atributo || '';
-    }
-    else if (inputId.includes('Codigo') || inputId.includes('codigo')) {
-        if (descripcionInput) descripcionInput.value = item.descripcion || '';
-        if (referenciaInput) referenciaInput.value = item.referencia || '';
-        if (proveedorInput) proveedorInput.value = item.proveedor || '';
-        if (precioUnitarioInput) {
-            precioUnitarioInput.value = item.precioUnitario ? formatNumberWithThousandsSeparator(item.precioUnitario) : '';
-        }
-        if (atributoInput) atributoInput.value = item.atributo || '';
-    }
-
-    setTimeout(() => updateTotalItems(isEdit), 100);
-}
 
 function updateTotalItems(isEdit = false) {
     const cantidadInput = isEdit ? document.getElementById('editCantidad') : document.getElementById('cantidad');
@@ -276,7 +246,11 @@ function updateTotalItems(isEdit = false) {
     const cantidad = parseInt(cantidadInput?.value) || 0;
     const precioUnitario = parseInt((precioUnitarioInput?.value || '').replace(/[^\d]/g, '')) || 0;
     const total = cantidad * precioUnitario;
+    
+    // Formatear con separadores de miles
     totalItemsInput.value = total ? formatNumberWithThousandsSeparator(total) : '';
+    
+    console.log(`Calculando total: ${cantidad} × ${precioUnitario} = ${total}`); // Para debugging
 }
 
 async function logAction(registroId, action, oldData = null, newData = null) {
@@ -1497,10 +1471,45 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    cantidadInput?.addEventListener('input', () => updateTotalItems(false));
-    editCantidadInput?.addEventListener('input', () => updateTotalItems(true));
-    precioUnitarioInput?.addEventListener('input', () => updateTotalItems(false));
-    editPrecioUnitarioInput?.addEventListener('input', () => updateTotalItems(true));
+// Event listeners para el formulario principal
+if (cantidadInput) {
+    cantidadInput.addEventListener('input', () => updateTotalItems(false));
+}
+
+if (precioUnitarioInput) {
+    precioUnitarioInput.addEventListener('input', () => updateTotalItems(false));
+}
+
+// Event listeners para el modal de edición
+if (editCantidadInput) {
+    editCantidadInput.addEventListener('input', () => updateTotalItems(true));
+}
+
+if (editPrecioUnitarioInput) {
+    editPrecioUnitarioInput.addEventListener('input', () => updateTotalItems(true));
+}
+
+// ACTUALIZAR TOTAL AL CARGAR REFERENCIA (cuando se selecciona código o descripción)
+const codigoInput = document.getElementById('codigo');
+const descripcionInput = document.getElementById('descripcion');
+const editCodigoInput = document.getElementById('editCodigo');
+const editDescripcionInput = document.getElementById('editDescripcion');
+
+if (codigoInput) {
+    codigoInput.addEventListener('change', () => setTimeout(() => updateTotalItems(false), 100));
+}
+
+if (descripcionInput) {
+    descripcionInput.addEventListener('change', () => setTimeout(() => updateTotalItems(false), 100));
+}
+
+if (editCodigoInput) {
+    editCodigoInput.addEventListener('change', () => setTimeout(() => updateTotalItems(true), 100));
+}
+
+if (editDescripcionInput) {
+    editDescripcionInput.addEventListener('change', () => setTimeout(() => updateTotalItems(true), 100));
+}
 
     async function initialize() {
         await Promise.all([loadMedicos(), loadReferencias()]);
