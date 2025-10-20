@@ -163,10 +163,6 @@ function enableColumnResizing() {
     const headers = table.querySelectorAll('th');
 
     headers.forEach((header, index) => {
-        header.style.width = header.getBoundingClientRect().width + 'px';
-    });
-
-    headers.forEach((header, index) => {
         header.addEventListener('mousedown', (e) => {
             const rect = header.getBoundingClientRect();
             if (e.clientX > rect.right - 10) {
