@@ -42,7 +42,7 @@ function formatNumberWithThousandsSeparator(number) {
 
 async function getRegistroByUniqueKey(admision, excludeId = null) {
     if (!admision) return null;
-    const q = query(collection(db, "registros"), where("admision", "==", admision.trim().toUpperCase()));
+    const q = query(collection(db, "registrar_consignacion"), where("admision", "==", admision.trim().toUpperCase()));
     const querySnapshot = await getDocs(q);
     if (!querySnapshot.empty) {
         const doc = querySnapshot.docs[0];
@@ -54,7 +54,7 @@ async function getRegistroByUniqueKey(admision, excludeId = null) {
 
 async function logAction(registroId, action, oldData = null, newData = null) {
     if (!window.currentUserData) return;
-    await addDoc(collection(db, "registros_historial"), {
+    await addDoc(collection(db, "registrar_consignacion_historial"), {
         registroId,
         action,
         timestamp: new Date(),
@@ -326,7 +326,7 @@ document.addEventListener('DOMContentLoaded', () => {
     window.openHistoryModal = function (id, admision) {
         historyTitle.textContent = `Historial Registro ${admision}`;
         showLoading();
-        const q = query(collection(db, "registros_historial"), where("registroId", "==", id), orderBy("timestamp", "desc"));
+        const q = query(collection(db, "registrar_consignacion_historial"), where("registroId", "==", id), orderBy("timestamp", "desc"));
         getDocs(q).then((querySnapshot) => {
             hideLoading();
             let html = '';
@@ -402,7 +402,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     showToast('La admisión ya existe.', 'error');
                     return;
                 }
-                await updateDoc(doc(db, "registros", currentEditId), processedRow);
+                await updateDoc(doc(db, "registrar_consignacion", currentEditId), processedRow);
                 await logAction(currentEditId, 'update', currentEditOldData, processedRow);
                 hideLoading();
                 showToast(`Registro ${processedRow.admision} actualizado exitosamente`, 'success');
@@ -422,11 +422,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         showLoading();
         try {
-            const registroDoc = await getDoc(doc(db, "registros", currentDeleteId));
+            const registroDoc = await getDoc(doc(db, "registrar_consignacion", currentDeleteId));
             if (registroDoc.exists()) {
                 const registroData = registroDoc.data();
                 await logAction(currentDeleteId, 'delete', registroData);
-                await deleteDoc(doc(db, "registros", currentDeleteId));
+                await deleteDoc(doc(db, "registrar_consignacion", currentDeleteId));
                 hideLoading();
                 showToast(`Registro ${currentDeleteAdmision} eliminado exitosamente`, 'success');
                 closeDeleteModalHandler();
@@ -547,7 +547,7 @@ document.addEventListener('DOMContentLoaded', () => {
     async function loadRegistros() {
         showLoading();
         try {
-            let q = query(collection(db, "registros"), orderBy("createdAt", "desc"));
+            let q = query(collection(db, "registrar_consignacion"), orderBy("createdAt", "desc"));
             const conditions = [];
 
             if (searchAdmision) {
@@ -604,7 +604,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 firstVisible = null;
             }
 
-            let countQuery = query(collection(db, "registros"));
+            let countQuery = query(collection(db, "registrar_consignacion"));
             if (searchAdmision) {
                 countQuery = query(countQuery, where("admision", ">=", searchAdmision), where("admision", "<=", searchAdmision + '\uf8ff'));
             }
@@ -774,7 +774,7 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             showLoading();
             try {
-                const q = query(collection(db, "registros"));
+                const q = query(collection(db, "registrar_consignacion"));
                 const querySnapshot = await getDocs(q);
                 const allRegistros = [];
                 querySnapshot.forEach((doc) => {
@@ -797,7 +797,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const ws = XLSX.utils.json_to_sheet(data);
                 const wb = XLSX.utils.book_new();
                 XLSX.utils.book_append_sheet(wb, ws, "Registros");
-                XLSX.writeFile(wb, 'registros_todos.xlsx');
+                XLSX.writeFile(wb, 'registrar_consignacion_todos.xlsx');
                 actionsMenu.style.display = 'none';
                 hideLoading();
             } catch (error) {
@@ -827,7 +827,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const ws = XLSX.utils.json_to_sheet(data);
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, "Registros");
-            XLSX.writeFile(wb, `registros_pagina_${currentPage}.xlsx`);
+            XLSX.writeFile(wb, `registrar_consignacion_pagina_${currentPage}.xlsx`);
             actionsMenu.style.display = 'none';
         });
     }
@@ -860,7 +860,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         showToast('La admisión ya existe.', 'error');
                         return;
                     }
-                    const docRef = await addDoc(collection(db, "registros"), processedRow);
+                    const docRef = await addDoc(collection(db, "registrar_consignacion"), processedRow);
                     await logAction(docRef.id, 'create', null, processedRow);
                     hideLoading();
                     showToast(`Registro ${processedRow.admision} ingresado exitosamente`, 'success');
