@@ -158,40 +158,63 @@ async function logAction(referenciaId, action, oldData = null, newData = null) {
     });
 }
 
-function enableColumnResizing() {
+function setupColumnResize() {
     const table = document.querySelector('.referencias-table');
     const headers = document.querySelectorAll('.referencias-table th');
 
     headers.forEach((header, index) => {
-        header.addEventListener('mousedown', (e) => {
-            const rect = header.getBoundingClientRect();
-            if (e.clientX > rect.right - 10) {
-                e.preventDefault();
-                document.body.classList.add('resizing');
-                const startX = e.clientX;
-                const startWidth = header.offsetWidth;
-                const minWidth = parseInt(getComputedStyle(header).minWidth) || 20;
-                const maxWidth = 2000;
-                const onMouseMove = (moveEvent) => {
-                    let newWidth = startWidth + (moveEvent.clientX - startX);
-                    newWidth = Math.max(minWidth, Math.min(newWidth, maxWidth));
-                    header.style.width = `${newWidth}px`;
-                    const cells = table.querySelectorAll(`td:nth-child(${index + 1})`);
-                    cells.forEach(cell => {
-                        cell.style.width = `${newWidth}px`;
-                    });
-                };
-                const onMouseUp = () => {
-                    document.body.classList.remove('resizing');
-                    document.removeEventListener('mousemove', onMouseMove);
-                    document.removeEventListener('mouseup', onMouseUp);
-                    document.removeEventListener('mouseleave', onMouseUp);
-                };
-                document.addEventListener('mousemove', onMouseMove);
-                document.addEventListener('mouseup', onMouseUp);
-                document.addEventListener('mouseleave', onMouseUp);
+        const existingHandle = header.querySelector('.resize-handle');
+        if (existingHandle) existingHandle.remove();
+
+        const resizeHandle = document.createElement('div');
+        resizeHandle.className = 'resize-handle';
+        header.appendChild(resizeHandle);
+        header.style.position = 'relative';
+
+        let isResizing = false;
+        let startX, startWidth;
+
+        const startResize = (e) => {
+            isResizing = true;
+            startX = e.pageX || (e.touches && e.touches[0].pageX);
+            startWidth = header.getBoundingClientRect().width;
+            resizeHandle.classList.add('active');
+            e.preventDefault();
+        };
+
+        const resize = (e) => {
+            if (!isResizing) return;
+            const clientX = e.pageX || (e.touches && e.touches[0].pageX);
+            if (!clientX) return;
+            const newWidth = Math.max(20, startWidth + (clientX - startX));
+
+            header.style.width = `${newWidth}px`;
+            header.style.minWidth = `${newWidth}px`;
+            header.style.maxWidth = `${newWidth}px`;
+
+            const cells = document.querySelectorAll(`.referencias-table td:nth-child(${index + 1})`);
+            cells.forEach(cell => {
+                cell.style.width = `${newWidth}px`;
+                cell.style.minWidth = `${newWidth}px`;
+                cell.style.maxWidth = `${newWidth}px`;
+            });
+
+            e.preventDefault();
+        };
+
+        const stopResize = () => {
+            if (isResizing) {
+                isResizing = false;
+                resizeHandle.classList.remove('active');
             }
-        });
+        };
+
+        resizeHandle.addEventListener('mousedown', startResize);
+        resizeHandle.addEventListener('touchstart', startResize, { passive: false });
+        document.addEventListener('mousemove', resize);
+        document.addEventListener('touchmove', resize, { passive: false });
+        document.addEventListener('mouseup', stopResize);
+        document.addEventListener('touchend', stopResize);
     });
 }
 
@@ -742,7 +765,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         updatePagination(totalRecords);
-        enableColumnResizing();
+        setupColumnResize();
     }
 
     function updatePagination(total) {
@@ -1009,15 +1032,22 @@ document.addEventListener('DOMContentLoaded', () => {
             window.location.replace('../index.html');
             return;
         }
-
-        const userDoc = await getDoc(doc(db, 'users', user.uid));
-        if (userDoc.exists()) {
-            window.currentUserData = userDoc.data();
+        try {
+            const userDocRef = doc(db, 'users', user.uid);
+            const userDoc = await getDoc(userDocRef);
+            if (userDoc.exists()) {
+                window.currentUserData = userDoc.data();
+            } else {
+                window.currentUserData = { fullName: user.displayName || 'Usuario Invitado', username: user.email || 'invitado' };
+            }
+            await loadProveedores();
+            setupAutocomplete('proveedor', 'proveedorIcon', 'proveedorList');
+            setupAutocomplete('existProveedor', 'existProveedorIcon', 'existProveedorList');
+            setupAutocomplete('editProveedor', 'editProveedorIcon', 'editProveedorList');
+            await loadReferencias();
+        } catch (error) {
+            window.currentUserData = { fullName: 'Usuario Invitado', username: 'invitado' };
+            showToast('Error al cargar datos del usuario.', 'error');
         }
-        await loadProveedores();
-        setupAutocomplete('proveedor', 'proveedorIcon', 'proveedorList');
-        setupAutocomplete('existProveedor', 'existProveedorIcon', 'existProveedorList');
-        setupAutocomplete('editProveedor', 'editProveedorIcon', 'editProveedorList');
-        await loadReferencias();
     });
 });
