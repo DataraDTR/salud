@@ -32,7 +32,7 @@ html, body {
     display: flex;
     justify-content: space-between;
     gap: 10px;
-    margin-bottom: 20px;
+    margin-bottom: 10px; /* Reducido de 20px a 10px */
     align-items: center;
     flex-wrap: wrap;
 }
@@ -41,7 +41,6 @@ html, body {
     display: flex;
     justify-content: space-between;
     gap: 10px;
-    margin-bottom: 20px;
     align-items: center;
     flex-wrap: wrap;
 }
@@ -93,34 +92,49 @@ html, body {
 }
 
 .registrar-date-search {
-    min-width: 250px;
+    min-width: 350px; /* Aumentado para acomodar la fila única */
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
 }
 
 .registrar-date-options {
     display: flex;
-    flex-direction: column;
+    flex-wrap: nowrap;
+    gap: 8px;
+    align-items: center;
+}
+
+.registrar-date-options label {
+    display: flex;
+    align-items: center;
     gap: 4px;
-    margin-bottom: 8px;
+    font-size: 10px;
+    white-space: nowrap;
 }
 
 .registrar-date-group {
     display: flex;
-    gap: 10px;
-    width: 100%;
+    gap: 8px;
+    align-items: center;
 }
 
 #mesSelect {
-    width: 60%;
+    width: 100px; /* Ajustado para la fila */
     padding: 8px;
     border: 1px solid #ddd;
     border-radius: 4px;
 }
 
 #anioSelect {
-    width: 40%;
+    width: 80px; /* Ajustado para la fila */
     padding: 8px;
     border: 1px solid #ddd;
     border-radius: 4px;
+}
+
+#fechaDia, #fechaDesde, #fechaHasta {
+    width: 120px; /* Ajustado para la fila */
 }
 
 .registrar-actions-menu {
@@ -379,7 +393,7 @@ html, body {
 }
 
 #registrar-message {
-    margin-bottom: 20px;
+    margin-bottom: 10px; /* Reducido de 20px a 10px */
     padding: 8px;
     border-radius: 4px;
     display: none;
