@@ -212,11 +212,11 @@ html, body {
 }
 
 .referencias-table {
-    table-layout: fixed; /* ← Importante */
     width: 100%;
     border-collapse: collapse;
     font-size: 11px;
     border: 1px solid #ddd;
+    table-layout: fixed; /* ←←← ESTA LÍNEA ES CLAVE */
 }
 
 .referencias-table th, .referencias-table td {

@@ -165,40 +165,47 @@ function enableColumnResizing() {
     const headers = table.querySelectorAll('th');
     headers.forEach((header, index) => {
         // Evitar múltiples listeners
-        if (header._hasResizer) return;
-        header._hasResizer = true;
+        if (header.dataset.resizerAttached) return;
+        header.dataset.resizerAttached = 'true';
 
-        // Crear un "grip" visual (opcional, pero mejora UX)
-        const resizer = document.createElement('div');
-        resizer.style.position = 'absolute';
-        resizer.style.right = '0';
-        resizer.style.top = '0';
-        resizer.style.bottom = '0';
-        resizer.style.width = '5px';
-        resizer.style.cursor = 'col-resize';
-        resizer.style.userSelect = 'none';
-        header.appendChild(resizer);
+        // Asegurar que el header tenga posición relativa para el grip
+        header.style.position = 'relative';
+
+        // Crear grip visual (mejora UX y precisión)
+        let resizer = header.querySelector('.column-resizer');
+        if (!resizer) {
+            resizer = document.createElement('div');
+            resizer.className = 'column-resizer';
+            resizer.style.cssText = `
+                position: absolute;
+                top: 0;
+                right: -3px;
+                width: 6px;
+                height: 100%;
+                cursor: col-resize;
+                z-index: 10;
+                user-select: none;
+            `;
+            header.appendChild(resizer);
+        }
 
         let startX, startWidth;
 
         const onMouseDown = (e) => {
-            if (e.target !== resizer) return;
             e.preventDefault();
             startX = e.clientX;
-            const computed = window.getComputedStyle(header);
-            startWidth = parseInt(computed.width, 10);
+            startWidth = header.offsetWidth;
 
             const onMouseMove = (moveEvent) => {
                 const dx = moveEvent.clientX - startX;
                 const newWidth = Math.max(50, startWidth + dx); // mínimo 50px
                 header.style.width = `${newWidth}px`;
 
-                // Aplicar mismo ancho a todas las celdas de esa columna
+                // Aplicar a todas las celdas de la misma columna
                 const rows = table.querySelectorAll('tr');
                 rows.forEach(row => {
-                    const cell = row.cells[index];
-                    if (cell) {
-                        cell.style.width = `${newWidth}px`;
+                    if (row.cells[index]) {
+                        row.cells[index].style.width = `${newWidth}px`;
                     }
                 });
             };
@@ -212,7 +219,7 @@ function enableColumnResizing() {
             document.addEventListener('mouseup', onMouseUp);
         };
 
-        header.addEventListener('mousedown', onMouseDown);
+        resizer.addEventListener('mousedown', onMouseDown);
     });
 }
 
