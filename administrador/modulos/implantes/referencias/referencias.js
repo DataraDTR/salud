@@ -166,11 +166,11 @@ function setupColumnResize() {
     const initialWidths = [
         100, // Acciones
         130, // Referencia
-        200, // Detalles
+        300, // Detalles
         80,  // Precio Unitario
         80,  // Código
-        150, // Proveedor
-        250, // Descripción
+        300, // Proveedor
+        300, // Descripción
         120, // Tipo
         120, // Atributo
         80   // Estado
