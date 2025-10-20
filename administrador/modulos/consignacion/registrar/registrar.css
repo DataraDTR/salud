@@ -63,6 +63,15 @@ html, body {
     margin-bottom: 8px;
 }
 
+.registrar-form-group.registrar-actions-menu {
+    flex: 0;
+    min-width: auto;
+    max-width: none;
+    margin-bottom: 8px;
+    position: relative;
+    margin-left: auto; /* Mueve el botón Acciones al extremo derecho */
+}
+
 .registrar-label {
     font-size: 10px;
     font-weight: bold;
@@ -226,20 +235,19 @@ html, body {
 }
 
 #actionsBtn {
-    background: none;
+    padding: 10px 20px;
     border: none;
-    color: #007bff;
+    border-radius: 4px;
     cursor: pointer;
     font-size: 12px;
-    padding: 8px 16px;
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
+    font-weight: bold;
+    min-width: 100px;
+    text-align: center;
+    transition: background-color 0.2s ease, transform 0.1s ease;
 }
 
 #actionsBtn:hover {
-    color: #0056b3;
-    text-decoration: underline;
+    transform: translateY(-1px);
 }
 
 .registrar-dropdown-menu {
@@ -761,11 +769,12 @@ html, body {
     .registrar-form-group {
         max-width: 100%;
     }
-    .registrar-form-group.button-group {
+    .registrar-form-group.button-group, .registrar-form-group.registrar-actions-menu {
         flex: 0 0 auto;
         max-width: 100%;
         display: flex;
         justify-content: center;
+        margin-left: 0; /* Reset margin-left en pantallas pequeñas */
     }
     .modal-btn {
         flex: 1;
@@ -789,7 +798,7 @@ html, body {
         width: 100%;
         min-width: 100%;
     }
-    .registrar-form-group.button-group {
+    .registrar-form-group.button-group, .registrar-form-group.registrar-actions-menu {
         flex-direction: column;
         gap: 10px;
     }
