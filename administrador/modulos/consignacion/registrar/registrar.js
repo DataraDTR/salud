@@ -46,6 +46,19 @@ function formatNumberWithThousandsSeparator(number) {
     return cleaned ? Number(cleaned).toLocaleString('es-CL') : '';
 }
 
+function parseFechaCX(fecha) {
+    if (!fecha) return null;
+    if (fecha.toDate && typeof fecha.toDate === 'function') {
+        return fecha.toDate();
+    } else if (typeof fecha === 'string') {
+        const parsed = new Date(fecha);
+        return isNaN(parsed) ? null : parsed;
+    } else if (fecha instanceof Date) {
+        return fecha;
+    }
+    return null;
+}
+
 async function loadMedicos() {
     try {
         const querySnapshot = await getDocs(collection(db, "medicos"));
@@ -130,16 +143,20 @@ function setupAutocomplete(inputId, iconId, listId) {
 
 async function logAction(registroId, action, oldData = null, newData = null) {
     if (!window.currentUserData) return;
-    await addDoc(collection(db, "registrar_consignacion_historial"), {
-        registroId,
-        action,
-        timestamp: new Date(),
-        userId: auth.currentUser ? auth.currentUser.uid : null,
-        userFullName: window.currentUserData.fullName || 'Usuario Invitado',
-        username: window.currentUserData.username || 'invitado',
-        oldData,
-        newData
-    });
+    try {
+        await addDoc(collection(db, "registrar_consignacion_historial"), {
+            registroId,
+            action,
+            timestamp: new Date(),
+            userId: auth.currentUser ? auth.currentUser.uid : null,
+            userFullName: window.currentUserData.fullName || 'Usuario Invitado',
+            username: window.currentUserData.username || 'invitado',
+            oldData,
+            newData
+        });
+    } catch (error) {
+        console.error('Error al registrar acción en historial:', error);
+    }
 }
 
 function setupColumnResize() {
@@ -475,8 +492,14 @@ document.addEventListener('DOMContentLoaded', () => {
             let tempRegistros = [];
             querySnapshot.forEach((doc) => {
                 const data = doc.data();
-                data.fechaCX = data.fechaCX ? data.fechaCX.toDate() : null;
-                tempRegistros.push({ id: doc.id, ...data });
+                try {
+                    data.fechaCX = parseFechaCX(data.fechaCX);
+                    tempRegistros.push({ id: doc.id, ...data });
+                } catch (error) {
+                    console.warn(`Error al procesar fechaCX para el documento ${doc.id}:`, error);
+                    data.fechaCX = null;
+                    tempRegistros.push({ id: doc.id, ...data });
+                }
             });
 
             if (searchDescripcion) {
@@ -554,6 +577,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             hideLoading();
             showToast('Error al cargar los registros: ' + error.message, 'error');
+            console.error('Detalles del error:', error);
         }
     }
 
@@ -845,7 +869,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const allRegistros = [];
             querySnapshot.forEach((doc) => {
                 const data = doc.data();
-                data.fechaCX = data.fechaCX ? data.fechaCX.toDate() : null;
+                data.fechaCX = parseFechaCX(data.fechaCX);
                 allRegistros.push({ id: doc.id, ...data });
             });
             const data = allRegistros.map(reg => ({
