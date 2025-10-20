@@ -159,9 +159,8 @@ async function logAction(referenciaId, action, oldData = null, newData = null) {
 }
 
 function enableColumnResizing() {
-    const table = document.querySelector('.referencias-table');
-    const headers = document.querySelectorAll('.referencias-table th');
-
+    const table = document.getElementById('referenciasTable');
+    const headers = table.querySelectorAll('th');
     headers.forEach((header, index) => {
         header.addEventListener('mousedown', (e) => {
             const rect = header.getBoundingClientRect();
@@ -170,7 +169,7 @@ function enableColumnResizing() {
                 document.body.classList.add('resizing');
                 const startX = e.clientX;
                 const startWidth = header.offsetWidth;
-                const minWidth = parseInt(getComputedStyle(header).minWidth) || 20;
+                const minWidth = parseInt(getComputedStyle(header).minWidth) || 50;
                 const maxWidth = 2000;
                 header.style.maxWidth = 'none';
                 const cells = table.querySelectorAll(`td:nth-child(${index + 1})`);
