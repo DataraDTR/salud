@@ -79,11 +79,11 @@ html, body {
     white-space: nowrap;
 }
 
-#admision, #paciente, #fechaCX, #codigo, #descripcion, #cantidad,
+#admision, #paciente, #fechaCX, #cantidad,
 #referencia, #proveedor, #precioUnitario, #atributo, #totalItems,
 #buscarAdmision, #buscarPaciente, #buscarDescripcion, #buscarProveedor, #buscarMedico,
 #fechaDia, #fechaDesde, #fechaHasta, #anioSelect,
-#editAdmision, #editPaciente, #editFechaCX, #editCodigo, #editDescripcion, #editCantidad,
+#editAdmision, #editPaciente, #editFechaCX, #editCantidad,
 #editReferencia, #editProveedor, #editPrecioUnitario, #editAtributo, #editTotalItems {
     width: 100%;
     padding: 8px;
@@ -94,16 +94,7 @@ html, body {
     text-transform: uppercase;
 }
 
-#medico, #editMedico {
-    width: 100%;
-    padding: 8px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    font-size: 11px;
-    box-sizing: border-box;
-    text-transform: none !important;
-}
-
+/* *** ICONOS FIJADOS A LA IZQUIERDA - FIX COMPLETO *** */
 .medico-input-container, .codigo-input-container, .descripcion-input-container {
     position: relative;
     width: 100%;
@@ -113,20 +104,37 @@ html, body {
     display: flex;
     align-items: center;
     width: 100%;
+    position: relative;
 }
 
 .medico-icon, .codigo-icon, .descripcion-icon {
     position: absolute;
-    right: 8px;
-    top: 50%;
-    transform: translateY(-50%);
+    left: 8px;                    /* ✅ FIJO: IZQUIERDA */
+    top: 50%;                     /* ✅ FIJO: CENTRO VERTICAL */
+    transform: translateY(-50%);   /* ✅ FIJO: AJUSTE PRECISO */
     color: #007bff;
     cursor: pointer;
     font-size: 12px;
+    z-index: 10;
+    pointer-events: auto;
 }
 
 .medico-icon:hover, .codigo-icon:hover, .descripcion-icon:hover {
     color: #0056b3;
+}
+
+/* *** INPUTS CON PADDING IZQUIERDO PARA ICONOS *** */
+#medico, #editMedico,
+#codigo, #editCodigo,
+#descripcion, #editDescripcion {
+    padding-left: 30px !important;  /* ✅ ESPACIO PARA ICONO */
+    padding-right: 8px;
+    width: 100%;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 11px;
+    box-sizing: border-box;
+    text-transform: none !important;
 }
 
 .medico-dropdown, .codigo-dropdown, .descripcion-dropdown {
@@ -161,10 +169,16 @@ html, body {
     cursor: not-allowed;
 }
 
-#admision:focus, #paciente:focus, #medico:focus, #fechaCX:focus, #codigo:focus, #descripcion:focus, #cantidad:focus,
+#admision:focus, #paciente:focus, #fechaCX:focus, #cantidad:focus,
 #buscarAdmision:focus, #buscarPaciente:focus, #buscarDescripcion:focus, #buscarProveedor:focus, #buscarMedico:focus,
 #fechaDia:focus, #fechaDesde:focus, #fechaHasta:focus, #anioSelect:focus,
-#editAdmision:focus, #editPaciente:focus, #editMedico:focus, #editFechaCX:focus, #editCodigo:focus, #editDescripcion:focus, #editCantidad:focus {
+#editAdmision:focus, #editPaciente:focus, #editFechaCX:focus, #editCantidad:focus {
+    box-shadow: 0 0 12px rgba(0, 123, 255, 0.5);
+    outline: none;
+}
+
+#medico:focus, #codigo:focus, #descripcion:focus,
+#editMedico:focus, #editCodigo:focus, #editDescripcion:focus {
     box-shadow: 0 0 12px rgba(0, 123, 255, 0.5);
     outline: none;
 }
@@ -671,12 +685,40 @@ html, body {
     text-transform: uppercase;
 }
 
-.modal-form-group input#editMedico {
-    text-transform: none !important;
+/* *** FIX ICONOS EN MODAL *** */
+.modal .medico-input-container, 
+.modal .codigo-input-container, 
+.modal .descripcion-input-container {
+    position: relative;
+    width: 100%;
 }
 
-.modal-form-group select {
-    text-transform: uppercase;
+.modal .medico-input-wrapper, 
+.modal .codigo-input-wrapper, 
+.modal .descripcion-input-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.modal .medico-icon, 
+.modal .codigo-icon, 
+.modal .descripcion-icon {
+    position: absolute;
+    left: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #007bff;
+    cursor: pointer;
+    font-size: 12px;
+    z-index: 10;
+}
+
+.modal #editMedico, 
+.modal #editCodigo, 
+.modal #editDescripcion {
+    padding-left: 30px !important;
+    padding-right: 8px;
+    text-transform: none !important;
 }
 
 .modal-form-group input:focus,
