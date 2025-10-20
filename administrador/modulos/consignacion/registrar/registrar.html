@@ -3,306 +3,275 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Registro de Datos</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>Registrar Consignación</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="registrar.css">
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script type="module">
-        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-        import { getAuth, onAuthStateChanged, setPersistence, browserSessionPersistence } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
-        import { getFirestore, collection, addDoc, getDocs, query, where, doc, updateDoc, deleteDoc, orderBy, getDoc, limit, startAfter, endBefore } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
-        window.firebaseModules = { 
-            initializeApp, 
-            getAuth, 
-            onAuthStateChanged, 
-            setPersistence, 
-            browserSessionPersistence, 
-            getFirestore, 
-            collection, 
-            addDoc, 
-            getDocs, 
-            query, 
-            where, 
-            doc, 
-            updateDoc, 
-            deleteDoc, 
-            orderBy, 
-            getDoc, 
-            limit, 
-            startAfter, 
-            endBefore 
-        };
-    </script>
-    <script type="module" src="registrar.js"></script>
 </head>
 <body>
     <div class="registrar-main-container">
-        <h1 class="registrar-title">Registro de Datos</h1>
-
+        <h1 class="registrar-title">Registrar Consignación</h1>
         <div id="registrar-message"></div>
-
-        <div class="registrar-fields-container registrar-first-row">
-            <div class="registrar-form-group">
-                <label for="admision" class="registrar-label">Admisión:</label>
-                <input type="text" id="admision" autocomplete="off">
-            </div>
-            <div class="registrar-form-group">
-                <label for="paciente" class="registrar-label">Paciente:</label>
-                <input type="text" id="paciente" autocomplete="off">
-            </div>
-            <div class="registrar-form-group medico-input-container">
-                <label for="medico" class="registrar-label">Médico:</label>
-                <div class="medico-input-wrapper">
-                    <input type="text" id="medico" autocomplete="off">
-                    <i class="fas fa-list medico-icon" id="medicoListBtn"></i>
+        <div class="registrar-fields-container">
+            <div class="registrar-first-row">
+                <div class="registrar-form-group">
+                    <label class="registrar-label" for="admision">Admisión:</label>
+                    <input type="text" id="admision" maxlength="10">
                 </div>
-                <div id="medicoDropdown" class="medico-dropdown"></div>
-            </div>
-            <div class="registrar-form-group">
-                <label for="fechaCX" class="registrar-label">Fecha CX:</label>
-                <input type="date" id="fechaCX" autocomplete="off">
-            </div>
-            <div class="registrar-form-group">
-                <label for="codigo" class="registrar-label">Código:</label>
-                <input type="text" id="codigo" autocomplete="off">
-            </div>
-            <div class="registrar-form-group">
-                <label for="descripcion" class="registrar-label">Descripción:</label>
-                <input type="text" id="descripcion" autocomplete="off">
-            </div>
-            <div class="registrar-form-group">
-                <label for="cantidad" class="registrar-label">Cantidad:</label>
-                <input type="number" id="cantidad" min="0" autocomplete="off">
-            </div>
-            <button id="registrarBtn" class="modal-btn modal-btn-primary">Registrar</button>
-        </div>
-
-        <div class="registrar-fields-container registrar-second-row">
-            <div class="registrar-form-group">
-                <label for="referencia" class="registrar-label">Referencia:</label>
-                <input type="text" id="referencia" readonly autocomplete="off">
-            </div>
-            <div class="registrar-form-group">
-                <label for="proveedor" class="registrar-label">Proveedor:</label>
-                <input type="text" id="proveedor" readonly autocomplete="off">
-            </div>
-            <div class="registrar-form-group">
-                <label for="precioUnitario" class="registrar-label">Precio Unitario:</label>
-                <input type="text" id="precioUnitario" readonly autocomplete="off">
-            </div>
-            <div class="registrar-form-group">
-                <label for="atributo" class="registrar-label">Atributo:</label>
-                <input type="text" id="atributo" readonly autocomplete="off">
-            </div>
-            <div class="registrar-form-group">
-                <label for="totalItems" class="registrar-label">Total Items:</label>
-                <input type="text" id="totalItems" readonly autocomplete="off">
-            </div>
-        </div>
-
-        <div class="registrar-fields-container registrar-search-row">
-            <div class="registrar-form-group">
-                <label for="buscarAdmision" class="registrar-label">Buscar Admisión:</label>
-                <input type="text" id="buscarAdmision" placeholder="Buscar por admisión" autocomplete="off">
-            </div>
-            <div class="registrar-form-group">
-                <label for="buscarPaciente" class="registrar-label">Buscar Paciente:</label>
-                <input type="text" id="buscarPaciente" placeholder="Buscar por paciente" autocomplete="off">
-            </div>
-            <div class="registrar-form-group">
-                <label for="buscarDescripcion" class="registrar-label">Buscar Descripción:</label>
-                <input type="text" id="buscarDescripcion" placeholder="Buscar por descripción" autocomplete="off">
-            </div>
-            <div class="registrar-form-group">
-                <label for="buscarProveedor" class="registrar-label">Buscar Proveedor:</label>
-                <input type="text" id="buscarProveedor" placeholder="Buscar por proveedor" autocomplete="off">
-            </div>
-            <div class="registrar-form-group">
-                <label for="buscarMedico" class="registrar-label">Buscar Médico:</label>
-                <input type="text" id="buscarMedico" placeholder="Buscar por médico" autocomplete="off">
-            </div>
-            <div class="registrar-form-group registrar-date-search">
-                <label class="registrar-label">Buscar por Fecha:</label>
-                <div class="registrar-date-options">
-                    <label><input type="radio" name="dateType" value="day" checked> Día</label>
-                    <div id="dateDay" class="registrar-date-group">
-                        <input type="date" id="fechaDia" autocomplete="off">
+                <div class="registrar-form-group">
+                    <label class="registrar-label" for="paciente">Paciente:</label>
+                    <input type="text" id="paciente">
+                </div>
+                <div class="registrar-form-group medico-input-container">
+                    <label class="registrar-label" for="medico">Médico:</label>
+                    <div class="medico-input-wrapper">
+                        <input type="text" id="medico">
+                        <i class="fas fa-clipboard-list medico-icon" id="medicoToggle"></i>
                     </div>
-                    <label><input type="radio" name="dateType" value="week"> Semana</label>
-                    <div id="dateWeek" class="registrar-date-group" style="display: none;">
-                        <input type="date" id="fechaDesde" placeholder="Desde" autocomplete="off">
-                        <input type="date" id="fechaHasta" placeholder="Hasta" autocomplete="off">
-                    </div>
-                    <label><input type="radio" name="dateType" value="month"> Mes</label>
-                    <div id="dateMonth" class="registrar-date-group" style="display: none;">
-                        <select id="mesSelect">
-                            <option value="01">Enero</option>
-                            <option value="02">Febrero</option>
-                            <option value="03">Marzo</option>
-                            <option value="04">Abril</option>
-                            <option value="05">Mayo</option>
-                            <option value="06">Junio</option>
-                            <option value="07">Julio</option>
-                            <option value="08">Agosto</option>
-                            <option value="09">Septiembre</option>
-                            <option value="10">Octubre</option>
-                            <option value="11">Noviembre</option>
-                            <option value="12">Diciembre</option>
-                        </select>
-                        <input type="number" id="anioSelect" min="1900" max="2100" placeholder="Año" autocomplete="off">
-                    </div>
+                    <div class="medico-dropdown" id="medicoDropdown"></div>
+                </div>
+                <div class="registrar-form-group">
+                    <label class="registrar-label" for="fechaCX">Fecha CX:</label>
+                    <input type="date" id="fechaCX">
+                </div>
+                <div class="registrar-form-group">
+                    <button id="registrarBtn" class="modal-btn modal-btn-primary">Registrar</button>
+                </div>
+                <div class="registrar-form-group">
+                    <button id="limpiarBtn" class="modal-btn modal-btn-secondary">Limpiar</button>
                 </div>
             </div>
-            <div class="registrar-actions-menu">
-                <button id="actionsBtn"><i class="fas fa-angle-down"></i> Acciones</button>
-                <div id="actionsMenu" class="registrar-dropdown-menu">
-                    <div class="menu-title"><i class="fas fa-angle-down"></i> Acciones</div>
-                    <a href="#" id="downloadAll">Descargar todos los registros</a>
-                    <a href="#" id="downloadPage">Descargar hoja actual</a>
+            <div class="registrar-second-row">
+                <div class="registrar-form-group">
+                    <label class="registrar-label" for="codigo">Código:</label>
+                    <input type="text" id="codigo">
+                </div>
+                <div class="registrar-form-group">
+                    <label class="registrar-label" for="descripcion">Descripción:</label>
+                    <input type="text" id="descripcion">
+                </div>
+                <div class="registrar-form-group">
+                    <label class="registrar-label" for="cantidad">Cantidad:</label>
+                    <input type="number" id="cantidad" min="1">
+                </div>
+                <div class="registrar-form-group">
+                    <label class="registrar-label" for="referencia">Referencia:</label>
+                    <input type="text" id="referencia" disabled>
+                </div>
+                <div class="registrar-form-group">
+                    <label class="registrar-label" for="proveedor">Proveedor:</label>
+                    <input type="text" id="proveedor" disabled>
+                </div>
+                <div class="registrar-form-group">
+                    <label class="registrar-label" for="precioUnitario">Precio Unitario:</label>
+                    <input type="number" id="precioUnitario" disabled>
+                </div>
+                <div class="registrar-form-group">
+                    <label class="registrar-label" for="atributo">Atributo:</label>
+                    <input type="text" id="atributo" disabled>
+                </div>
+                <div class="registrar-form-group">
+                    <label class="registrar-label" for="totalItems">Total Items:</label>
+                    <input type="number" id="totalItems" disabled>
+                </div>
+            </div>
+            <div class="registrar-search-row">
+                <div class="registrar-form-group">
+                    <label class="registrar-label" for="buscarAdmision">Buscar Admisión:</label>
+                    <input type="text" id="buscarAdmision">
+                </div>
+                <div class="registrar-form-group">
+                    <label class="registrar-label" for="buscarPaciente">Buscar Paciente:</label>
+                    <input type="text" id="buscarPaciente">
+                </div>
+                <div class="registrar-form-group">
+                    <label class="registrar-label" for="buscarMedico">Buscar Médico:</label>
+                    <input type="text" id="buscarMedico">
+                </div>
+                <div class="registrar-form-group">
+                    <label class="registrar-label" for="buscarDescripcion">Buscar Descripción:</label>
+                    <input type="text" id="buscarDescripcion">
+                </div>
+                <div class="registrar-form-group">
+                    <label class="registrar-label" for="buscarProveedor">Buscar Proveedor:</label>
+                    <input type="text" id="buscarProveedor">
+                </div>
+                <div class="registrar-date-search">
+                    <label class="registrar-label">Buscar por Fecha:</label>
+                    <div class="registrar-date-options">
+                        <div class="registrar-date-group">
+                            <label><input type="radio" name="dateFilter" id="dateDay" value="day"> Día</label>
+                            <input type="date" id="fechaDia">
+                        </div>
+                        <div class="registrar-date-group">
+                            <label><input type="radio" name="dateFilter" id="dateWeek" value="week"> Semana</label>
+                            <input type="date" id="fechaDesde">
+                            <input type="date" id="fechaHasta">
+                        </div>
+                        <div class="registrar-date-group">
+                            <label><input type="radio" name="dateFilter" id="dateMonth" value="month"> Mes</label>
+                            <select id="mesSelect">
+                                <option value="01">Enero</option>
+                                <option value="02">Febrero</option>
+                                <option value="03">Marzo</option>
+                                <option value="04">Abril</option>
+                                <option value="05">Mayo</option>
+                                <option value="06">Junio</option>
+                                <option value="07">Julio</option>
+                                <option value="08">Agosto</option>
+                                <option value="09">Septiembre</option>
+                                <option value="10">Octubre</option>
+                                <option value="11">Noviembre</option>
+                                <option value="12">Diciembre</option>
+                            </select>
+                            <select id="anioSelect"></select>
+                        </div>
+                    </div>
+                </div>
+                <div class="registrar-actions-menu">
+                    <button id="actionsBtn">Acciones <i class="fas fa-caret-down"></i></button>
+                    <div class="registrar-dropdown-menu" id="actionsMenu">
+                        <div class="menu-title">Acciones</div>
+                        <a href="#" id="downloadAll">Descargar todos los registros</a>
+                        <a href="#" id="downloadCurrent">Descargar hoja actual</a>
+                    </div>
                 </div>
             </div>
         </div>
-
         <div class="registrar-table-container">
-            <table id="registrarTable" class="registrar-table">
+            <table class="registrar-table" id="registrarTable">
                 <thead>
                     <tr>
-                        <th>Acciones</th>
-                        <th>Admisión</th>
-                        <th>Paciente</th>
-                        <th>Médico</th>
-                        <th>Fecha CX</th>
-                        <th>Código</th>
-                        <th>Descripción</th>
-                        <th>Cantidad</th>
-                        <th>Referencia</th>
-                        <th>Proveedor</th>
-                        <th>Precio Unitario</th>
-                        <th>Atributo</th>
-                        <th>Total Items</th>
+                        <th>Admisión<div class="resize-handle"></div></th>
+                        <th>Paciente<div class="resize-handle"></div></th>
+                        <th>Médico<div class="resize-handle"></div></th>
+                        <th>Fecha CX<div class="resize-handle"></div></th>
+                        <th>Código<div class="resize-handle"></div></th>
+                        <th>Descripción<div class="resize-handle"></div></th>
+                        <th>Cantidad<div class="resize-handle"></div></th>
+                        <th>Referencia<div class="resize-handle"></div></th>
+                        <th>Proveedor<div class="resize-handle"></div></th>
+                        <th>Precio Unitario<div class="resize-handle"></div></th>
+                        <th>Atributo<div class="resize-handle"></div></th>
+                        <th>Total Items<div class="resize-handle"></div></th>
+                        <th>Acciones<div class="resize-handle"></div></th>
                     </tr>
                 </thead>
-                <tbody id="registrarBody">
-                </tbody>
+                <tbody></tbody>
             </table>
         </div>
-
-        <div class="registrar-pagination" id="pagination">
+        <div class="registrar-pagination">
             <div class="registrar-pagination-info" id="paginationInfo"></div>
             <div class="registrar-pagination-controls">
-                <button id="prevBtn">Anterior</button>
+                <button id="prevPage">Anterior</button>
                 <div class="registrar-page-numbers" id="pageNumbers"></div>
-                <button id="nextBtn">Siguiente</button>
+                <button id="nextPage">Siguiente</button>
             </div>
         </div>
-
-        <div id="registrar-loading" class="registrar-loading">
+        <div class="registrar-loading" id="loading">
             <div class="registrar-loading-spinner"></div>
-            <div class="registrar-loading-text">Procesando...</div>
+            <div class="registrar-loading-text">Cargando...</div>
         </div>
+    </div>
 
-        <div id="registrar-toast-container" class="registrar-toast-container"></div>
-
-        <div id="editModal" class="modal">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h2>Editar Registro</h2>
-                    <span class="close" id="closeEditModal">&times;</span>
-                </div>
-                <div class="modal-content-body">
-                    <form id="editForm">
-                        <input type="hidden" id="editId" autocomplete="off">
-                        <div class="modal-form-group">
-                            <label for="editAdmision">Admisión:</label>
-                            <input type="text" id="editAdmision" required autocomplete="off">
-                        </div>
-                        <div class="modal-form-group">
-                            <label for="editPaciente">Paciente:</label>
-                            <input type="text" id="editPaciente" required autocomplete="off">
-                        </div>
-                        <div class="modal-form-group medico-input-container">
-                            <label for="editMedico">Médico:</label>
-                            <div class="medico-input-wrapper">
-                                <input type="text" id="editMedico" required autocomplete="off">
-                                <i class="fas fa-list medico-icon" id="editMedicoListBtn"></i>
-                            </div>
-                            <div id="editMedicoDropdown" class="medico-dropdown"></div>
-                        </div>
-                        <div class="modal-form-group">
-                            <label for="editFechaCX">Fecha CX:</label>
-                            <input type="date" id="editFechaCX" required autocomplete="off">
-                        </div>
-                        <div class="modal-form-group">
-                            <label for="editCodigo">Código:</label>
-                            <input type="text" id="editCodigo" required autocomplete="off">
-                        </div>
-                        <div class="modal-form-group">
-                            <label for="editDescripcion">Descripción:</label>
-                            <input type="text" id="editDescripcion" required autocomplete="off">
-                        </div>
-                        <div class="modal-form-group">
-                            <label for="editCantidad">Cantidad:</label>
-                            <input type="number" id="editCantidad" min="0" required autocomplete="off">
-                        </div>
-                        <div class="modal-form-group">
-                            <label for="editReferencia">Referencia:</label>
-                            <input type="text" id="editReferencia" readonly autocomplete="off">
-                        </div>
-                        <div class="modal-form-group">
-                            <label for="editProveedor">Proveedor:</label>
-                            <input type="text" id="editProveedor" readonly autocomplete="off">
-                        </div>
-                        <div class="modal-form-group">
-                            <label for="editPrecioUnitario">Precio Unitario:</label>
-                            <input type="text" id="editPrecioUnitario" readonly autocomplete="off">
-                        </div>
-                        <div class="modal-form-group">
-                            <label for="editAtributo">Atributo:</label>
-                            <input type="text" id="editAtributo" readonly autocomplete="off">
-                        </div>
-                        <div class="modal-form-group">
-                            <label for="editTotalItems">Total Items:</label>
-                            <input type="text" id="editTotalItems" readonly autocomplete="off">
-                        </div>
-                        <div class="modal-buttons">
-                            <button type="button" class="modal-btn modal-btn-secondary" id="cancelEdit">Cancelar</button>
-                            <button type="submit" class="modal-btn modal-btn-primary">Guardar</button>
-                        </div>
-                    </form>
-                </div>
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Editar Registro</h2>
+                <span class="close">&times;</span>
             </div>
-        </div>
-
-        <div id="deleteModal" class="modal">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h2>Eliminar Registro</h2>
-                    <span class="close" id="closeDeleteModal">&times;</span>
+            <div class="modal-content-body">
+                <div class="modal-form-group">
+                    <label for="editAdmision">Admisión:</label>
+                    <input type="text" id="editAdmision" maxlength="10">
                 </div>
-                <div class="modal-content-body">
-                    <p class="delete-modal-text" id="deleteText"></p>
-                    <div class="modal-buttons">
-                        <button type="button" class="modal-btn modal-btn-secondary" id="cancelDelete">No</button>
-                        <button type="button" class="modal-btn modal-btn-danger" id="confirmDelete">Sí</button>
+                <div class="modal-form-group">
+                    <label for="editPaciente">Paciente:</label>
+                    <input type="text" id="editPaciente">
+                </div>
+                <div class="modal-form-group medico-input-container">
+                    <label for="editMedico">Médico:</label>
+                    <div class="medico-input-wrapper">
+                        <input type="text" id="editMedico">
+                        <i class="fas fa-clipboard-list medico-icon" id="editMedicoToggle"></i>
                     </div>
+                    <div class="medico-dropdown" id="editMedicoDropdown"></div>
                 </div>
-            </div>
-        </div>
-
-        <div id="historyModal" class="modal">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h2 id="historyTitle">Historial Registro</h2>
-                    <span class="close" id="closeHistory">&times;</span>
+                <div class="modal-form-group">
+                    <label for="editFechaCX">Fecha CX:</label>
+                    <input type="date" id="editFechaCX">
                 </div>
-                <div class="modal-content-body">
-                    <div id="historyContent"></div>
-                    <div class="modal-buttons">
-                        <button type="button" class="modal-btn modal-btn-secondary" id="closeHistoryBtn">Cerrar</button>
-                    </div>
+                <div class="modal-form-group">
+                    <label for="editCodigo">Código:</label>
+                    <input type="text" id="editCodigo">
+                </div>
+                <div class="modal-form-group">
+                    <label for="editDescripcion">Descripción:</label>
+                    <input type="text" id="editDescripcion">
+                </div>
+                <div class="modal-form-group">
+                    <label for="editCantidad">Cantidad:</label>
+                    <input type="number" id="editCantidad" min="1">
+                </div>
+                <div class="modal-form-group">
+                    <label for="editReferencia">Referencia:</label>
+                    <input type="text" id="editReferencia" disabled>
+                </div>
+                <div class="modal-form-group">
+                    <label for="editProveedor">Proveedor:</label>
+                    <input type="text" id="editProveedor" disabled>
+                </div>
+                <div class="modal-form-group">
+                    <label for="editPrecioUnitario">Precio Unitario:</label>
+                    <input type="number" id="editPrecioUnitario" disabled>
+                </div>
+                <div class="modal-form-group">
+                    <label for="editAtributo">Atributo:</label>
+                    <input type="text" id="editAtributo" disabled>
+                </div>
+                <div class="modal-form-group">
+                    <label for="editTotalItems">Total Items:</label>
+                    <input type="number" id="editTotalItems" disabled>
+                </div>
+                <div class="modal-buttons">
+                    <button class="modal-btn modal-btn-primary" id="saveEditBtn">Guardar</button>
+                    <button class="modal-btn modal-btn-secondary" id="cancelEditBtn">Cancelar</button>
                 </div>
             </div>
         </div>
     </div>
+
+    <div id="deleteModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Confirmar Eliminación</h2>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-content-body">
+                <p class="delete-modal-text">¿Estás seguro de que deseas eliminar este registro?</p>
+                <div class="modal-buttons">
+                    <button class="modal-btn modal-btn-danger" id="confirmDeleteBtn">Eliminar</button>
+                    <button class="modal-btn modal-btn-secondary" id="cancelDeleteBtn">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="historyModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Historial de Cambios</h2>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-content-body" id="historyContent">
+            </div>
+        </div>
+    </div>
+
+    <div class="registrar-toast-container" id="toastContainer"></div>
+    <script src="registrar.js"></script>
 </body>
 </html>

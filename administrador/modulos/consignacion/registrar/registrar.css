@@ -45,6 +45,10 @@ html, body {
     flex-wrap: wrap;
 }
 
+.registrar-first-row {
+    align-items: flex-end;
+}
+
 .registrar-form-group {
     display: flex;
     flex-direction: column;
@@ -55,11 +59,10 @@ html, body {
     max-width: 200px;
 }
 
-.registrar-label {
-    font-size: 10px;
-    font-weight: bold;
-    color: #333;
-    white-space: nowrap;
+.registrar-form-group.button-group {
+    flex: 0;
+    min-width: auto;
+    max-width: none;
 }
 
 #admision, #paciente, #fechaCX, #codigo, #descripcion, #cantidad,
@@ -330,16 +333,16 @@ html, body {
 
 .registrar-table th:nth-child(1), .registrar-table td:nth-child(1) { width: 100px; min-width: 100px; max-width: 100px; }
 .registrar-table th:nth-child(2), .registrar-table td:nth-child(2) { width: 130px; min-width: 130px; max-width: 130px; }
-.registrar-table th:nth-child(3), .registrar-table td:nth-child(3) { width: 200px; min-width: 200px; max-width: 200px; }
-.registrar-table th:nth-child(4), .registrar-table td:nth-child(4) { width: 200px; min-width: 200px; max-width: 200px; text-transform: none !important; }
-.registrar-table th:nth-child(5), .registrar-table td:nth-child(5) { width: 120px; min-width: 120px; max-width: 120px; }
-.registrar-table th:nth-child(6), .registrar-table td:nth-child(6) { width: 100px; min-width: 100px; max-width: 100px; }
-.registrar-table th:nth-child(7), .registrar-table td:nth-child(7) { width: 300px; min-width: 300px; max-width: 300px; }
-.registrar-table th:nth-child(8), .registrar-table td:nth-child(8) { width: 80px; min-width: 80px; max-width: 80px; }
-.registrar-table th:nth-child(9), .registrar-table td:nth-child(9) { width: 130px; min-width: 130px; max-width: 130px; }
-.registrar-table th:nth-child(10), .registrar-table td:nth-child(10) { width: 150px; min-width: 150px; max-width: 150px; }
-.registrar-table th:nth-child(11), .registrar-table td:nth-child(11) { width: 100px; min-width: 100px; max-width: 100px; }
-.registrar-table th:nth-child(12), .registrar-table td:nth-child(12) { width: 120px; min-width: 120px; max-width: 120px; }
+.registrar-table th:nth-child(3), .registrar-table td:nth-child(3) { width: 200px; min-width: 200px; max-width: 200px; text-transform: none !important; }
+.registrar-table th:nth-child(4), .registrar-table td:nth-child(4) { width: 120px; min-width: 120px; max-width: 120px; }
+.registrar-table th:nth-child(5), .registrar-table td:nth-child(5) { width: 100px; min-width: 100px; max-width: 100px; }
+.registrar-table th:nth-child(6), .registrar-table td:nth-child(6) { width: 300px; min-width: 300px; max-width: 300px; }
+.registrar-table th:nth-child(7), .registrar-table td:nth-child(7) { width: 80px; min-width: 80px; max-width: 80px; }
+.registrar-table th:nth-child(8), .registrar-table td:nth-child(8) { width: 130px; min-width: 130px; max-width: 130px; }
+.registrar-table th:nth-child(9), .registrar-table td:nth-child(9) { width: 150px; min-width: 150px; max-width: 150px; }
+.registrar-table th:nth-child(10), .registrar-table td:nth-child(10) { width: 100px; min-width: 100px; max-width: 100px; }
+.registrar-table th:nth-child(11), .registrar-table td:nth-child(11) { width: 120px; min-width: 120px; max-width: 120px; }
+.registrar-table th:nth-child(12), .registrar-table td:nth-child(12) { width: 100px; min-width: 100px; max-width: 100px; }
 .registrar-table th:nth-child(13), .registrar-table td:nth-child(13) { width: 100px; min-width: 100px; max-width: 100px; }
 
 .registrar-actions {
@@ -680,6 +683,8 @@ html, body {
     border-radius: 4px;
     cursor: pointer;
     font-size: 12px;
+    min-width: 80px;
+    text-align: center;
 }
 
 .modal-btn-primary {
@@ -741,12 +746,11 @@ html, body {
         width: 90px;
         min-width: 90px;
     }
-    #mesSelect {
-        width: 80px;
-        min-width: 80px;
+    .registrar-form-group.button-group {
+        flex: 0 0 100%;
+        max-width: 100%;
     }
-    #anioSelect {
-        width: 60px;
-        min-width: 60px;
+    .modal-btn {
+        flex: 1;
     }
 }
