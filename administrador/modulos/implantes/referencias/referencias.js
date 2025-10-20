@@ -172,11 +172,15 @@ function enableColumnResizing() {
                 const startWidth = header.offsetWidth;
                 const minWidth = parseInt(getComputedStyle(header).minWidth) || 20;
                 const maxWidth = 2000;
+                header.style.maxWidth = 'none';
+                const cells = table.querySelectorAll(`td:nth-child(${index + 1})`);
+                cells.forEach(cell => {
+                    cell.style.maxWidth = 'none';
+                });
                 const onMouseMove = (moveEvent) => {
                     let newWidth = startWidth + (moveEvent.clientX - startX);
                     newWidth = Math.max(minWidth, Math.min(newWidth, maxWidth));
                     header.style.width = `${newWidth}px`;
-                    const cells = table.querySelectorAll(`td:nth-child(${index + 1})`);
                     cells.forEach(cell => {
                         cell.style.width = `${newWidth}px`;
                     });
