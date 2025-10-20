@@ -79,22 +79,24 @@ html, body {
     white-space: nowrap;
 }
 
-#admision, #paciente, #fechaCX, #cantidad,
+/* *** TODOS LOS INPUTS CON MISMA ALTURA Y PADDING *** */
+#admision, #paciente, #medico, #fechaCX, #codigo, #descripcion, #cantidad,
 #referencia, #proveedor, #precioUnitario, #atributo, #totalItems,
 #buscarAdmision, #buscarPaciente, #buscarDescripcion, #buscarProveedor, #buscarMedico,
 #fechaDia, #fechaDesde, #fechaHasta, #anioSelect,
-#editAdmision, #editPaciente, #editFechaCX, #editCantidad,
+#editAdmision, #editPaciente, #editMedico, #editFechaCX, #editCodigo, #editDescripcion, #editCantidad,
 #editReferencia, #editProveedor, #editPrecioUnitario, #editAtributo, #editTotalItems {
     width: 100%;
-    padding: 8px;
+    padding: 8px 8px;           /* ✅ PADDING UNIFORME: 8px IZQUIERDA + 8px DERECHA */
     border: 1px solid #ddd;
     border-radius: 4px;
     font-size: 11px;
     box-sizing: border-box;
-    text-transform: uppercase;
+    height: 32px;               /* ✅ ALTURA FIJA PARA TODOS */
+    line-height: 16px;          /* ✅ LINE HEIGHT UNIFORME */
 }
 
-/* *** ICONOS FIJADOS A LA IZQUIERDA - FIX COMPLETO *** */
+/* *** ICONOS EN LA DERECHA - CENTRO VERTICAL *** */
 .medico-input-container, .codigo-input-container, .descripcion-input-container {
     position: relative;
     width: 100%;
@@ -109,34 +111,24 @@ html, body {
 
 .medico-icon, .codigo-icon, .descripcion-icon {
     position: absolute;
-    left: 8px;                    /* ✅ FIJO: IZQUIERDA */
-    top: 50%;                     /* ✅ FIJO: CENTRO VERTICAL */
-    transform: translateY(-50%);   /* ✅ FIJO: AJUSTE PRECISO */
+    right: 8px;                 /* ✅ DERECHA */
+    top: 50%;                   /* ✅ CENTRO VERTICAL */
+    transform: translateY(-50%); /* ✅ AJUSTE PRECISO */
     color: #007bff;
     cursor: pointer;
     font-size: 12px;
     z-index: 10;
     pointer-events: auto;
+    height: 100%;               /* ✅ OCUPA TODA LA ALTURA DEL INPUT */
+    display: flex;
+    align-items: center;
 }
 
 .medico-icon:hover, .codigo-icon:hover, .descripcion-icon:hover {
     color: #0056b3;
 }
 
-/* *** INPUTS CON PADDING IZQUIERDO PARA ICONOS *** */
-#medico, #editMedico,
-#codigo, #editCodigo,
-#descripcion, #editDescripcion {
-    padding-left: 30px !important;  /* ✅ ESPACIO PARA ICONO */
-    padding-right: 8px;
-    width: 100%;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    font-size: 11px;
-    box-sizing: border-box;
-    text-transform: none !important;
-}
-
+/* *** DROPDOWNS *** */
 .medico-dropdown, .codigo-dropdown, .descripcion-dropdown {
     display: none;
     position: absolute;
@@ -163,22 +155,18 @@ html, body {
     background-color: #f1f1f1;
 }
 
+/* *** CAMPOS DESHABILITADOS *** */
 #referencia, #proveedor, #precioUnitario, #atributo, #totalItems,
 #editReferencia, #editProveedor, #editPrecioUnitario, #editAtributo, #editTotalItems {
     background-color: #f8f9fa;
     cursor: not-allowed;
 }
 
-#admision:focus, #paciente:focus, #fechaCX:focus, #cantidad:focus,
+/* *** FOCUS UNIFORME *** */
+#admision:focus, #paciente:focus, #medico:focus, #fechaCX:focus, #codigo:focus, #descripcion:focus, #cantidad:focus,
 #buscarAdmision:focus, #buscarPaciente:focus, #buscarDescripcion:focus, #buscarProveedor:focus, #buscarMedico:focus,
 #fechaDia:focus, #fechaDesde:focus, #fechaHasta:focus, #anioSelect:focus,
-#editAdmision:focus, #editPaciente:focus, #editFechaCX:focus, #editCantidad:focus {
-    box-shadow: 0 0 12px rgba(0, 123, 255, 0.5);
-    outline: none;
-}
-
-#medico:focus, #codigo:focus, #descripcion:focus,
-#editMedico:focus, #editCodigo:focus, #editDescripcion:focus {
+#editAdmision:focus, #editPaciente:focus, #editMedico:focus, #editFechaCX:focus, #editCodigo:focus, #editDescripcion:focus, #editCantidad:focus {
     box-shadow: 0 0 12px rgba(0, 123, 255, 0.5);
     outline: none;
 }
@@ -231,6 +219,8 @@ html, body {
     padding: 8px;
     border: 1px solid #ddd;
     border-radius: 4px;
+    height: 32px;
+    box-sizing: border-box;
 }
 
 #anioSelect {
@@ -239,6 +229,8 @@ html, body {
     padding: 8px;
     border: 1px solid #ddd;
     border-radius: 4px;
+    height: 32px;
+    box-sizing: border-box;
 }
 
 .registrar-actions-menu {
@@ -677,15 +669,15 @@ html, body {
 .modal-form-group input,
 .modal-form-group select {
     width: 100%;
-    padding: 8px;
+    padding: 8px 8px;
     border: 1px solid #ddd;
     border-radius: 4px;
     font-size: 11px;
     box-sizing: border-box;
-    text-transform: uppercase;
+    height: 32px;               /* ✅ MISMA ALTURA EN MODAL */
 }
 
-/* *** FIX ICONOS EN MODAL *** */
+/* *** ICONOS EN MODAL - DERECHA *** */
 .modal .medico-input-container, 
 .modal .codigo-input-container, 
 .modal .descripcion-input-container {
@@ -704,20 +696,21 @@ html, body {
 .modal .codigo-icon, 
 .modal .descripcion-icon {
     position: absolute;
-    left: 8px;
+    right: 8px;                 /* ✅ DERECHA EN MODAL */
     top: 50%;
     transform: translateY(-50%);
     color: #007bff;
     cursor: pointer;
     font-size: 12px;
     z-index: 10;
+    height: 100%;
+    display: flex;
+    align-items: center;
 }
 
 .modal #editMedico, 
 .modal #editCodigo, 
 .modal #editDescripcion {
-    padding-left: 30px !important;
-    padding-right: 8px;
     text-transform: none !important;
 }
 
@@ -833,11 +826,7 @@ html, body {
         width: 100%;
         min-width: 100%;
     }
-    #mesSelect {
-        width: 100%;
-        min-width: 100%;
-    }
-    #anioSelect {
+    #mesSelect, #anioSelect {
         width: 100%;
         min-width: 100%;
     }
