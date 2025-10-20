@@ -163,6 +163,7 @@ function setupColumnResize() {
     const headers = document.querySelectorAll('.referencias-table th');
 
     headers.forEach((header, index) => {
+        // Remove any existing resize handle
         const existingHandle = header.querySelector('.resize-handle');
         if (existingHandle) existingHandle.remove();
 
@@ -186,12 +187,16 @@ function setupColumnResize() {
             if (!isResizing) return;
             const clientX = e.pageX || (e.touches && e.touches[0].pageX);
             if (!clientX) return;
-            const newWidth = Math.max(20, startWidth + (clientX - startX));
 
+            // Calculate new width, ensuring it stays within bounds
+            const newWidth = Math.max(20, Math.min(2000, startWidth + (clientX - startX)));
+
+            // Update only the current column's header
             header.style.width = `${newWidth}px`;
             header.style.minWidth = `${newWidth}px`;
             header.style.maxWidth = `${newWidth}px`;
 
+            // Update corresponding cells in the same column
             const cells = document.querySelectorAll(`.referencias-table td:nth-child(${index + 1})`);
             cells.forEach(cell => {
                 cell.style.width = `${newWidth}px`;
