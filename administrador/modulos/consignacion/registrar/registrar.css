@@ -69,7 +69,7 @@ html, body {
     max-width: none;
     margin-bottom: 8px;
     position: relative;
-    margin-left: auto; /* Mueve el botón Acciones al extremo derecho */
+    margin-left: auto;
 }
 
 .registrar-label {
@@ -775,7 +775,7 @@ html, body {
         max-width: 100%;
         display: flex;
         justify-content: center;
-        margin-left: 0; /* Reset margin-left en pantallas pequeñas */
+        margin-left: 0;
     }
     .modal-btn {
         flex: 1;

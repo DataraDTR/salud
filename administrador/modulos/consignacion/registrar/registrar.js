@@ -1,3 +1,8 @@
+console.log('window.firebaseModules al inicio de registrar.js:', window.firebaseModules);
+if (!window.firebaseModules) {
+    console.error('window.firebaseModules no está definido. Asegúrate de que el script de Firebase se cargue primero en registrar.html.');
+    throw new Error('Firebase modules not loaded');
+}
 const { initializeApp, getAuth, onAuthStateChanged, setPersistence, browserSessionPersistence, getFirestore, collection, addDoc, getDocs, query, where, doc, updateDoc, deleteDoc, orderBy, getDoc, limit, startAfter, endBefore } = window.firebaseModules;
 
 const firebaseConfig = {
@@ -496,22 +501,26 @@ document.addEventListener('DOMContentLoaded', () => {
                     where("admision", ">=", searchAdmision),
                     where("admision", "<=", searchAdmision + '\uf8ff')
                 );
-            } else if (searchPaciente) {
+            }
+            if (searchPaciente) {
                 countQuery = query(countQuery,
                     where("paciente", ">=", searchPaciente),
                     where("paciente", "<=", searchPaciente + '\uf8ff')
                 );
-            } else if (searchMedico) {
+            }
+            if (searchMedico) {
                 countQuery = query(countQuery,
                     where("medico", ">=", searchMedico),
                     where("medico", "<=", searchMedico + '\uf8ff')
                 );
-            } else if (searchProveedor) {
+            }
+            if (searchProveedor) {
                 countQuery = query(countQuery,
                     where("proveedor", ">=", searchProveedor),
                     where("proveedor", "<=", searchProveedor + '\uf8ff')
                 );
-            } else if (dateFilter === 'day' && fechaDia) {
+            }
+            if (dateFilter === 'day' && fechaDia) {
                 const start = new Date(fechaDia);
                 const end = new Date(fechaDia);
                 end.setDate(end.getDate() + 1);
@@ -831,7 +840,7 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         showLoading();
         try {
-            const q = query(collection(db, "registrar_consignacion"));
+            const q = query(collection(db, "registrar_consignacion"), orderBy("fechaCX", "desc"));
             const querySnapshot = await getDocs(q);
             const allRegistros = [];
             querySnapshot.forEach((doc) => {
@@ -853,15 +862,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 Atributo: reg.atributo || '',
                 'Total Items': reg.totalItems || ''
             }));
-            const ws = XLSX.utils.json_to_sheet(data);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Registros");
-            XLSX.writeFile(wb, 'registros_todos.xlsx');
-            actionsMenu.style.display = 'none';
+
+            const worksheet = XLSX.utils.json_to_sheet(data);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, 'Registros');
+            XLSX.writeFile(workbook, 'registros_completos.xlsx');
+            showToast('Registros completos descargados con éxito', 'success');
             hideLoading();
         } catch (error) {
             hideLoading();
-            showToast('Error al descargar los registros: ' + error.message, 'error');
+            showToast('Error al descargar registros: ' + error.message, 'error');
         }
     });
 
@@ -881,69 +891,73 @@ document.addEventListener('DOMContentLoaded', () => {
             Atributo: reg.atributo || '',
             'Total Items': reg.totalItems || ''
         }));
-        const ws = XLSX.utils.json_to_sheet(data);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Registros");
-        XLSX.writeFile(wb, `registros_pagina_${currentPage}.xlsx`);
-        actionsMenu.style.display = 'none';
+
+        const worksheet = XLSX.utils.json_to_sheet(data);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, 'Hoja Actual');
+        XLSX.writeFile(workbook, 'registros_hoja_actual.xlsx');
+        showToast('Hoja actual descargada con éxito', 'success');
     });
 
     registrarBtn.addEventListener('click', async () => {
-        const registro = {
-            admision: admisionInput.value.trim().toUpperCase(),
-            paciente: pacienteInput.value.trim().toUpperCase(),
-            medico: medicoInput.value.trim(),
-            fechaCX: fechaCXInput.value ? new Date(fechaCXInput.value) : null,
-            codigo: codigoInput.value.trim().toUpperCase(),
-            descripcion: descripcionInput.value.trim().toUpperCase(),
-            cantidad: parseInt(cantidadInput.value) || 0,
-            referencia: referenciaInput.value.trim().toUpperCase(),
-            proveedor: proveedorInput.value.trim().toUpperCase(),
-            precioUnitario: parseInt(precioUnitarioInput.value.replace(/[^\d]/g, '')) || 0,
-            atributo: atributoInput.value.trim().toUpperCase(),
-            totalItems: totalItemsInput.value || '',
-            fullName: window.currentUserData.fullName
-        };
-
-        if (!registro.admision || !registro.paciente || !registro.medico || !registro.fechaCX || !registro.codigo || !registro.cantidad) {
-            showToast('Todos los campos obligatorios deben estar completos.', 'error');
-            return;
-        }
-
         showLoading();
         try {
-            const existingAdmision = await validateAdmision(registro.admision);
+            const admision = admisionInput.value.trim().toUpperCase();
+            const paciente = pacienteInput.value.trim().toUpperCase();
+            const medico = medicoInput.value.trim();
+            const fechaCX = fechaCXInput.value ? new Date(fechaCXInput.value) : null;
+            const codigo = codigoInput.value.trim().toUpperCase();
+            const descripcion = descripcionInput.value.trim().toUpperCase();
+            const cantidad = parseInt(cantidadInput.value) || 0;
+
+            if (!admision || !paciente || !medico || !fechaCX || !codigo || !descripcion || !cantidad) {
+                showToast('Por favor, completa todos los campos requeridos.', 'error');
+                hideLoading();
+                return;
+            }
+
+            const existingAdmision = await validateAdmision(admision);
             if (existingAdmision) {
+                showToast('El número de admisión ya existe.', 'error');
                 hideLoading();
-                showToast('El número de admisión ya está registrado.', 'error');
                 return;
             }
 
-            const producto = await getProductoByCodigo(registro.codigo);
+            const producto = await getProductoByCodigo(codigo);
             if (!producto) {
+                showToast('Código de producto no encontrado.', 'error');
                 hideLoading();
-                showToast('El código no existe en la base de datos de productos.', 'error');
                 return;
             }
 
-            registro.referencia = producto.referencia || '';
-            registro.proveedor = producto.proveedor || '';
-            registro.precioUnitario = producto.precioUnitario || 0;
-            registro.atributo = producto.atributo || '';
-            registro.totalItems = (registro.cantidad * registro.precioUnitario).toString();
+            const totalItems = producto.precioUnitario * cantidad;
 
-            const docRef = await addDoc(collection(db, "registrar_consignacion"), {
-                ...registro,
-                createdAt: new Date()
-            });
+            const registro = {
+                admision,
+                paciente,
+                medico,
+                fechaCX,
+                codigo,
+                descripcion,
+                cantidad,
+                referencia: producto.referencia || '',
+                proveedor: producto.proveedor || '',
+                precioUnitario: producto.precioUnitario || 0,
+                atributo: producto.atributo || '',
+                totalItems
+            };
+
+            const docRef = await addDoc(collection(db, "registrar_consignacion"), registro);
             await logAction(docRef.id, 'create', null, registro);
+            showToast('Registro añadido con éxito', 'success');
             clearForm();
-            hideLoading();
-            showToast('Registro añadido exitosamente', 'success');
+            currentPage = 1;
+            lastVisible = null;
+            firstVisible = null;
             await loadRegistros();
         } catch (error) {
+            showToast('Error al registrar: ' + error.message, 'error');
             hideLoading();
-            showToast('Error al añadir el registro: ' + error.message, 'error');
         }
     });
 
@@ -968,151 +982,156 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     saveEditBtn.addEventListener('click', async () => {
-        if (!currentEditId) return;
-
-        const registro = {
-            admision: editAdmisionInput.value.trim().toUpperCase(),
-            paciente: editPacienteInput.value.trim().toUpperCase(),
-            medico: editMedicoInput.value.trim(),
-            fechaCX: editFechaCXInput.value ? new Date(editFechaCXInput.value) : null,
-            codigo: editCodigoInput.value.trim().toUpperCase(),
-            descripcion: editDescripcionInput.value.trim().toUpperCase(),
-            cantidad: parseInt(editCantidadInput.value) || 0,
-            referencia: editReferenciaInput.value.trim().toUpperCase(),
-            proveedor: editProveedorInput.value.trim().toUpperCase(),
-            precioUnitario: parseInt(editPrecioUnitarioInput.value.replace(/[^\d]/g, '')) || 0,
-            atributo: editAtributoInput.value.trim().toUpperCase(),
-            totalItems: editTotalItemsInput.value || '',
-            fullName: window.currentUserData.fullName
-        };
-
-        if (!registro.admision || !registro.paciente || !registro.medico || !registro.fechaCX || !registro.codigo || !registro.cantidad) {
-            showToast('Todos los campos obligatorios deben estar completos.', 'error');
-            return;
-        }
-
         showLoading();
         try {
-            const existingAdmision = await validateAdmision(registro.admision, currentEditId);
+            const admision = editAdmisionInput.value.trim().toUpperCase();
+            const paciente = editPacienteInput.value.trim().toUpperCase();
+            const medico = editMedicoInput.value.trim();
+            const fechaCX = editFechaCXInput.value ? new Date(editFechaCXInput.value) : null;
+            const codigo = editCodigoInput.value.trim().toUpperCase();
+            const descripcion = editDescripcionInput.value.trim().toUpperCase();
+            const cantidad = parseInt(editCantidadInput.value) || 0;
+
+            if (!admision || !paciente || !medico || !fechaCX || !codigo || !descripcion || !cantidad) {
+                showToast('Por favor, completa todos los campos requeridos.', 'error');
+                hideLoading();
+                return;
+            }
+
+            const existingAdmision = await validateAdmision(admision, currentEditId);
             if (existingAdmision) {
+                showToast('El número de admisión ya existe.', 'error');
                 hideLoading();
-                showToast('El número de admisión ya está registrado.', 'error');
                 return;
             }
 
-            const producto = await getProductoByCodigo(registro.codigo);
+            const producto = await getProductoByCodigo(codigo);
             if (!producto) {
+                showToast('Código de producto no encontrado.', 'error');
                 hideLoading();
-                showToast('El código no existe en la base de datos de productos.', 'error');
                 return;
             }
 
-            registro.referencia = producto.referencia || '';
-            registro.proveedor = producto.proveedor || '';
-            registro.precioUnitario = producto.precioUnitario || 0;
-            registro.atributo = producto.atributo || '';
-            registro.totalItems = (registro.cantidad * registro.precioUnitario).toString();
+            const totalItems = producto.precioUnitario * cantidad;
 
-            await updateDoc(doc(db, "registrar_consignacion", currentEditId), {
-                ...registro,
-                updatedAt: new Date()
-            });
-            await logAction(currentEditId, 'update', currentEditOldData, registro);
-            hideLoading();
-            showToast('Registro actualizado exitosamente', 'success');
+            const updatedRegistro = {
+                admision,
+                paciente,
+                medico,
+                fechaCX,
+                codigo,
+                descripcion,
+                cantidad,
+                referencia: producto.referencia || '',
+                proveedor: producto.proveedor || '',
+                precioUnitario: producto.precioUnitario || 0,
+                atributo: producto.atributo || '',
+                totalItems
+            };
+
+            const docRef = doc(db, "registrar_consignacion", currentEditId);
+            await updateDoc(docRef, updatedRegistro);
+            await logAction(currentEditId, 'update', currentEditOldData, updatedRegistro);
+            showToast('Registro actualizado con éxito', 'success');
             closeModal(editModal);
+            currentPage = 1;
+            lastVisible = null;
+            firstVisible = null;
             await loadRegistros();
         } catch (error) {
+            showToast('Error al actualizar: ' + error.message, 'error');
             hideLoading();
-            showToast('Error al actualizar el registro: ' + error.message, 'error');
         }
     });
 
     window.openDeleteModal = function (id, admision) {
         currentDeleteId = id;
         currentDeleteAdmision = admision;
-        document.querySelector('#deleteModal .delete-modal-text').textContent = `¿Estás seguro de que deseas eliminar el registro con admisión "${admision}"?`;
         deleteModal.style.display = 'block';
     };
 
     confirmDeleteBtn.addEventListener('click', async () => {
-        if (!currentDeleteId) return;
-
         showLoading();
         try {
-            const registroDoc = await getDoc(doc(db, "registrar_consignacion", currentDeleteId));
-            if (registroDoc.exists()) {
-                const registroData = registroDoc.data();
-                await logAction(currentDeleteId, 'delete', registroData);
-                await deleteDoc(doc(db, "registrar_consignacion", currentDeleteId));
-                hideLoading();
-                showToast(`Registro con admisión ${currentDeleteAdmision} eliminado exitosamente`, 'success');
-                closeModal(deleteModal);
-                await loadRegistros();
-            } else {
-                hideLoading();
-                showToast('El registro no existe.', 'error');
-                closeModal(deleteModal);
-            }
+            const docRef = doc(db, "registrar_consignacion", currentDeleteId);
+            const registroData = registros.find(reg => reg.id === currentDeleteId);
+            await deleteDoc(docRef);
+            await logAction(currentDeleteId, 'delete', registroData);
+            showToast('Registro eliminado con éxito', 'success');
+            closeModal(deleteModal);
+            currentPage = 1;
+            lastVisible = null;
+            firstVisible = null;
+            await loadRegistros();
         } catch (error) {
+            showToast('Error al eliminar: ' + error.message, 'error');
             hideLoading();
-            showToast('Error al eliminar el registro: ' + error.message, 'error');
         }
     });
 
-    window.openHistoryModal = function (id, admision) {
+    window.openHistoryModal = async function (id, admision) {
         showLoading();
-        const q = query(collection(db, "registrar_consignacion_historial"), where("registroId", "==", id), orderBy("timestamp", "desc"));
-        getDocs(q).then((querySnapshot) => {
-            hideLoading();
-            let html = '';
-            querySnapshot.forEach((doc) => {
-                const log = doc.data();
-                const date = log.timestamp ? log.timestamp.toDate().toLocaleString('es-CL') : 'Fecha inválida';
-                if (log.action === 'create') {
-                    html += `<div class="history-entry">Creado | ${log.userFullName || 'Desconocido'} | ${log.username || 'desconocido'} | ${date}</div>`;
-                } else if (log.action === 'update') {
-                    html += `<div class="history-entry">Modificado | ${log.userFullName || 'Desconocido'} | ${log.username || 'desconocido'} | ${date} | Admisión: ${log.oldData ? log.oldData.admision : 'N/A'} → ${log.newData ? log.newData.admision : 'N/A'}</div>`;
-                } else if (log.action === 'delete') {
-                    html += `<div class="history-entry">Eliminado | ${log.userFullName || 'Desconocido'} | ${log.username || 'desconocido'} | ${date}</div>`;
-                }
-            });
-            historyContent.innerHTML = html || '<div>No hay historial disponible.</div>';
+        try {
+            const q = query(collection(db, "registrar_consignacion_historial"), where("registroId", "==", id), orderBy("timestamp", "desc"));
+            const querySnapshot = await getDocs(q);
+            historyContent.innerHTML = '';
+            if (querySnapshot.empty) {
+                historyContent.innerHTML = '<p>No hay historial para este registro.</p>';
+            } else {
+                querySnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    const entry = document.createElement('div');
+                    entry.className = 'history-entry';
+                    entry.innerHTML = `
+                        <p><strong>Acción:</strong> ${data.action}</p>
+                        <p><strong>Usuario:</strong> ${data.userFullName} (${data.username})</p>
+                        <p><strong>Fecha:</strong> ${data.timestamp.toDate().toLocaleString('es-CL')}</p>
+                        ${data.oldData ? `<p><strong>Datos Antiguos:</strong> ${JSON.stringify(data.oldData, null, 2)}</p>` : ''}
+                        ${data.newData ? `<p><strong>Datos Nuevos:</strong> ${JSON.stringify(data.newData, null, 2)}</p>` : ''}
+                    `;
+                    historyContent.appendChild(entry);
+                });
+            }
             historyModal.style.display = 'block';
-        }).catch((error) => {
             hideLoading();
-            showToast('Error al cargar el historial: ' + error.message, 'error');
-        });
+        } catch (error) {
+            showToast('Error al cargar historial: ' + error.message, 'error');
+            hideLoading();
+        }
     };
 
     codigoInput.addEventListener('blur', async () => {
         const codigo = codigoInput.value.trim().toUpperCase();
         if (codigo) {
-            showLoading();
-            try {
-                const producto = await getProductoByCodigo(codigo);
-                if (producto) {
-                    referenciaInput.value = producto.referencia || '';
-                    proveedorInput.value = producto.proveedor || '';
-                    precioUnitarioInput.value = producto.precioUnitario ? formatNumberWithThousandsSeparator(producto.precioUnitario) : '';
-                    atributoInput.value = producto.atributo || '';
-                    descripcionInput.value = producto.descripcion || '';
-                    if (cantidadInput.value) {
-                        totalItemsInput.value = (parseInt(cantidadInput.value) * (producto.precioUnitario || 0)).toString();
-                    }
-                } else {
-                    referenciaInput.value = '';
-                    proveedorInput.value = '';
-                    precioUnitarioInput.value = '';
-                    atributoInput.value = '';
-                    descripcionInput.value = '';
-                    totalItemsInput.value = '';
-                    showToast('Código no encontrado.', 'error');
-                }
-                hideLoading();
-            } catch (error) {
-                hideLoading();
-                showToast('Error al buscar el código: ' + error.message, 'error');
+            const producto = await getProductoByCodigo(codigo);
+            if (producto) {
+                descripcionInput.value = producto.descripcion || '';
+                referenciaInput.value = producto.referencia || '';
+                proveedorInput.value = producto.proveedor || '';
+                precioUnitarioInput.value = producto.precioUnitario ? formatNumberWithThousandsSeparator(producto.precioUnitario) : '';
+                atributoInput.value = producto.atributo || '';
+                const cantidad = parseInt(cantidadInput.value) || 0;
+                totalItemsInput.value = cantidad && producto.precioUnitario ? cantidad * producto.precioUnitario : '';
+            } else {
+                showToast('Código no encontrado.', 'error');
+            }
+        }
+    });
+
+    editCodigoInput.addEventListener('blur', async () => {
+        const codigo = editCodigoInput.value.trim().toUpperCase();
+        if (codigo) {
+            const producto = await getProductoByCodigo(codigo);
+            if (producto) {
+                editDescripcionInput.value = producto.descripcion || '';
+                editReferenciaInput.value = producto.referencia || '';
+                editProveedorInput.value = producto.proveedor || '';
+                editPrecioUnitarioInput.value = producto.precioUnitario ? formatNumberWithThousandsSeparator(producto.precioUnitario) : '';
+                editAtributoInput.value = producto.atributo || '';
+                const cantidad = parseInt(editCantidadInput.value) || 0;
+                editTotalItemsInput.value = cantidad && producto.precioUnitario ? cantidad * producto.precioUnitario : '';
+            } else {
+                showToast('Código no encontrado.', 'error');
             }
         }
     });
@@ -1120,77 +1139,37 @@ document.addEventListener('DOMContentLoaded', () => {
     cantidadInput.addEventListener('input', () => {
         const cantidad = parseInt(cantidadInput.value) || 0;
         const precioUnitario = parseInt(precioUnitarioInput.value.replace(/[^\d]/g, '')) || 0;
-        totalItemsInput.value = (cantidad * precioUnitario).toString();
-    });
-
-    editCodigoInput.addEventListener('blur', async () => {
-        const codigo = editCodigoInput.value.trim().toUpperCase();
-        if (codigo) {
-            showLoading();
-            try {
-                const producto = await getProductoByCodigo(codigo);
-                if (producto) {
-                    editReferenciaInput.value = producto.referencia || '';
-                    editProveedorInput.value = producto.proveedor || '';
-                    editPrecioUnitarioInput.value = producto.precioUnitario ? formatNumberWithThousandsSeparator(producto.precioUnitario) : '';
-                    editAtributoInput.value = producto.atributo || '';
-                    editDescripcionInput.value = producto.descripcion || '';
-                    if (editCantidadInput.value) {
-                        editTotalItemsInput.value = (parseInt(editCantidadInput.value) * (producto.precioUnitario || 0)).toString();
-                    }
-                } else {
-                    editReferenciaInput.value = '';
-                    editProveedorInput.value = '';
-                    editPrecioUnitarioInput.value = '';
-                    editAtributoInput.value = '';
-                    editDescripcionInput.value = '';
-                    editTotalItemsInput.value = '';
-                    showToast('Código no encontrado.', 'error');
-                }
-                hideLoading();
-            } catch (error) {
-                hideLoading();
-                showToast('Error al buscar el código: ' + error.message, 'error');
-            }
-        }
+        totalItemsInput.value = cantidad && precioUnitario ? cantidad * precioUnitario : '';
     });
 
     editCantidadInput.addEventListener('input', () => {
         const cantidad = parseInt(editCantidadInput.value) || 0;
         const precioUnitario = parseInt(editPrecioUnitarioInput.value.replace(/[^\d]/g, '')) || 0;
-        editTotalItemsInput.value = (cantidad * precioUnitario).toString();
+        editTotalItemsInput.value = cantidad && precioUnitario ? cantidad * precioUnitario : '';
     });
 
-    onAuthStateChanged(auth, async (user) => {
-        console.log('Estado de autenticación:', user ? `Usuario autenticado: ${user.email}` : 'No autenticado');
-        if (!user) {
-            window.location.replace('../index.html');
-            return;
+    function populateAnioSelect() {
+        const currentYear = new Date().getFullYear();
+        for (let year = currentYear - 5; year <= currentYear + 5; year++) {
+            const option = document.createElement('option');
+            option.value = year;
+            option.textContent = year;
+            if (year === currentYear) option.selected = true;
+            anioSelect.appendChild(option);
         }
-        try {
-            const userDocRef = doc(db, 'users', user.uid);
-            const userDoc = await getDoc(userDocRef);
-            if (userDoc.exists()) {
-                window.currentUserData = userDoc.data();
-            } else {
-                window.currentUserData = { fullName: user.displayName || 'Usuario Invitado', username: user.email || 'invitado' };
-            }
+    }
+
+    onAuthStateChanged(auth, async (user) => {
+        if (user) {
+            const userDoc = await getDoc(doc(db, "users", user.uid));
+            window.currentUserData = userDoc.exists() ? userDoc.data() : {};
             await loadMedicos();
             setupAutocomplete('medico', 'medicoToggle', 'medicoDropdown');
             setupAutocomplete('editMedico', 'editMedicoToggle', 'editMedicoDropdown');
-
-            const currentYear = new Date().getFullYear();
-            for (let year = currentYear; year >= currentYear - 10; year--) {
-                const option = document.createElement('option');
-                option.value = year;
-                option.textContent = year;
-                anioSelect.appendChild(option);
-            }
-
+            populateAnioSelect();
             await loadRegistros();
-        } catch (error) {
-            window.currentUserData = { fullName: 'Usuario Invitado', username: 'invitado' };
-            showToast('Error al cargar datos del usuario.', 'error');
+        } else {
+            window.location.href = 'index.html';
         }
     });
 });
