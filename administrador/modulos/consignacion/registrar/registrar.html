@@ -7,33 +7,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="registrar.css">
     <script src="https://cdn.sheetjs.com/xlsx-0.18.5/package/dist/xlsx.full.min.js"></script>
-    <script type="module">
-        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-        import { getAuth, onAuthStateChanged, setPersistence, browserSessionPersistence } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
-        import { getFirestore, collection, addDoc, getDocs, query, where, doc, updateDoc, deleteDoc, orderBy, getDoc, limit, startAfter, endBefore } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
-        window.firebaseModules = { 
-            initializeApp, 
-            getAuth, 
-            onAuthStateChanged, 
-            setPersistence, 
-            browserSessionPersistence, 
-            getFirestore, 
-            collection, 
-            addDoc, 
-            getDocs, 
-            query, 
-            where, 
-            doc, 
-            updateDoc, 
-            deleteDoc, 
-            orderBy, 
-            getDoc, 
-            limit, 
-            startAfter, 
-            endBefore 
-        };
-        console.log('Firebase modules cargados:', window.firebaseModules);
-    </script>
 </head>
 <body>
     <div class="registrar-main-container">
@@ -61,13 +34,21 @@
                     <label class="registrar-label" for="fechaCX">Fecha CX:</label>
                     <input type="date" id="fechaCX">
                 </div>
-                <div class="registrar-form-group">
+                <div class="registrar-form-group codigo-input-container">
                     <label class="registrar-label" for="codigo">Código:</label>
-                    <input type="text" id="codigo">
+                    <div class="codigo-input-wrapper">
+                        <input type="text" id="codigo">
+                        <i class="fas fa-clipboard-list codigo-icon" id="codigoToggle"></i>
+                    </div>
+                    <div class="codigo-dropdown" id="codigoDropdown"></div>
                 </div>
-                <div class="registrar-form-group">
+                <div class="registrar-form-group descripcion-input-container">
                     <label class="registrar-label" for="descripcion">Descripción:</label>
-                    <input type="text" id="descripcion">
+                    <div class="descripcion-input-wrapper">
+                        <input type="text" id="descripcion">
+                        <i class="fas fa-clipboard-list descripcion-icon" id="descripcionToggle"></i>
+                    </div>
+                    <div class="descripcion-dropdown" id="descripcionDropdown"></div>
                 </div>
                 <div class="registrar-form-group">
                     <label class="registrar-label" for="cantidad">Cantidad:</label>
@@ -228,13 +209,21 @@
                     <label for="editFechaCX">Fecha CX:</label>
                     <input type="date" id="editFechaCX">
                 </div>
-                <div class="modal-form-group">
+                <div class="modal-form-group codigo-input-container">
                     <label for="editCodigo">Código:</label>
-                    <input type="text" id="editCodigo">
+                    <div class="codigo-input-wrapper">
+                        <input type="text" id="editCodigo">
+                        <i class="fas fa-clipboard-list codigo-icon" id="editCodigoToggle"></i>
+                    </div>
+                    <div class="codigo-dropdown" id="editCodigoDropdown"></div>
                 </div>
-                <div class="modal-form-group">
+                <div class="modal-form-group descripcion-input-container">
                     <label for="editDescripcion">Descripción:</label>
-                    <input type="text" id="editDescripcion">
+                    <div class="descripcion-input-wrapper">
+                        <input type="text" id="editDescripcion">
+                        <i class="fas fa-clipboard-list descripcion-icon" id="editDescripcionToggle"></i>
+                    </div>
+                    <div class="descripcion-dropdown" id="editDescripcionDropdown"></div>
                 </div>
                 <div class="modal-form-group">
                     <label for="editCantidad">Cantidad:</label>

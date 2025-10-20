@@ -69,7 +69,7 @@ html, body {
     max-width: none;
     margin-bottom: 8px;
     position: relative;
-    margin-left: auto;
+    margin-left: auto; /* Mueve el botón Acciones al extremo derecho */
 }
 
 .registrar-label {
@@ -104,18 +104,18 @@ html, body {
     text-transform: none !important;
 }
 
-.medico-input-container {
+.medico-input-container, .codigo-input-container, .descripcion-input-container {
     position: relative;
     width: 100%;
 }
 
-.medico-input-wrapper {
+.medico-input-wrapper, .codigo-input-wrapper, .descripcion-input-wrapper {
     display: flex;
     align-items: center;
     width: 100%;
 }
 
-.medico-icon {
+.medico-icon, .codigo-icon, .descripcion-icon {
     position: absolute;
     right: 8px;
     top: 50%;
@@ -125,11 +125,11 @@ html, body {
     font-size: 12px;
 }
 
-.medico-icon:hover {
+.medico-icon:hover, .codigo-icon:hover, .descripcion-icon:hover {
     color: #0056b3;
 }
 
-.medico-dropdown {
+.medico-dropdown, .codigo-dropdown, .descripcion-dropdown {
     display: none;
     position: absolute;
     top: 100%;
@@ -144,14 +144,14 @@ html, body {
     box-shadow: 0 4px 8px rgba(0,0,0,0.1);
 }
 
-.medico-dropdown div {
+.medico-dropdown div, .codigo-dropdown div, .descripcion-dropdown div {
     padding: 8px;
     font-size: 11px;
     cursor: pointer;
     text-transform: none !important;
 }
 
-.medico-dropdown div:hover {
+.medico-dropdown div:hover, .codigo-dropdown div:hover, .descripcion-dropdown div:hover {
     background-color: #f1f1f1;
 }
 
@@ -775,7 +775,7 @@ html, body {
         max-width: 100%;
         display: flex;
         justify-content: center;
-        margin-left: 0;
+        margin-left: 0; /* Reset margin-left en pantallas pequeñas */
     }
     .modal-btn {
         flex: 1;
