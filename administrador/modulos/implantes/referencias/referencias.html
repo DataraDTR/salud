@@ -5,35 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gestión de Referencias</title>
     <link rel="stylesheet" href="referencias.css">
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
-    <script>
-        window.firebaseModules = {
-            initializeApp: firebase.initializeApp,
-            getAuth: firebase.auth,
-            onAuthStateChanged: firebase.auth().onAuthStateChanged,
-            setPersistence: firebase.auth().setPersistence,
-            browserSessionPersistence: firebase.auth.Auth.Persistence.SESSION,
-            getFirestore: firebase.firestore,
-            collection: firebase.firestore().collection,
-            addDoc: firebase.firestore().addDoc,
-            getDocs: firebase.firestore().getDocs,
-            query: firebase.firestore().query,
-            where: firebase.firestore().where,
-            doc: firebase.firestore().doc,
-            updateDoc: firebase.firestore().updateDoc,
-            deleteDoc: firebase.firestore().deleteDoc,
-            orderBy: firebase.firestore().orderBy,
-            getDoc: firebase.firestore().getDoc,
-            limit: firebase.firestore().limit,
-            startAfter: firebase.firestore().startAfter,
-            endBefore: firebase.firestore().endBefore
-        };
-    </script>
-    <script src="referencias.js"></script>
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.4/css/all.css" integrity="sha384-DyZ88mC6Up2uqS4h/KRgHuoeGwBcD4Ng9SiP4dIRy0EXTlnuz47vAwmeGwVChigm" crossorigin="anonymous">
 </head>
 <body>
     <div class="referencias-main-container">
@@ -297,5 +269,34 @@
             </div>
         </div>
     </div>
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
+        import { getAuth, onAuthStateChanged, setPersistence, browserSessionPersistence } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
+        import { getFirestore, collection, addDoc, getDocs, query, where, doc, updateDoc, deleteDoc, orderBy, getDoc, limit, startAfter, endBefore } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
+
+        window.firebaseModules = {
+            initializeApp,
+            getAuth,
+            onAuthStateChanged,
+            setPersistence,
+            browserSessionPersistence,
+            getFirestore,
+            collection,
+            addDoc,
+            getDocs,
+            query,
+            where,
+            doc,
+            updateDoc,
+            deleteDoc,
+            orderBy,
+            getDoc,
+            limit,
+            startAfter,
+            endBefore
+        };
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="referencias.js"></script>
 </body>
 </html>
