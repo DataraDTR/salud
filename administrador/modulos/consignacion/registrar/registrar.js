@@ -793,14 +793,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     <td class="registrar-cell atributo">${escapeHtml(registro.atributo || '')}</td>
                     <td class="registrar-cell total">${formatNumberWithThousandsSeparator(registro.totalItems)}</td>
                     <td class="registrar-actions">
-                        <div class="action-buttons">
-                            <button title="Editar registro" class="btn-action btn-edit" onclick="openEditModal('${registro.id}', ${JSON.stringify(registro).replace(/"/g, '&quot;')})">
+                        <div class="registrar-actions">
+                            <button title="Editar registro" class="registrar-btn-edit" onclick="openEditModal('${registro.id}', ${JSON.stringify(registro).replace(/"/g, '&quot;')})">
                                 <i class="fas fa-edit"></i>
                             </button>
-                            <button title="Eliminar registro" class="btn-action btn-delete" onclick="openDeleteModal('${registro.id}', '${escapeHtml(registro.admision || '')}')">
+                            <button title="Eliminar registro" class="registrar-btn-delete" onclick="openDeleteModal('${registro.id}', '${escapeHtml(registro.admision || '')}')">
                                 <i class="fas fa-trash"></i>
                             </button>
-                            <button title="Ver historial" class="btn-action btn-history" onclick="openHistoryModal('${registro.id}', '${escapeHtml(registro.admision || '')}')">
+                            <button title="Ver historial" class="registrar-btn-history" onclick="openHistoryModal('${registro.id}', '${escapeHtml(registro.admision || '')}')">
                                 <i class="fas fa-history"></i>
                             </button>
                         </div>
