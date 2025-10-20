@@ -33,20 +33,17 @@ html, body {
     justify-content: space-between;
     gap: 10px;
     margin-bottom: 10px;
-    align-items: center;
+    align-items: flex-start;
     flex-wrap: wrap;
 }
 
 .registrar-first-row, .registrar-second-row, .registrar-search-row {
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-start;
     gap: 10px;
-    align-items: center;
-    flex-wrap: wrap;
-}
-
-.registrar-first-row {
     align-items: flex-end;
+    flex-wrap: wrap;
+    width: 100%;
 }
 
 .registrar-form-group {
@@ -56,13 +53,21 @@ html, body {
     gap: 4px;
     flex: 1;
     min-width: 120px;
-    max-width: 200px;
+    max-width: 160px;
 }
 
 .registrar-form-group.button-group {
     flex: 0;
     min-width: auto;
     max-width: none;
+    margin-bottom: 8px;
+}
+
+.registrar-label {
+    font-size: 10px;
+    font-weight: bold;
+    color: #333;
+    white-space: nowrap;
 }
 
 #admision, #paciente, #fechaCX, #codigo, #descripcion, #cantidad,
@@ -92,6 +97,7 @@ html, body {
 
 .medico-input-container {
     position: relative;
+    width: 100%;
 }
 
 .medico-input-wrapper {
@@ -678,13 +684,19 @@ html, body {
 }
 
 .modal-btn {
-    padding: 8px 16px;
+    padding: 10px 20px;
     border: none;
     border-radius: 4px;
     cursor: pointer;
     font-size: 12px;
-    min-width: 80px;
+    font-weight: bold;
+    min-width: 100px;
     text-align: center;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.modal-btn:hover {
+    transform: translateY(-1px);
 }
 
 .modal-btn-primary {
@@ -742,15 +754,46 @@ html, body {
     .registrar-date-group {
         flex-wrap: wrap;
     }
-    #fechaDia, #fechaDesde, #fechaHasta {
-        width: 90px;
-        min-width: 90px;
+    .registrar-first-row, .registrar-second-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .registrar-form-group {
+        max-width: 100%;
     }
     .registrar-form-group.button-group {
-        flex: 0 0 100%;
+        flex: 0 0 auto;
         max-width: 100%;
+        display: flex;
+        justify-content: center;
     }
     .modal-btn {
         flex: 1;
+        min-width: 0;
+    }
+}
+
+@media screen and (max-width: 768px) {
+    .registrar-form-group {
+        min-width: 100%;
+    }
+    #fechaDia, #fechaDesde, #fechaHasta {
+        width: 100%;
+        min-width: 100%;
+    }
+    #mesSelect {
+        width: 100%;
+        min-width: 100%;
+    }
+    #anioSelect {
+        width: 100%;
+        min-width: 100%;
+    }
+    .registrar-form-group.button-group {
+        flex-direction: column;
+        gap: 10px;
+    }
+    .modal-btn {
+        width: 100%;
     }
 }
