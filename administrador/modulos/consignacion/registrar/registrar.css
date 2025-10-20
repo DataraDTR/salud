@@ -62,11 +62,11 @@ html, body {
     white-space: nowrap;
 }
 
-#admision, #paciente, #medico, #fechaCX, #codigo, #descripcion, #cantidad,
+#admision, #paciente, #fechaCX, #codigo, #descripcion, #cantidad,
 #referencia, #proveedor, #precioUnitario, #atributo, #totalItems,
 #buscarAdmision, #buscarPaciente, #buscarDescripcion, #buscarProveedor, #buscarMedico,
 #fechaDia, #fechaDesde, #fechaHasta, #anioSelect,
-#editAdmision, #editPaciente, #editMedico, #editFechaCX, #editCodigo, #editDescripcion, #editCantidad,
+#editAdmision, #editPaciente, #editFechaCX, #editCodigo, #editDescripcion, #editCantidad,
 #editReferencia, #editProveedor, #editPrecioUnitario, #editAtributo, #editTotalItems {
     width: 100%;
     padding: 8px;
@@ -75,6 +75,16 @@ html, body {
     font-size: 11px;
     box-sizing: border-box;
     text-transform: uppercase;
+}
+
+#medico, #editMedico {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 11px;
+    box-sizing: border-box;
+    text-transform: none !important;
 }
 
 .medico-input-container {
@@ -120,7 +130,7 @@ html, body {
     padding: 8px;
     font-size: 11px;
     cursor: pointer;
-    text-transform: uppercase;
+    text-transform: none !important;
 }
 
 .medico-dropdown div:hover {
@@ -321,7 +331,7 @@ html, body {
 .registrar-table th:nth-child(1), .registrar-table td:nth-child(1) { width: 100px; min-width: 100px; max-width: 100px; }
 .registrar-table th:nth-child(2), .registrar-table td:nth-child(2) { width: 130px; min-width: 130px; max-width: 130px; }
 .registrar-table th:nth-child(3), .registrar-table td:nth-child(3) { width: 200px; min-width: 200px; max-width: 200px; }
-.registrar-table th:nth-child(4), .registrar-table td:nth-child(4) { width: 200px; min-width: 200px; max-width: 200px; }
+.registrar-table th:nth-child(4), .registrar-table td:nth-child(4) { width: 200px; min-width: 200px; max-width: 200px; text-transform: none !important; }
 .registrar-table th:nth-child(5), .registrar-table td:nth-child(5) { width: 120px; min-width: 120px; max-width: 120px; }
 .registrar-table th:nth-child(6), .registrar-table td:nth-child(6) { width: 100px; min-width: 100px; max-width: 100px; }
 .registrar-table th:nth-child(7), .registrar-table td:nth-child(7) { width: 300px; min-width: 300px; max-width: 300px; }
@@ -643,6 +653,14 @@ html, body {
     text-transform: uppercase;
 }
 
+.modal-form-group input#editMedico {
+    text-transform: none !important;
+}
+
+.modal-form-group select {
+    text-transform: uppercase;
+}
+
 .modal-form-group input:focus,
 .modal-form-group select:focus {
     box-shadow: 0 0 12px rgba(0, 123, 255, 0.5);
@@ -715,6 +733,9 @@ html, body {
     .registrar-date-options {
         flex-wrap: wrap;
         gap: 4px;
+    }
+    .registrar-date-group {
+        flex-wrap: wrap;
     }
     #fechaDia, #fechaDesde, #fechaHasta {
         width: 90px;
