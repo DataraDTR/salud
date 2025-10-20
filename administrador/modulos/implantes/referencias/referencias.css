@@ -211,15 +211,20 @@ html, body {
     flex-grow: 1;
 }
 
-.referencias-table {
-    table-layout: fixed;
-    border-collapse: collapse;
+.referencias-grid {
+    display: grid;
+    grid-template-columns: 100px 130px 200px 100px 80px 150px 250px 120px 120px 80px;
     font-size: 11px;
     width: 100%;
     box-sizing: border-box;
 }
 
-.referencias-table th, .referencias-table td {
+.referencias-grid-header {
+    display: contents;
+}
+
+.referencias-grid-header > div {
+    background-color: #f2f2f2;
     padding: 4px;
     text-align: left;
     border: 1px solid #ddd;
@@ -227,16 +232,32 @@ html, body {
     overflow: hidden;
     text-overflow: ellipsis;
     box-sizing: border-box;
-}
-
-.referencias-table th {
-    background-color: #f2f2f2;
     font-size: 11px;
     position: sticky;
     top: 0;
     z-index: 10;
     user-select: none;
     position: relative;
+    width: 100%;
+}
+
+.referencias-grid-row {
+    display: contents;
+}
+
+.referencias-grid-row > div {
+    padding: 4px;
+    text-align: left;
+    border: 1px solid #ddd;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+.referencias-grid-row:hover > div {
+    background-color: #f8f9fa;
 }
 
 .resize-handle {
@@ -250,20 +271,16 @@ html, body {
     background: transparent;
 }
 
-.referencias-table tbody tr:hover {
-    background-color: #f8f9fa;
-}
-
-.referencias-table th:nth-child(1), .referencias-table td:nth-child(1) { width: 100px; min-width: 80px; max-width: 100px; }
-.referencias-table th:nth-child(2), .referencias-table td:nth-child(2) { width: 130px; min-width: 80px; max-width: 130px; }
-.referencias-table th:nth-child(3), .referencias-table td:nth-child(3) { width: 200px; min-width: 150px; max-width: 200px; }
-.referencias-table th:nth-child(4), .referencias-table td:nth-child(4) { width: 100px; min-width: 80px; max-width: 100px; }
-.referencias-table th:nth-child(5), .referencias-table td:nth-child(5) { width: 80px; min-width: 60px; max-width: 80px; }
-.referencias-table th:nth-child(6), .referencias-table td:nth-child(6) { width: 150px; min-width: 100px; max-width: 150px; }
-.referencias-table th:nth-child(7), .referencias-table td:nth-child(7) { width: 250px; min-width: 200px; max-width: 250px; }
-.referencias-table th:nth-child(8), .referencias-table td:nth-child(8) { width: 120px; min-width: 80px; max-width: 120px; }
-.referencias-table th:nth-child(9), .referencias-table td:nth-child(9) { width: 120px; min-width: 80px; max-width: 120px; }
-.referencias-table th:nth-child(10), .referencias-table td:nth-child(10) { width: 80px; min-width: 60px; max-width: 80px; }
+.referencias-grid-header > div:nth-child(1), .referencias-grid-row > div:nth-child(1) { width: 100px; min-width: 80px; max-width: 100px; }
+.referencias-grid-header > div:nth-child(2), .referencias-grid-row > div:nth-child(2) { width: 130px; min-width: 80px; max-width: 130px; }
+.referencias-grid-header > div:nth-child(3), .referencias-grid-row > div:nth-child(3) { width: 200px; min-width: 150px; max-width: 200px; }
+.referencias-grid-header > div:nth-child(4), .referencias-grid-row > div:nth-child(4) { width: 100px; min-width: 80px; max-width: 100px; }
+.referencias-grid-header > div:nth-child(5), .referencias-grid-row > div:nth-child(5) { width: 80px; min-width: 60px; max-width: 80px; }
+.referencias-grid-header > div:nth-child(6), .referencias-grid-row > div:nth-child(6) { width: 150px; min-width: 100px; max-width: 150px; }
+.referencias-grid-header > div:nth-child(7), .referencias-grid-row > div:nth-child(7) { width: 250px; min-width: 200px; max-width: 250px; }
+.referencias-grid-header > div:nth-child(8), .referencias-grid-row > div:nth-child(8) { width: 120px; min-width: 80px; max-width: 120px; }
+.referencias-grid-header > div:nth-child(9), .referencias-grid-row > div:nth-child(9) { width: 120px; min-width: 80px; max-width: 120px; }
+.referencias-grid-header > div:nth-child(10), .referencias-grid-row > div:nth-child(10) { width: 80px; min-width: 60px; max-width: 80px; }
 
 .referencias-actions {
     display: flex;

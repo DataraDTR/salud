@@ -159,9 +159,9 @@ async function logAction(referenciaId, action, oldData = null, newData = null) {
 }
 
 function enableColumnResizing() {
-    const table = document.getElementById('referenciasTable');
-    const headers = table.querySelectorAll('th');
-    const colWidths = Array.from(headers).map(header => header.offsetWidth); // Guardar anchos iniciales
+    const grid = document.getElementById('referenciasGrid');
+    const headers = grid.querySelectorAll('.referencias-grid-header > div');
+    const colWidths = Array.from(headers).map(header => parseInt(header.style.width) || header.offsetWidth);
 
     headers.forEach((header, index) => {
         const resizeHandle = document.createElement('div');
@@ -177,35 +177,24 @@ function enableColumnResizing() {
             const minWidth = parseInt(getComputedStyle(header).minWidth) || 50;
             const maxWidth = parseInt(getComputedStyle(header).maxWidth) || 2000;
 
-            const cells = table.querySelectorAll(`td:nth-child(${index + 1})`);
-
-            // Guardar anchos de todas las columnas antes de redimensionar
-            const originalWidths = Array.from(headers).map(h => h.offsetWidth);
-
             const onMouseMove = (moveEvent) => {
                 let newWidth = startWidth + (moveEvent.clientX - startX);
                 newWidth = Math.max(minWidth, Math.min(newWidth, maxWidth));
 
-                // Actualizar solo la columna seleccionada
+                // Actualizar la plantilla de columnas del grid
+                const gridTemplateColumns = colWidths.map((w, i) => i === index ? `${newWidth}px` : `${w}px`).join(' ');
+                grid.style.gridTemplateColumns = gridTemplateColumns;
+
+                // Actualizar el ancho de la columna seleccionada
                 header.style.width = `${newWidth}px`;
-                header.style.minWidth = `${minWidth}px`;
-                header.style.maxWidth = `${maxWidth}px`;
+                const cells = grid.querySelectorAll(`.referencias-grid-row > div:nth-child(${index + 1})`);
                 cells.forEach(cell => {
                     cell.style.width = `${newWidth}px`;
                     cell.style.minWidth = `${minWidth}px`;
                     cell.style.maxWidth = `${maxWidth}px`;
                 });
 
-                // Restaurar anchos originales de las otras columnas
-                headers.forEach((h, i) => {
-                    if (i !== index) {
-                        h.style.width = `${originalWidths[i]}px`;
-                        const otherCells = table.querySelectorAll(`td:nth-child(${i + 1})`);
-                        otherCells.forEach(cell => {
-                            cell.style.width = `${originalWidths[i]}px`;
-                        });
-                    }
-                });
+                colWidths[index] = newWidth;
             };
 
             const onMouseUp = () => {
@@ -213,22 +202,11 @@ function enableColumnResizing() {
                 document.removeEventListener('mousemove', onMouseMove);
                 document.removeEventListener('mouseup', onMouseUp);
                 document.removeEventListener('mouseleave', onMouseUp);
-                // Actualizar colWidths con el nuevo ancho
-                colWidths[index] = header.offsetWidth;
             };
 
             document.addEventListener('mousemove', onMouseMove);
             document.addEventListener('mouseup', onMouseUp);
             document.addEventListener('mouseleave', onMouseUp);
-        });
-    });
-
-    // Forzar anchos iniciales para evitar que el navegador los ajuste
-    headers.forEach((header, index) => {
-        header.style.width = `${colWidths[index]}px`;
-        const cells = table.querySelectorAll(`td:nth-child(${index + 1})`);
-        cells.forEach(cell => {
-            cell.style.width = `${colWidths[index]}px`;
         });
     });
 }
@@ -742,7 +720,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 totalRecords = referencias.length;
             }
 
-            renderTable();
+            renderGrid();
             hideLoading();
         } catch (error) {
             hideLoading();
@@ -750,29 +728,31 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function renderTable() {
+    function renderGrid() {
+        const referenciasBody = document.getElementById('referenciasBody');
         if (referenciasBody) {
             referenciasBody.innerHTML = '';
             if (referencias.length === 0) {
-                referenciasBody.innerHTML = '<tr><td colspan="10">No hay registros para mostrar.</td></tr>';
+                referenciasBody.innerHTML = '<div class="referencias-grid-row"><div style="grid-column: span 10;">No hay registros para mostrar.</div></div>';
             } else {
                 referencias.forEach(referencia => {
-                    const row = document.createElement('tr');
+                    const row = document.createElement('div');
+                    row.className = 'referencias-grid-row';
                     row.innerHTML = `
-                        <td class="referencias-actions">
+                        <div class="referencias-actions">
                             <button title="Editar" class="referencias-btn-edit" onclick="openEditModal('${referencia.id}', ${JSON.stringify(referencia).replace(/"/g, '&quot;')})"><i class="fas fa-edit"></i></button>
                             <button title="Eliminar" class="referencias-btn-delete" onclick="openDeleteModal('${referencia.id}', '${referencia.referencia}')"><i class="fas fa-trash"></i></button>
                             <button title="Ver Historial" class="referencias-btn-history" onclick="openHistoryModal('${referencia.id}', '${referencia.referencia}')"><i class="fas fa-history"></i></button>
-                        </td>
-                        <td>${referencia.referencia || ''}</td>
-                        <td>${referencia.detalles || ''}</td>
-                        <td>${formatNumberWithThousandsSeparator(referencia.precioUnitario)}</td>
-                        <td>${referencia.codigo || ''}</td>
-                        <td>${referencia.proveedor || ''}</td>
-                        <td>${referencia.descripcion || ''}</td>
-                        <td>${referencia.tipo || ''}</td>
-                        <td>${referencia.atributo || ''}</td>
-                        <td>${referencia.estado || 'ACTIVO'}</td>
+                        </div>
+                        <div>${referencia.referencia || ''}</div>
+                        <div>${referencia.detalles || ''}</div>
+                        <div>${formatNumberWithThousandsSeparator(referencia.precioUnitario)}</div>
+                        <div>${referencia.codigo || ''}</div>
+                        <div>${referencia.proveedor || ''}</div>
+                        <div>${referencia.descripcion || ''}</div>
+                        <div>${referencia.tipo || ''}</div>
+                        <div>${referencia.atributo || ''}</div>
+                        <div>${referencia.estado || 'ACTIVO'}</div>
                     `;
                     referenciasBody.appendChild(row);
                 });
