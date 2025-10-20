@@ -247,6 +247,7 @@ html, body {
     height: 100%;
     cursor: col-resize;
     z-index: 11;
+    background: transparent;
 }
 
 .referencias-table tbody tr:hover {

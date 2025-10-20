@@ -161,6 +161,7 @@ async function logAction(referenciaId, action, oldData = null, newData = null) {
 function enableColumnResizing() {
     const table = document.getElementById('referenciasTable');
     const headers = table.querySelectorAll('th');
+    const colWidths = Array.from(headers).map(header => header.offsetWidth); // Guardar anchos iniciales
 
     headers.forEach((header, index) => {
         const resizeHandle = document.createElement('div');
@@ -178,16 +179,32 @@ function enableColumnResizing() {
 
             const cells = table.querySelectorAll(`td:nth-child(${index + 1})`);
 
+            // Guardar anchos de todas las columnas antes de redimensionar
+            const originalWidths = Array.from(headers).map(h => h.offsetWidth);
+
             const onMouseMove = (moveEvent) => {
                 let newWidth = startWidth + (moveEvent.clientX - startX);
                 newWidth = Math.max(minWidth, Math.min(newWidth, maxWidth));
 
-                // Ajustar solo la columna seleccionada
+                // Actualizar solo la columna seleccionada
                 header.style.width = `${newWidth}px`;
-                header.style.maxWidth = `${newWidth}px`;
+                header.style.minWidth = `${minWidth}px`;
+                header.style.maxWidth = `${maxWidth}px`;
                 cells.forEach(cell => {
                     cell.style.width = `${newWidth}px`;
-                    cell.style.maxWidth = `${newWidth}px`;
+                    cell.style.minWidth = `${minWidth}px`;
+                    cell.style.maxWidth = `${maxWidth}px`;
+                });
+
+                // Restaurar anchos originales de las otras columnas
+                headers.forEach((h, i) => {
+                    if (i !== index) {
+                        h.style.width = `${originalWidths[i]}px`;
+                        const otherCells = table.querySelectorAll(`td:nth-child(${i + 1})`);
+                        otherCells.forEach(cell => {
+                            cell.style.width = `${originalWidths[i]}px`;
+                        });
+                    }
                 });
             };
 
@@ -196,11 +213,22 @@ function enableColumnResizing() {
                 document.removeEventListener('mousemove', onMouseMove);
                 document.removeEventListener('mouseup', onMouseUp);
                 document.removeEventListener('mouseleave', onMouseUp);
+                // Actualizar colWidths con el nuevo ancho
+                colWidths[index] = header.offsetWidth;
             };
 
             document.addEventListener('mousemove', onMouseMove);
             document.addEventListener('mouseup', onMouseUp);
             document.addEventListener('mouseleave', onMouseUp);
+        });
+    });
+
+    // Forzar anchos iniciales para evitar que el navegador los ajuste
+    headers.forEach((header, index) => {
+        header.style.width = `${colWidths[index]}px`;
+        const cells = table.querySelectorAll(`td:nth-child(${index + 1})`);
+        cells.forEach(cell => {
+            cell.style.width = `${colWidths[index]}px`;
         });
     });
 }
