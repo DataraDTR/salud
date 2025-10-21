@@ -799,31 +799,42 @@ html, body {
     }
 }
 
-/* Estilos para el spinner */
-.loading-overlay {
+/* Estilos para el spinner en un contenedor pequeño tipo modal */
+.loading-modal {
     display: none;
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.5);
-    z-index: 9999;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 120px;
+    height: 80px;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
 }
 
-.loading-overlay.show {
+.loading-modal.show {
     display: flex;
 }
 
 .spinner {
-    border: 4px solid #f3f3f3;
-    border-top: 4px solid #3498db;
+    width: 32px;
+    height: 32px;
+    border: 3px solid #e3f2fd;
+    border-top: 3px solid #007bff;
     border-radius: 50%;
-    width: 40px;
-    height: 40px;
     animation: spin 1s linear infinite;
+}
+
+.loading-text {
+    margin-top: 8px;
+    font-size: 12px;
+    color: #333;
 }
 
 @keyframes spin {
