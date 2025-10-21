@@ -575,57 +575,76 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     ingresarNewCodeBtn.addEventListener('click', async (e) => {
-        e.preventDefault();
-        showLoading();
+    e.preventDefault();
+    showLoading();
 
-        if (!proveedorInput) {
-            hideLoading();
-            showToast('Error: Campo proveedor no encontrado.', 'error');
-            return;
-        }
+    if (!proveedorInput) {
+        hideLoading();
+        showToast('Error: Campo proveedor no encontrado.', 'error');
+        return;
+    }
 
-        const processedRow = {
-            referencia: referenciaInput.value.trim().toUpperCase(),
-            detalles: detallesInput.value.trim().toUpperCase(),
-            precioUnitario: precioUnitarioInput.value.replace(/[^\d]/g, ''),
-            proveedor: proveedorInput.value.trim().toUpperCase(),
-            descripcion: descripcionInput.value.trim().toUpperCase(),
-            tipo: tipoInput.value,
-            atributo: atributoInput.value,
-            estado: 'ACTIVO',
-            fullName: window.currentUserData.fullName
-        };
+    const processedRow = {
+        referencia: referenciaInput.value.trim().toUpperCase(),
+        detalles: detallesInput.value.trim().toUpperCase(),
+        precioUnitario: precioUnitarioInput.value.replace(/[^\d]/g, ''),
+        proveedor: proveedorInput.value.trim().toUpperCase(),
+        descripcion: descripcionInput.value.trim().toUpperCase(),
+        tipo: tipoInput.value,
+        atributo: atributoInput.value,
+        estado: 'ACTIVO',
+        fullName: window.currentUserData ? window.currentUserData.fullName : 'Usuario Invitado'
+    };
 
-        if (processedRow.referencia) {
-            try {
-                const existingRef = await getReferenciaByUniqueKey(processedRow.referencia);
-                if (existingRef) {
-                    hideLoading();
-                    showToast('La referencia ya existe.', 'error');
-                    return;
-                }
-
-                const docRef = await addDoc(collection(db, "referencias_implantes"), {
-                    ...processedRow,
-                    codigo: 'PENDIENTE',
-                    createdAt: new Date()
-                });
-
-                await logAction(docRef.id, 'create', null, processedRow);
+    if (processedRow.referencia) {
+        try {
+            const existingRef = await getReferenciaByUniqueKey(processedRow.referencia);
+            if (existingRef) {
                 hideLoading();
-                showToast(`Referencia ${processedRow.referencia} creada exitosamente`, 'success');
-                newCodeForm.reset();
-                descripcionInput.value = '';
-                await loadReferencias();
-            } catch (error) {
-                hideLoading();
-                showToast('Error al crear la referencia: ' + error.message, 'error');
+                showToast('La referencia ya existe.', 'error');
+                return;
             }
-        } else {
+
+            const docRef = await addDoc(collection(db, "referencias_implantes"), {
+                ...processedRow,
+                codigo: 'PENDIENTE',
+                createdAt: new Date()
+            });
+
+            await logAction(docRef.id, 'create', null, processedRow);
             hideLoading();
-            showToast('Falta la referencia', 'error');
+            showToast(`Referencia ${processedRow.referencia} creada exitosamente`, 'success');
+
+            // Limpiar los campos manualmente en lugar de usar reset()
+            if (newCodeForm) {
+                const inputs = newCodeForm.querySelectorAll('input, select');
+                inputs.forEach(input => {
+                    if (input.type !== 'button' && input.type !== 'submit') {
+                        input.value = '';
+                    }
+                });
+                descripcionInput.value = ''; // Limpiar campo descripción explícitamente
+            } else {
+                // Fallback: limpiar campos individuales si newCodeForm no existe
+                referenciaInput.value = '';
+                detallesInput.value = '';
+                precioUnitarioInput.value = '';
+                proveedorInput.value = '';
+                descripcionInput.value = '';
+                tipoInput.value = 'IMPLANTES';
+                atributoInput.value = 'COTIZACION';
+            }
+
+            await loadReferencias();
+        } catch (error) {
+            hideLoading();
+            showToast('Error al crear la referencia: ' + error.message, 'error');
         }
-    });
+    } else {
+        hideLoading();
+        showToast('Falta la referencia', 'error');
+    }
+});
 
     ingresarExistingCodeBtn.addEventListener('click', async (e) => {
         e.preventDefault();
