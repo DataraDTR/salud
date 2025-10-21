@@ -5,6 +5,22 @@ import {
     updateDoc, deleteDoc, orderBy, getDoc, limit, startAfter 
 } from 'https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js';
 
+// Definir showLoading y hideLoading al inicio para que estén disponibles
+const loading = document.getElementById('loading');
+window.showLoading = function () {
+    if (loading) {
+        loading.classList.add('show');
+        document.body.style.overflow = 'hidden';
+    }
+};
+
+window.hideLoading = function () {
+    if (loading) {
+        loading.classList.remove('show');
+        document.body.style.overflow = '';
+    }
+};
+
 const firebaseConfig = {
     apiKey: "AIzaSyD6JY7FaRqjZoN6OzbFHoIXxd-IJL3H-Ek",
     authDomain: "datara-salud.firebaseapp.com",
@@ -503,8 +519,7 @@ function parseFechaCX(fecha) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    const loading = document.getElementById('loading');
-    window.hideLoading(); // Forzar ocultar el spinner al inicio
+    window.hideLoading(); // Ahora está definido
     const registrarTable = document.getElementById('registrarTable');
     const registrarBody = registrarTable?.querySelector('tbody');
     const prevPage = document.getElementById('prevPage');
@@ -633,20 +648,6 @@ document.addEventListener('DOMContentLoaded', () => {
         codigoDropdown.style.display = 'none';
         descripcionDropdown.style.display = 'none';
     }
-
-    window.showLoading = function () {
-        if (loading) {
-            loading.classList.add('show');
-            document.body.style.overflow = 'hidden';
-        }
-    };
-
-    window.hideLoading = function () {
-        if (loading) {
-            loading.classList.remove('show');
-            document.body.style.overflow = '';
-        }
-    };
 
     function closeModal(modal) {
         if (modal) {
