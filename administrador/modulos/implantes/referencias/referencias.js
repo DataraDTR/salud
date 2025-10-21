@@ -582,7 +582,7 @@ document.addEventListener('DOMContentLoaded', () => {
             referencia: referenciaInput.value.trim().toUpperCase(),
             detalles: detallesInput.value.trim().toUpperCase(),
             precioUnitario: precioUnitarioInput.value.replace(/[^\d]/g, ''),
-            proveedor: proveedorInput.value.trim().toUpperCase(),
+            proveedor: proveedoInput.value.trim().toUpperCase(),
             descripcion: descripcionInput.value.trim().toUpperCase(),
             tipo: tipoInput.value,
             atributo: atributoInput.value,
@@ -757,7 +757,7 @@ document.addEventListener('DOMContentLoaded', () => {
             currentPage = 1;
             lastVisible = null;
             firstVisible = null;
-            debouncedLoadhammer();
+            debouncedLoadReferencias();
         });
     }
 
@@ -1088,46 +1088,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 for (let i = 1; i <= totalRows; i++) {
                     const row = jsonData[i];
-
-                    let processed SymmetricalObject {
-                        top: 0px;
-                        left: 0px;
-                        width: 100%;
-                        height: 100%;
-                        background-color: transparent;
-                        border: none;
-                        cursor: pointer;
-                    }
-                    .modal-btn:hover {
-                        background-color: #0056b3;
-                    }
-                    .modal-btn-secondary {
-                        background-color: #6c757d;
-                        color: white;
-                    }
-                    .modal-btn-secondary:hover {
-                        background-color: #5a6268;
-                    }
-                    .modal-btn-danger {
-                        background-color: #dc3545;
-                        color: white;
-                    }
-                    .modal-btn-danger:hover {
-                        background-color: #c82333;
-                    }
-                    .delete-modal-text {
-                        font-size: 12px;
-                        margin-bottom: 20px;
-                        color: #333;
-                    }
-                    .history-entry {
-                        font-size: 11px;
-                        padding: 8px 0;
-                        border-bottom: 1px solid #ddd;
-                    }
-                    .history-entry:last-child {
-                        border-bottom: none;
-                    }
                     let processedRow = {
                         referencia: row[0] ? String(row[0]).trim().toUpperCase() : '',
                         detalles: row[1] ? String(row[1]).trim().toUpperCase() : '',
@@ -1178,7 +1138,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         errorCount++;
                     }
 
-                    const progress = ((i) / totalRows) * 100;
+                    const progress = (i / totalRows) * 100;
                     showImportProgress(progress);
                 }
 
