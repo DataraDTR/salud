@@ -19,6 +19,10 @@ window.showLoading = function (caller = 'unknown') {
     loadingCounter++;
     console.log(`showLoading called by ${caller}, loadingCounter: ${loadingCounter}, classList: ${loading.classList}`);
     loading.classList.add('show');
+    // Verificar el estado después de agregar la clase
+    setTimeout(() => {
+        console.log(`showLoading post-add, classList: ${loading.classList}`);
+    }, 10);
 };
 
 window.hideLoading = function (caller = 'unknown') {
@@ -31,6 +35,14 @@ window.hideLoading = function (caller = 'unknown') {
     if (loadingCounter <= 0) {
         loadingCounter = 0; // Evitar valores negativos
         loading.classList.remove('show');
+        // Forzar la actualización del DOM y esperar cualquier transición
+        setTimeout(() => {
+            loading.classList.remove('show'); // Intentar nuevamente para asegurar
+            console.log(`hideLoading post-remove, classList: ${loading.classList}`);
+            if (loading.classList.contains('show')) {
+                console.error('Spinner sigue visible después de hideLoading, revisa CSS o conflictos en el DOM');
+            }
+        }, 300); // Retraso para permitir que las transiciones CSS terminen
     }
 };
 
@@ -542,6 +554,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Inicializar spinner como oculto
     if (loading) {
         loading.classList.remove('show');
+        console.log('DOMContentLoaded: Spinner inicializado como oculto, classList:', loading.classList);
+    } else {
+        console.warn('DOMContentLoaded: Elemento con ID "loading" no encontrado en el DOM');
     }
 
     const registrarTable = document.getElementById('registrarTable');

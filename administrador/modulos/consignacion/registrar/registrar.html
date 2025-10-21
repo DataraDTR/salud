@@ -79,9 +79,9 @@
                     </div>
                     <div class="descripcion-dropdown" id="descripcionDropdown"></div>
                 </div>
-                <div class="modal-form-group registrar-form-type">
-                    <label><input type="radio" name="editAtributoFilter" value="CONSIGNACION" checked> Consignación</label>
-                    <label><input type="radio" name="editAtributoFilter" value="COTIZACION"> Cotización</label>
+                <div class="registrar-form-group registrar-form-type">
+                    <label><input type="radio" name="atributoFilter" value="CONSIGNACION" checked> Consignación</label>
+                    <label><input type="radio" name="atributoFilter" value="COTIZACION"> Cotización</label>
                 </div>
                 <div class="registrar-form-group">
                     <label class="registrar-label" for="cantidad">Cantidad:</label>
@@ -211,7 +211,7 @@
         </div>
         <div id="loading" class="loading-modal">
             <div class="spinner"></div>
-            <div class="loading-text">Cargando...</div>
+            <span class="loading-text">Cargando...</span>
         </div>
     </div>
     <div id="editModal" class="modal">
@@ -256,6 +256,10 @@
                         <i class="fas fa-clipboard-list descripcion-icon" id="editDescripcionToggle"></i>
                     </div>
                     <div class="descripcion-dropdown" id="editDescripcionDropdown"></div>
+                </div>
+                <div class="modal-form-group registrar-form-type">
+                    <label><input type="radio" name="editAtributoFilter" value="CONSIGNACION" checked> Consignación</label>
+                    <label><input type="radio" name="editAtributoFilter" value="COTIZACION"> Cotización</label>
                 </div>
                 <div class="modal-form-group">
                     <label for="editCantidad">Cantidad:</label>
