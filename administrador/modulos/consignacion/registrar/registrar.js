@@ -5,9 +5,13 @@ import {
     updateDoc, deleteDoc, orderBy, getDoc, limit, startAfter 
 } from 'https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js';
 
+// Contador para rastrear operaciones de carga
+let loadingCounter = 0;
+
 // Definir showLoading y hideLoading al inicio para que estén disponibles
 const loading = document.getElementById('loading');
 window.showLoading = function () {
+    loadingCounter++;
     if (loading) {
         loading.classList.add('show');
         document.body.style.overflow = 'hidden';
@@ -15,9 +19,13 @@ window.showLoading = function () {
 };
 
 window.hideLoading = function () {
-    if (loading) {
-        loading.classList.remove('show');
-        document.body.style.overflow = '';
+    loadingCounter--;
+    if (loadingCounter <= 0) {
+        loadingCounter = 0; // Evitar valores negativos
+        if (loading) {
+            loading.classList.remove('show');
+            document.body.style.overflow = '';
+        }
     }
 };
 
@@ -65,6 +73,7 @@ function formatNumberWithThousandsSeparator(number) {
 }
 
 async function loadMedicos() {
+    window.showLoading();
     try {
         const querySnapshot = await getDocs(collection(db, "medicos"));
         medicos = [];
@@ -75,6 +84,8 @@ async function loadMedicos() {
     } catch (error) {
         console.error('Error en loadMedicos:', error);
         showToast('Error al cargar médicos: ' + error.message, 'error');
+    } finally {
+        window.hideLoading();
     }
 }
 
@@ -519,7 +530,6 @@ function parseFechaCX(fecha) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    window.hideLoading(); // Ahora está definido
     const registrarTable = document.getElementById('registrarTable');
     const registrarBody = registrarTable?.querySelector('tbody');
     const prevPage = document.getElementById('prevPage');
@@ -1391,12 +1401,16 @@ document.addEventListener('DOMContentLoaded', () => {
             radio.checked = radio.value === atributoFilter;
         });
 
-        await loadReferencias(); // Recargar referencias con el atributo del registro
-        if (medicos.length > 0) {
-            setupAutocomplete('editMedico', 'editMedicoToggle', 'editMedicoDropdown', medicos, 'nombre');
+        window.showLoading();
+        try {
+            await loadReferencias(); // Recargar referencias con el atributo del registro
+            if (medicos.length > 0) {
+                setupAutocomplete('editMedico', 'editMedicoToggle', 'editMedicoDropdown', medicos, 'nombre');
+            }
+        } finally {
+            window.hideLoading();
+            if (editModal) editModal.style.display = 'block';
         }
-
-        if (editModal) editModal.style.display = 'block';
     };
 
     window.openDeleteModal = function(id, admision) {
@@ -1597,6 +1611,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
         try {
+            window.showLoading();
             const userDocRef = doc(db, 'users', user.uid);
             const userDoc = await getDoc(userDocRef);
             if (userDoc.exists()) {
