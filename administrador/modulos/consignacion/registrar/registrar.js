@@ -1529,31 +1529,44 @@ function fillFields(item, inputId) {
 
         async function initialize() {
             console.log('Iniciando carga de datos...');
-            await Promise.all([loadMedicos(), loadReferencias()]);
-
-            console.log('Configurando autocompletados...');
-            if (medicos.length > 0) {
-                console.log('Configurando autocompletado para médico');
-                setupAutocomplete('medico', 'medicoToggle', 'medicoDropdown', medicos, 'nombre');
-                setupAutocomplete('editMedico', 'editMedicoToggle', 'editMedicoDropdown', medicos, 'nombre');
-            } else {
-                console.warn('No se configuró autocompletado para médico: lista vacía');
-                showToast('No hay médicos disponibles para autocompletado', 'warning');
-            }
-
-            if (referencias.length > 0) {
-                console.log('Configurando autocompletados para código y descripción');
-                setupAutocomplete('codigo', 'codigoToggle', 'codigoDropdown', referencias, 'codigo');
-                setupAutocomplete('descripcion', 'descripcionToggle', 'descripcionDropdown', referencias, 'descripcion', true);
-                setupAutocomplete('editCodigo', 'editCodigoToggle', 'editCodigoDropdown', referencias, 'codigo');
-                setupAutocomplete('editDescripcion', 'editDescripcionToggle', 'editDescripcionDropdown', referencias, 'descripcion', true);
-            } else {
-                console.warn('No se configuró autocompletado para código/descripción: lista vacía');
-                showToast('No hay referencias disponibles para autocompletado', 'warning');
-            }
-
-            console.log('Cargando registros...');
-            await loadRegistros();
+            onAuthStateChanged(auth, (user) => {
+                if (user) {
+                    console.log('Usuario autenticado:', user.uid, user.email);
+                    window.currentUserData = {
+                        fullName: user.displayName || 'Usuario',
+                        username: user.email || 'invitado'
+                    };
+                    // Continúa con la carga de datos
+                    Promise.all([loadMedicos(), loadReferencias()])
+                        .then(() => {
+                            console.log('Configurando autocompletados...');
+                            if (medicos.length > 0) {
+                                setupAutocomplete('medico', 'medicoToggle', 'medicoDropdown', medicos, 'nombre');
+                                setupAutocomplete('editMedico', 'editMedicoToggle', 'editMedicoDropdown', medicos, 'nombre');
+                            } else {
+                                showToast('No hay médicos disponibles para autocompletado', 'warning');
+                            }
+                            if (referencias.length > 0) {
+                                setupAutocomplete('codigo', 'codigoToggle', 'codigoDropdown', referencias, 'codigo');
+                                setupAutocomplete('descripcion', 'descripcionToggle', 'descripcionDropdown', referencias, 'descripcion', true);
+                                setupAutocomplete('editCodigo', 'editCodigoToggle', 'editCodigoDropdown', referencias, 'codigo');
+                                setupAutocomplete('editDescripcion', 'editDescripcionToggle', 'editDescripcionDropdown', referencias, 'descripcion', true);
+                            } else {
+                                showToast('No hay referencias disponibles para autocompletado', 'warning');
+                            }
+                            loadRegistros();
+                        })
+                        .catch(error => {
+                            console.error('Error inicializando:', error);
+                            showToast('Error al inicializar la aplicación: ' + error.message, 'error');
+                        });
+                } else {
+                    console.error('No hay usuario autenticado');
+                    showToast('Por favor, inicia sesión para usar la aplicación', 'error');
+                    // Redirigir al login
+                    window.location.href = 'login.html'; // Asegúrate de tener una página de login
+                }
+            });
         }
 
         initialize();
