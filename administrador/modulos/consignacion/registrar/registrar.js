@@ -1,13 +1,9 @@
-if (!window.firebaseModules) {
-    console.error('window.firebaseModules no está definido. Asegúrate de que el script de Firebase se cargue primero en registrar.html.');
-    throw new Error('Firebase modules not loaded');
-}
-
-const { 
-    initializeApp, getAuth, onAuthStateChanged, setPersistence, browserSessionPersistence, 
-    getFirestore, collection, addDoc, getDocs, query, where, doc, updateDoc, deleteDoc, 
-    orderBy, getDoc, limit, startAfter, endBefore 
-} = window.firebaseModules;
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js';
+import { getAuth, onAuthStateChanged, setPersistence, browserSessionPersistence } from 'https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js';
+import { 
+    getFirestore, collection, addDoc, getDocs, query, where, doc, 
+    updateDoc, deleteDoc, orderBy, getDoc, limit, startAfter 
+} from 'https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js';
 
 const firebaseConfig = {
     apiKey: "AIzaSyD6JY7FaRqjZoN6OzbFHoIXxd-IJL3H-Ek",
@@ -161,10 +157,9 @@ function setupAutocomplete(inputId, iconId, listId, data, key) {
     }
 
     function showAll() {
-        list.innerHTML = ''; // Limpiar el dropdown
+        list.innerHTML = '';
         list.style.display = 'none';
         if (isLoadingReferencias) {
-            // No mostrar mensaje si las referencias están cargando
             return;
         }
         if (data.length === 0) {
@@ -329,7 +324,7 @@ function setupColumnResize() {
     const headers = document.querySelectorAll('.registrar-table th');
     
     const initialWidths = [
-        100, 130, 200, 120, 100, 300, 80, 130, 150, 100, 120, 100, 65
+        70, 130, 200, 80, 100, 300, 80, 130, 150, 100, 80, 100, 65
     ];
 
     headers.forEach((header, index) => {
@@ -1107,20 +1102,22 @@ document.addEventListener('DOMContentLoaded', () => {
         const atributoRadios = document.querySelectorAll('input[name="atributoFilter"]');
         const editAtributoRadios = document.querySelectorAll('input[name="editAtributoFilter"]');
 
-        atributoRadios.forEach(radio => {
-            radio.addEventListener('change', async (e) => {
-                atributoFilter = e.target.value;
-                window.showLoading();
+        const updateAtributoFilter = async (e) => {
+            atributoFilter = e.target.value;
+            window.showLoading();
+            try {
                 await loadReferencias();
-            });
+            } finally {
+                window.hideLoading();
+            }
+        };
+
+        atributoRadios.forEach(radio => {
+            radio.addEventListener('change', updateAtributoFilter);
         });
 
         editAtributoRadios.forEach(radio => {
-            radio.addEventListener('change', async (e) => {
-                atributoFilter = e.target.value;
-                window.showLoading();
-                await loadReferencias();
-            });
+            radio.addEventListener('change', updateAtributoFilter);
         });
     }
 
