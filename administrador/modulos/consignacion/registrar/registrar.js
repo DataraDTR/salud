@@ -59,7 +59,12 @@ async function loadMedicos() {
             medicos.push({ id: doc.id, ...doc.data() });
         });
         medicos.sort((a, b) => a.nombre.localeCompare(b.nombre));
+        console.log('Médicos cargados:', medicos); // Depuración
+        if (medicos.length === 0) {
+            showToast('No se encontraron médicos en la base de datos', 'warning');
+        }
     } catch (error) {
+        console.error('Error al cargar médicos:', error);
         showToast('Error al cargar médicos: ' + error.message, 'error');
     }
 }
@@ -72,7 +77,12 @@ async function loadReferencias() {
             referencias.push({ id: doc.id, ...doc.data() });
         });
         referencias.sort((a, b) => a.codigo.localeCompare(b.codigo));
+        console.log('Referencias cargadas:', referencias); // Depuración
+        if (referencias.length === 0) {
+            showToast('No se encontraron referencias en la base de datos', 'warning');
+        }
     } catch (error) {
+        console.error('Error al cargar referencias:', error);
         showToast('Error al cargar referencias: ' + error.message, 'error');
     }
 }
@@ -103,9 +113,12 @@ function setupAutocomplete(inputId, iconId, listId, data, key, isDescripcion = f
     const list = document.getElementById(listId);
 
     if (!input || !icon || !list) {
-        console.warn(`Elementos no encontrados para autocomplete: ${inputId}`);
+        console.warn(`Elementos no encontrados para autocomplete: input=${inputId}, icon=${iconId}, list=${listId}`);
+        showToast(`Error: Elementos no encontrados para autocompletado de ${inputId}`, 'error');
         return;
     }
+
+    console.log(`Configurando autocompletado para ${inputId} con ${data.length} elementos`);
 
     function showSuggestions(value) {
         list.innerHTML = '';
@@ -117,6 +130,8 @@ function setupAutocomplete(inputId, iconId, listId, data, key, isDescripcion = f
         const filtered = data.filter(item =>
             item[key]?.toLowerCase().includes(value.toLowerCase())
         );
+
+        console.log(`Sugerencias para ${inputId} con valor "${value}":`, filtered);
 
         if (filtered.length === 0) {
             list.style.display = 'none';
@@ -132,6 +147,7 @@ function setupAutocomplete(inputId, iconId, listId, data, key, isDescripcion = f
                 e.preventDefault();
                 e.stopPropagation();
 
+                console.log(`Seleccionado ${item[key]} para ${inputId}`);
                 input.value = item[key];
                 list.style.display = 'none';
 
@@ -149,6 +165,7 @@ function setupAutocomplete(inputId, iconId, listId, data, key, isDescripcion = f
 
     function showAll() {
         list.innerHTML = '';
+        console.log(`Mostrando todos los elementos para ${inputId}:`, data.slice(0, 20));
         data.slice(0, 20).forEach(item => {
             const div = document.createElement('div');
             div.className = 'autocomplete-item';
@@ -158,6 +175,7 @@ function setupAutocomplete(inputId, iconId, listId, data, key, isDescripcion = f
                 e.preventDefault();
                 e.stopPropagation();
 
+                console.log(`Seleccionado ${item[key]} para ${inputId}`);
                 input.value = item[key];
                 list.style.display = 'none';
 
@@ -174,10 +192,12 @@ function setupAutocomplete(inputId, iconId, listId, data, key, isDescripcion = f
     }
 
     input.addEventListener('input', (e) => {
+        console.log(`Input en ${inputId}: ${e.target.value}`);
         showSuggestions(e.target.value);
     });
 
     input.addEventListener('focus', () => {
+        console.log(`Foco en ${inputId}: ${input.value}`);
         if (input.value.trim()) {
             showSuggestions(input.value);
         }
@@ -185,6 +205,7 @@ function setupAutocomplete(inputId, iconId, listId, data, key, isDescripcion = f
 
     icon.addEventListener('click', (e) => {
         e.stopPropagation();
+        console.log(`Click en icono de ${inputId}`);
         if (list.style.display === 'block') {
             list.style.display = 'none';
         } else {
@@ -195,6 +216,7 @@ function setupAutocomplete(inputId, iconId, listId, data, key, isDescripcion = f
 
     document.addEventListener('click', (e) => {
         if (!input.contains(e.target) && !icon.contains(e.target) && !list.contains(e.target)) {
+            console.log(`Cerrando dropdown de ${inputId}`);
             list.style.display = 'none';
         }
     });
@@ -1506,16 +1528,31 @@ function fillFields(item, inputId) {
         }
 
         async function initialize() {
+            console.log('Iniciando carga de datos...');
             await Promise.all([loadMedicos(), loadReferencias()]);
 
+            console.log('Configurando autocompletados...');
             if (medicos.length > 0) {
+                console.log('Configurando autocompletado para médico');
                 setupAutocomplete('medico', 'medicoToggle', 'medicoDropdown', medicos, 'nombre');
-            }
-            if (referencias.length > 0) {
-                setupAutocomplete('codigo', 'codigoToggle', 'codigoDropdown', referencias, 'codigo');
-                setupAutocomplete('descripcion', 'descripcionToggle', 'descripcionDropdown', referencias, 'descripcion');
+                setupAutocomplete('editMedico', 'editMedicoToggle', 'editMedicoDropdown', medicos, 'nombre');
+            } else {
+                console.warn('No se configuró autocompletado para médico: lista vacía');
+                showToast('No hay médicos disponibles para autocompletado', 'warning');
             }
 
+            if (referencias.length > 0) {
+                console.log('Configurando autocompletados para código y descripción');
+                setupAutocomplete('codigo', 'codigoToggle', 'codigoDropdown', referencias, 'codigo');
+                setupAutocomplete('descripcion', 'descripcionToggle', 'descripcionDropdown', referencias, 'descripcion', true);
+                setupAutocomplete('editCodigo', 'editCodigoToggle', 'editCodigoDropdown', referencias, 'codigo');
+                setupAutocomplete('editDescripcion', 'editDescripcionToggle', 'editDescripcionDropdown', referencias, 'descripcion', true);
+            } else {
+                console.warn('No se configuró autocompletado para código/descripción: lista vacía');
+                showToast('No hay referencias disponibles para autocompletado', 'warning');
+            }
+
+            console.log('Cargando registros...');
             await loadRegistros();
         }
 
