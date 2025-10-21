@@ -5,10 +5,8 @@ import {
     updateDoc, deleteDoc, orderBy, getDoc, limit, startAfter 
 } from 'https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js';
 
-// Contador para rastrear operaciones de carga
 let loadingCounter = 0;
 
-// Definir showLoading y hideLoading al inicio para que estén disponibles
 const loading = document.getElementById('loading');
 
 window.showLoading = function (caller = 'unknown') {
@@ -19,7 +17,6 @@ window.showLoading = function (caller = 'unknown') {
     loadingCounter++;
     console.log(`showLoading called by ${caller}, loadingCounter: ${loadingCounter}, classList: ${loading.classList}`);
     loading.classList.add('show');
-    // Verificar el estado después de agregar la clase
     setTimeout(() => {
         console.log(`showLoading post-add, classList: ${loading.classList}`);
     }, 10);
@@ -33,16 +30,15 @@ window.hideLoading = function (caller = 'unknown') {
     loadingCounter--;
     console.log(`hideLoading called by ${caller}, loadingCounter: ${loadingCounter}, classList: ${loading.classList}`);
     if (loadingCounter <= 0) {
-        loadingCounter = 0; // Evitar valores negativos
+        loadingCounter = 0; 
         loading.classList.remove('show');
-        // Forzar la actualización del DOM y esperar cualquier transición
         setTimeout(() => {
-            loading.classList.remove('show'); // Intentar nuevamente para asegurar
+            loading.classList.remove('show'); 
             console.log(`hideLoading post-remove, classList: ${loading.classList}`);
             if (loading.classList.contains('show')) {
                 console.error('Spinner sigue visible después de hideLoading, revisa CSS o conflictos en el DOM');
             }
-        }, 300); // Retraso para permitir que las transiciones CSS terminen
+        }, 300); 
     }
 };
 
@@ -551,7 +547,6 @@ function parseFechaCX(fecha) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Inicializar spinner como oculto
     if (loading) {
         loading.classList.remove('show');
         console.log('DOMContentLoaded: Spinner inicializado como oculto, classList:', loading.classList);
@@ -1423,7 +1418,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (editAtributoInput) editAtributoInput.value = registro.atributo || '';
         if (editTotalItemsInput) editTotalItemsInput.value = formatNumberWithThousandsSeparator(registro.totalItems);
 
-        // Establecer el filtro de atributo según el registro
         atributoFilter = registro.atributo || 'CONSIGNACION';
         const editAtributoRadios = document.querySelectorAll('input[name="editAtributoFilter"]');
         editAtributoRadios.forEach(radio => {
@@ -1432,7 +1426,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         window.showLoading('openEditModal');
         try {
-            await loadReferencias(); // Recargar referencias con el atributo del registro
+            await loadReferencias(); 
             if (medicos.length > 0) {
                 setupAutocomplete('editMedico', 'editMedicoToggle', 'editMedicoDropdown', medicos, 'nombre');
             }
@@ -1649,7 +1643,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 window.currentUserData = { fullName: user.displayName || 'Usuario Invitado', username: user.email || 'invitado' };
             }
             await loadMedicos();
-            atributoFilter = 'CONSIGNACION'; // Valor por defecto
+            atributoFilter = 'CONSIGNACION';
             await loadReferencias();
             setupAutocomplete('medico', 'medicoToggle', 'medicoDropdown', medicos, 'nombre');
             setupAutocomplete('editMedico', 'editMedicoToggle', 'editMedicoDropdown', medicos, 'nombre');

@@ -799,7 +799,6 @@ html, body {
     }
 }
 
-/* Estilos para el spinner en un contenedor pequeño tipo modal */
 .loading-modal {
     display: none;
     position: fixed;
