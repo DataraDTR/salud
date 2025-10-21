@@ -109,6 +109,15 @@ async function getReferenciaByDescripcion(descripcion) {
     }
 }
 
+const waitForReferenciasLoad = () => new Promise(resolve => {
+    const interval = setInterval(() => {
+        if (!isLoadingReferencias) {
+            clearInterval(interval);
+            resolve();
+        }
+    }, 100);
+});
+
 function setupAutocomplete(inputId, iconId, listId, data, key) {
     const input = document.getElementById(inputId);
     const icon = document.getElementById(iconId);
@@ -154,13 +163,10 @@ function setupAutocomplete(inputId, iconId, listId, data, key) {
         list.style.overflowY = 'auto';
     }
 
-    function showAll() {
+    async function showAll() {
         list.innerHTML = ''; // Limpiar el dropdown
         list.style.display = 'none';
-        if (isLoadingReferencias) {
-            // No mostrar mensaje si las referencias están cargando
-            return;
-        }
+        await waitForReferenciasLoad(); // Esperar a que la carga termine
         if (data.length === 0) {
             showToast(`No hay ${key}s disponibles para ${atributoFilter}`, 'error');
             return;
@@ -1384,7 +1390,10 @@ document.addEventListener('DOMContentLoaded', () => {
             radio.checked = radio.value === atributoFilter;
         });
 
+        window.showLoading();
         await loadReferencias(); // Recargar referencias con el atributo del registro
+        window.hideLoading();
+
         if (medicos.length > 0) {
             setupAutocomplete('editMedico', 'editMedicoToggle', 'editMedicoDropdown', medicos, 'nombre');
         }
@@ -1585,28 +1594,31 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     onAuthStateChanged(auth, async (user) => {
-    if (!user) {
-        window.location.replace('../index.html');
-        return;
-    }
-    try {
-        const userDocRef = doc(db, 'users', user.uid);
-        const userDoc = await getDoc(userDocRef);
-        if (userDoc.exists()) {
-            window.currentUserData = userDoc.data();
-        } else {
-            window.currentUserData = { fullName: user.displayName || 'Usuario Invitado', username: user.email || 'invitado' };
+        if (!user) {
+            window.location.replace('../index.html');
+            return;
         }
-        await loadMedicos();
-        atributoFilter = 'CONSIGNACION'; // Valor por defecto
-        await loadReferencias();
-        setupAutocomplete('medico', 'medicoToggle', 'medicoDropdown', medicos, 'nombre');
-        setupAutocomplete('editMedico', 'editMedicoToggle', 'editMedicoDropdown', medicos, 'nombre');
-        await loadRegistros();
-    } catch (error) {
-        console.error('Error loading user data:', error);
-        window.currentUserData = { fullName: 'Usuario Invitado', username: 'invitado' };
-        showToast('Error al cargar datos del usuario.', 'error');
-    }
-});
+        try {
+            const userDocRef = doc(db, 'users', user.uid);
+            const userDoc = await getDoc(userDocRef);
+            if (userDoc.exists()) {
+                window.currentUserData = userDoc.data();
+            } else {
+                window.currentUserData = { fullName: user.displayName || 'Usuario Invitado', username: user.email || 'invitado' };
+            }
+            window.showLoading();
+            await loadMedicos();
+            atributoFilter = 'CONSIGNACION'; // Valor por defecto
+            await loadReferencias();
+            setupAutocomplete('medico', 'medicoToggle', 'medicoDropdown', medicos, 'nombre');
+            setupAutocomplete('editMedico', 'editMedicoToggle', 'editMedicoDropdown', medicos, 'nombre');
+            await loadRegistros();
+        } catch (error) {
+            console.error('Error loading user data:', error);
+            window.currentUserData = { fullName: 'Usuario Invitado', username: 'invitado' };
+            showToast('Error al cargar datos del usuario.', 'error');
+        } finally {
+            window.hideLoading();
+        }
+    });
 });
