@@ -1,4 +1,3 @@
-console.log('window.firebaseModules al inicio de registrar.js:', window.firebaseModules);
 if (!window.firebaseModules) {
     console.error('window.firebaseModules no está definido. Asegúrate de que el script de Firebase se cargue primero en registrar.html.');
     throw new Error('Firebase modules not loaded');
