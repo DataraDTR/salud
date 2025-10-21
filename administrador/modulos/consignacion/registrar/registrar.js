@@ -183,10 +183,15 @@ function setupAutocomplete(inputId, iconId, listId, data, key, isDescripcion = f
     });
 
     icon.addEventListener('click', (e) => {
+        e.preventDefault();
         e.stopPropagation();
         if (list.style.display === 'block') {
             list.style.display = 'none';
         } else {
+            if (data.length === 0) {
+                showToast('No hay datos de médicos disponibles', 'error');
+                return;
+            }
             showAll();
             input.focus();
         }
@@ -657,7 +662,7 @@ document.addEventListener('DOMContentLoaded', () => {
     async function loadRegistros() {
         window.showLoading();
         try {
-            let q = query(collection(db, "registrar_consignacion"), orderBy("fechaCX", "desc"));
+            let q = query(collection(db, "registrar_consignacion"), orderBy("fechaCX", "asc"));
             const conditions = [];
 
             if (searchAdmision) {
@@ -1092,7 +1097,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             window.showLoading();
             try {
-                let allQuery = query(collection(db, "registrar_consignacion"), orderBy("fechaCX", "desc"));
+                let allQuery = query(collection(db, "registrar_consignacion"), orderBy("fechaCX", "asc"));
                 
                 if (searchAdmision) {
                     allQuery = query(allQuery,
@@ -1491,14 +1496,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (medicoToggle) {
         medicoToggle.addEventListener('click', (e) => {
+            e.preventDefault();
             e.stopPropagation();
+            if (medicos.length === 0) {
+                showToast('No hay datos de médicos disponibles', 'error');
+                return;
+            }
             medicoDropdown.style.display = medicoDropdown.style.display === 'block' ? 'none' : 'block';
         });
     }
 
     if (editMedicoToggle) {
         editMedicoToggle.addEventListener('click', (e) => {
+            e.preventDefault();
             e.stopPropagation();
+            if (medicos.length === 0) {
+                showToast('No hay datos de médicos disponibles', 'error');
+                return;
+            }
             editMedicoDropdown.style.display = editMedicoDropdown.style.display === 'block' ? 'none' : 'block';
         });
     }

@@ -1,4 +1,3 @@
-console.log('window.firebaseModules al inicio de registrar.js:', window.firebaseModules);
 if (!window.firebaseModules) {
     console.error('window.firebaseModules no está definido. Asegúrate de que el script de Firebase se cargue primero en registrar.html.');
     throw new Error('Firebase modules not loaded');
@@ -302,7 +301,7 @@ function setupColumnResize() {
     const headers = document.querySelectorAll('.registrar-table th');
     
     const initialWidths = [
-        100, 130, 200, 120, 100, 300, 80, 130, 150, 120, 120, 100, 100
+        100, 130, 200, 120, 100, 300, 80, 130, 150, 100, 120, 100, 65
     ];
 
     headers.forEach((header, index) => {
@@ -1184,6 +1183,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const codigo = codigoInput?.value?.trim().toUpperCase();
             const descripcion = descripcionInput?.value?.trim().toUpperCase();
             const cantidad = parseInt(cantidadInput?.value) || 0;
+            const referencia = referenciaInput?.value?.trim().toUpperCase() || '';
+            const proveedor = proveedorInput?.value?.trim().toUpperCase() || '';
+            const precioUnitario = parseInt(precioUnitarioInput?.value?.replace(/[^\d]/g, '')) || 0;
+            const atributo = atributoInput?.value?.trim().toUpperCase() || '';
+            const totalItems = parseInt(totalItemsInput?.value?.replace(/[^\d]/g, '')) || 0;
 
             if (!admision || !paciente || !medico || !fechaCX || (!codigo && !descripcion) || !cantidad || cantidad <= 0) {
                 showToast('❌ Completa todos los campos obligatorios', 'error');
@@ -1199,46 +1203,49 @@ document.addEventListener('DOMContentLoaded', () => {
 
             window.showLoading();
             try {
-                let precioUnitario = 0;
-                let referencia = '';
-                let proveedor = '';
-                let atributo = '';
+                let finalCodigo = codigo;
+                let finalDescripcion = descripcion;
+                let finalReferencia = referencia;
+                let finalProveedor = proveedor;
+                let finalPrecioUnitario = precioUnitario;
+                let finalAtributo = atributo;
+                let finalTotalItems = totalItems;
 
                 if (codigo) {
                     const producto = await getProductoByCodigo(codigo);
                     if (producto) {
-                        precioUnitario = producto.precioUnitario || 0;
-                        referencia = producto.referencia || '';
-                        proveedor = producto.proveedor || '';
-                        atributo = producto.atributo || '';
-                        descripcion = producto.descripcion || descripcion;
+                        finalPrecioUnitario = producto.precioUnitario || precioUnitario;
+                        finalReferencia = producto.referencia || referencia;
+                        finalProveedor = producto.proveedor || proveedor;
+                        finalAtributo = producto.atributo || atributo;
+                        finalDescripcion = producto.descripcion || descripcion;
                     }
                 } else if (descripcion) {
                     const refData = await getReferenciaByDescripcion(descripcion);
                     if (refData) {
-                        precioUnitario = refData.precioUnitario || 0;
-                        referencia = refData.referencia || '';
-                        proveedor = refData.proveedor || '';
-                        atributo = refData.atributo || '';
-                        codigo = refData.codigo || codigo;
+                        finalPrecioUnitario = refData.precioUnitario || precioUnitario;
+                        finalReferencia = refData.referencia || referencia;
+                        finalProveedor = refData.proveedor || proveedor;
+                        finalAtributo = refData.atributo || atributo;
+                        finalCodigo = refData.codigo || codigo;
                     }
                 }
 
-                const totalItems = cantidad * precioUnitario;
+                finalTotalItems = cantidad * finalPrecioUnitario;
 
                 const registroData = {
                     admision,
                     paciente,
                     medico,
                     fechaCX,
-                    codigo: codigo || '',
-                    descripcion,
+                    codigo: finalCodigo || '',
+                    descripcion: finalDescripcion,
                     cantidad,
-                    referencia,
-                    proveedor,
-                    precioUnitario,
-                    atributo,
-                    totalItems,
+                    referencia: finalReferencia,
+                    proveedor: finalProveedor,
+                    precioUnitario: finalPrecioUnitario,
+                    atributo: finalAtributo,
+                    totalItems: finalTotalItems,
                     createdAt: new Date(),
                     updatedAt: new Date()
                 };
@@ -1377,6 +1384,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const codigo = editCodigoInput?.value?.trim().toUpperCase();
             const descripcion = editDescripcionInput?.value?.trim().toUpperCase();
             const cantidad = parseInt(editCantidadInput?.value) || 0;
+            const referencia = editReferenciaInput?.value?.trim().toUpperCase() || '';
+            const proveedor = editProveedorInput?.value?.trim().toUpperCase() || '';
+            const precioUnitario = parseInt(editPrecioUnitarioInput?.value?.replace(/[^\d]/g, '')) || 0;
+            const atributo = editAtributoInput?.value?.trim().toUpperCase() || '';
+            const totalItems = parseInt(editTotalItemsInput?.value?.replace(/[^\d]/g, '')) || 0;
 
             if (!admision || !paciente || !medico || !fechaCX || (!codigo && !descripcion) || !cantidad || cantidad <= 0) {
                 showToast('❌ Completa todos los campos obligatorios', 'error');
@@ -1391,46 +1403,49 @@ document.addEventListener('DOMContentLoaded', () => {
 
             window.showLoading();
             try {
-                let precioUnitario = parseInt(editPrecioUnitarioInput?.value?.replace(/[^\d]/g, '')) || 0;
-                let referencia = editReferenciaInput?.value?.trim() || '';
-                let proveedor = editProveedorInput?.value?.trim() || '';
-                let atributo = editAtributoInput?.value?.trim() || '';
+                let finalCodigo = codigo;
+                let finalDescripcion = descripcion;
+                let finalReferencia = referencia;
+                let finalProveedor = proveedor;
+                let finalPrecioUnitario = precioUnitario;
+                let finalAtributo = atributo;
+                let finalTotalItems = totalItems;
 
                 if (codigo) {
                     const producto = await getProductoByCodigo(codigo);
                     if (producto) {
-                        precioUnitario = producto.precioUnitario || precioUnitario;
-                        referencia = producto.referencia || referencia;
-                        proveedor = producto.proveedor || proveedor;
-                        atributo = producto.atributo || atributo;
-                        descripcion = producto.descripcion || descripcion;
+                        finalPrecioUnitario = producto.precioUnitario || precioUnitario;
+                        finalReferencia = producto.referencia || referencia;
+                        finalProveedor = producto.proveedor || proveedor;
+                        finalAtributo = producto.atributo || atributo;
+                        finalDescripcion = producto.descripcion || descripcion;
                     }
                 } else if (descripcion) {
                     const refData = await getReferenciaByDescripcion(descripcion);
                     if (refData) {
-                        precioUnitario = refData.precioUnitario || precioUnitario;
-                        referencia = refData.referencia || referencia;
-                        proveedor = refData.proveedor || proveedor;
-                        atributo = refData.atributo || atributo;
-                        codigo = refData.codigo || codigo;
+                        finalPrecioUnitario = refData.precioUnitario || precioUnitario;
+                        finalReferencia = refData.referencia || referencia;
+                        finalProveedor = refData.proveedor || proveedor;
+                        finalAtributo = refData.atributo || atributo;
+                        finalCodigo = refData.codigo || codigo;
                     }
                 }
 
-                const totalItems = cantidad * precioUnitario;
+                finalTotalItems = cantidad * finalPrecioUnitario;
 
                 const updatedData = {
                     admision,
                     paciente,
                     medico,
                     fechaCX,
-                    codigo: codigo || '',
-                    descripcion,
+                    codigo: finalCodigo || '',
+                    descripcion: finalDescripcion,
                     cantidad,
-                    referencia,
-                    proveedor,
-                    precioUnitario,
-                    atributo,
-                    totalItems,
+                    referencia: finalReferencia,
+                    proveedor: finalProveedor,
+                    precioUnitario: finalPrecioUnitario,
+                    atributo: finalAtributo,
+                    totalItems: finalTotalItems,
                     updatedAt: new Date()
                 };
 
