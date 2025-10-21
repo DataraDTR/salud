@@ -43,6 +43,7 @@ let fechaDesde = null;
 let fechaHasta = null;
 let mes = null;
 let anio = null;
+let atributoFilter = 'CONSIGNACION'; // Filtro por defecto
 
 function formatNumberWithThousandsSeparator(number) {
     if (!number) return '';
@@ -65,12 +66,19 @@ async function loadMedicos() {
 
 async function loadReferencias() {
     try {
-        const querySnapshot = await getDocs(collection(db, "referencias_implantes"));
+        const querySnapshot = await getDocs(
+            query(collection(db, "referencias_implantes"), where("atributo", "==", atributoFilter))
+        );
         referencias = [];
         querySnapshot.forEach((doc) => {
             referencias.push({ id: doc.id, ...doc.data() });
         });
-        referencias.sort((a, b) => a.codigo.localeCompare(b.codigo));
+        referencias.sort((a, b) => (a.codigo || '').localeCompare(b.codigo || ''));
+        // Actualizar los dropdowns después de cargar las referencias
+        setupAutocomplete('codigo', 'codigoToggle', 'codigoDropdown', referencias, 'codigo');
+        setupAutocomplete('descripcion', 'descripcionToggle', 'descripcionDropdown', referencias, 'descripcion');
+        setupAutocomplete('editCodigo', 'editCodigoToggle', 'editCodigoDropdown', referencias, 'codigo');
+        setupAutocomplete('editDescripcion', 'editDescripcionToggle', 'editDescripcionDropdown', referencias, 'descripcion');
     } catch (error) {
         showToast('Error al cargar referencias: ' + error.message, 'error');
     }
@@ -82,7 +90,8 @@ async function getReferenciaByDescripcion(descripcion) {
     try {
         const q = query(
             collection(db, "referencias_implantes"), 
-            where("descripcion", "==", descripcion.trim().toUpperCase())
+            where("descripcion", "==", descripcion.trim().toUpperCase()),
+            where("atributo", "==", atributoFilter)
         );
         const querySnapshot = await getDocs(q);
         
@@ -96,7 +105,7 @@ async function getReferenciaByDescripcion(descripcion) {
     }
 }
 
-function setupAutocomplete(inputId, iconId, listId, data, key, isDescripcion = false) {
+function setupAutocomplete(inputId, iconId, listId, data, key) {
     const input = document.getElementById(inputId);
     const icon = document.getElementById(iconId);
     const list = document.getElementById(listId);
@@ -108,19 +117,14 @@ function setupAutocomplete(inputId, iconId, listId, data, key, isDescripcion = f
 
     function showSuggestions(value) {
         list.innerHTML = '';
-        if (!value.trim()) {
-            list.style.display = 'none';
-            return;
-        }
+        list.style.display = 'none';
+        if (!value.trim()) return;
         
         const filtered = data.filter(item => 
-            item[key]?.toLowerCase().includes(value.toLowerCase())
+            item[key]?.toUpperCase().includes(value.toUpperCase())
         );
         
-        if (filtered.length === 0) {
-            list.style.display = 'none';
-            return;
-        }
+        if (filtered.length === 0) return;
 
         filtered.slice(0, 10).forEach(item => {
             const div = document.createElement('div');
@@ -148,6 +152,11 @@ function setupAutocomplete(inputId, iconId, listId, data, key, isDescripcion = f
 
     function showAll() {
         list.innerHTML = '';
+        list.style.display = 'none';
+        if (data.length === 0) {
+            showToast(`No hay ${key}s disponibles para ${atributoFilter}`, 'error');
+            return;
+        }
         data.slice(0, 20).forEach(item => {
             const div = document.createElement('div');
             div.className = 'autocomplete-item';
@@ -188,10 +197,6 @@ function setupAutocomplete(inputId, iconId, listId, data, key, isDescripcion = f
         if (list.style.display === 'block') {
             list.style.display = 'none';
         } else {
-            if (data.length === 0) {
-                showToast('No hay datos de médicos disponibles', 'error');
-                return;
-            }
             showAll();
             input.focus();
         }
@@ -219,7 +224,7 @@ function setupAutocomplete(inputId, iconId, listId, data, key, isDescripcion = f
             e.preventDefault();
             currentIndex = Array.from(items).findIndex(item => item.classList.contains('highlighted'));
             if (currentIndex > 0) {
-                if (currentIndex >= 0) items[currentIndex].classList.remove('highlighted');
+                items[currentIndex].classList.remove('highlighted');
                 items[currentIndex - 1].classList.add('highlighted');
                 items[currentIndex - 1].scrollIntoView({ block: 'nearest' });
             }
@@ -228,10 +233,8 @@ function setupAutocomplete(inputId, iconId, listId, data, key, isDescripcion = f
             const highlighted = list.querySelector('.highlighted');
             if (highlighted) {
                 highlighted.click();
-            } else {
-                if (items.length > 0) {
-                    items[0].click();
-                }
+            } else if (items.length > 0) {
+                items[0].click();
             }
         } else if (e.key === 'Escape') {
             list.style.display = 'none';
@@ -249,7 +252,7 @@ function fillFields(item, inputId) {
     const precioUnitarioInput = isEdit ? document.getElementById('editPrecioUnitario') : document.getElementById('precioUnitario');
     const atributoInput = isEdit ? document.getElementById('editAtributo') : document.getElementById('atributo');
 
-    if (inputId.includes('Descripcion') || inputId.includes('descripcion')) {
+    if (inputId.includes('descripcion') || inputId.includes('Descripcion')) {
         if (codigoInput) codigoInput.value = item.codigo || '';
         if (descripcionInput) descripcionInput.value = item.descripcion || '';
         if (referenciaInput) referenciaInput.value = item.referencia || '';
@@ -258,8 +261,7 @@ function fillFields(item, inputId) {
             precioUnitarioInput.value = item.precioUnitario ? formatNumberWithThousandsSeparator(item.precioUnitario) : '';
         }
         if (atributoInput) atributoInput.value = item.atributo || '';
-    }
-    else if (inputId.includes('Codigo') || inputId.includes('codigo')) {
+    } else if (inputId.includes('codigo') || inputId.includes('Codigo')) {
         if (descripcionInput) descripcionInput.value = item.descripcion || '';
         if (referenciaInput) referenciaInput.value = item.referencia || '';
         if (proveedorInput) proveedorInput.value = item.proveedor || '';
@@ -280,7 +282,9 @@ function updateTotalItems(isEdit = false) {
     const cantidad = parseInt(cantidadInput?.value) || 0;
     const precioUnitario = parseInt((precioUnitarioInput?.value || '').replace(/[^\d]/g, '')) || 0;
     const total = cantidad * precioUnitario;
-    totalItemsInput.value = total ? formatNumberWithThousandsSeparator(total) : '';
+    if (totalItemsInput) {
+        totalItemsInput.value = total ? formatNumberWithThousandsSeparator(total) : '';
+    }
 }
 
 async function logAction(registroId, action, oldData = null, newData = null) {
@@ -306,7 +310,7 @@ function setupColumnResize() {
     const headers = document.querySelectorAll('.registrar-table th');
     
     const initialWidths = [
-        70, 130, 200, 80, 100, 300, 80, 130, 150, 100, 80, 100, 65
+        100, 130, 200, 120, 100, 300, 80, 130, 150, 100, 120, 100, 65
     ];
 
     headers.forEach((header, index) => {
@@ -459,8 +463,9 @@ async function getProductoByCodigo(codigo) {
     
     try {
         const q = query(
-            collection(db, "productos"), 
-            where("codigo", "==", codigo.trim().toUpperCase())
+            collection(db, "referencias_implantes"), 
+            where("codigo", "==", codigo.trim().toUpperCase()),
+            where("atributo", "==", atributoFilter)
         );
         const querySnapshot = await getDocs(q);
         
@@ -610,7 +615,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         fechaCXInput.value = '';
         medicoDropdown.style.display = 'none';
-        editMedicoDropdown.style.display = 'none';
+        codigoDropdown.style.display = 'none';
+        descripcionDropdown.style.display = 'none';
     }
 
     window.showLoading = function () {
@@ -635,6 +641,8 @@ document.addEventListener('DOMContentLoaded', () => {
             currentEditId = null;
             currentEditOldData = null;
             editMedicoDropdown.style.display = 'none';
+            editCodigoDropdown.style.display = 'none';
+            editDescripcionDropdown.style.display = 'none';
         } else if (modal === deleteModal) {
             currentDeleteId = null;
             currentDeleteAdmision = null;
@@ -1075,7 +1083,31 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    function setupAtributoFilter() {
+        const atributoRadios = document.querySelectorAll('input[name="atributoFilter"]');
+        const editAtributoRadios = document.querySelectorAll('input[name="editAtributoFilter"]');
+
+        atributoRadios.forEach(radio => {
+            radio.addEventListener('change', async (e) => {
+                atributoFilter = e.target.value;
+                window.showLoading();
+                await loadReferencias();
+                window.hideLoading();
+            });
+        });
+
+        editAtributoRadios.forEach(radio => {
+            radio.addEventListener('change', async (e) => {
+                atributoFilter = e.target.value;
+                window.showLoading();
+                await loadReferencias();
+                window.hideLoading();
+            });
+        });
+    }
+
     setupDateFilters();
+    setupAtributoFilter();
 
     if (actionsBtn && actionsMenu) {
         actionsBtn.addEventListener('click', (e) => {
@@ -1103,6 +1135,45 @@ document.addEventListener('DOMContentLoaded', () => {
                     allQuery = query(allQuery,
                         where("admision", ">=", searchAdmision),
                         where("admision", "<=", searchAdmision + '\uf8ff')
+                    );
+                }
+                if (searchPaciente) {
+                    allQuery = query(allQuery,
+                        where("paciente", ">=", searchPaciente),
+                        where("paciente", "<=", searchPaciente + '\uf8ff')
+                    );
+                }
+                if (searchMedico) {
+                    allQuery = query(allQuery,
+                        where("medico", ">=", searchMedico),
+                        where("medico", "<=", searchMedico + '\uf8ff')
+                    );
+                }
+                if (searchProveedor) {
+                    allQuery = query(allQuery,
+                        where("proveedor", ">=", searchProveedor),
+                        where("proveedor", "<=", searchProveedor + '\uf8ff')
+                    );
+                }
+                if (dateFilter === 'day' && fechaDia) {
+                    const start = new Date(fechaDia);
+                    const end = new Date(start);
+                    end.setDate(end.getDate() + 1);
+                    allQuery = query(allQuery,
+                        where("fechaCX", ">=", start),
+                        where("fechaCX", "<", end)
+                    );
+                } else if (dateFilter === 'week' && fechaDesde && fechaHasta) {
+                    allQuery = query(allQuery,
+                        where("fechaCX", ">=", new Date(fechaDesde)),
+                        where("fechaCX", "<=", new Date(fechaHasta))
+                    );
+                } else if (dateFilter === 'month' && mes && anio) {
+                    const start = new Date(parseInt(anio), parseInt(mes) - 1, 1);
+                    const end = new Date(parseInt(anio), parseInt(mes), 0);
+                    allQuery = query(allQuery,
+                        where("fechaCX", ">=", start),
+                        where("fechaCX", "<=", end)
                     );
                 }
 
@@ -1137,7 +1208,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function exportToExcel(data, filename) {
         if (typeof XLSX === 'undefined') {
-            showToast('❌ Librería ExcelJS no cargada', 'error');
+            showToast('❌ Librería XLSX no cargada', 'error');
             return;
         }
 
@@ -1298,12 +1369,16 @@ document.addEventListener('DOMContentLoaded', () => {
         if (editAtributoInput) editAtributoInput.value = registro.atributo || '';
         if (editTotalItemsInput) editTotalItemsInput.value = formatNumberWithThousandsSeparator(registro.totalItems);
 
+        // Establecer el filtro de atributo según el registro
+        atributoFilter = registro.atributo || 'CONSIGNACION';
+        const editAtributoRadios = document.querySelectorAll('input[name="editAtributoFilter"]');
+        editAtributoRadios.forEach(radio => {
+            radio.checked = radio.value === atributoFilter;
+        });
+
+        await loadReferencias(); // Recargar referencias con el atributo del registro
         if (medicos.length > 0) {
             setupAutocomplete('editMedico', 'editMedicoToggle', 'editMedicoDropdown', medicos, 'nombre');
-        }
-        if (referencias.length > 0) {
-            setupAutocomplete('editCodigo', 'editCodigoToggle', 'editCodigoDropdown', referencias, 'codigo');
-            setupAutocomplete('editDescripcion', 'editDescripcionToggle', 'editDescripcionDropdown', referencias, 'descripcion');
         }
 
         if (editModal) editModal.style.display = 'block';
@@ -1313,7 +1388,7 @@ document.addEventListener('DOMContentLoaded', () => {
         currentDeleteId = id;
         currentDeleteAdmision = admision;
         
-        const deleteText = document.querySelector('.delete-modal-text') || document.getElementById('deleteText');
+        const deleteText = document.querySelector('.delete-modal-text');
         if (deleteText) {
             deleteText.textContent = `¿Estás seguro de eliminar el registro de admisión "${admision}"?`;
         }
@@ -1336,7 +1411,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             historyContent.innerHTML = `
                 <div class="history-header">
-                    <h3>Historial de Admision: ${escapeHtml(admision)}</h3>
+                    <h3>Historial de Admisión: ${escapeHtml(admision)}</h3>
                     <button class="btn-close-history" onclick="closeModal(document.getElementById('historyModal'))">
                         <i class="fas fa-times"></i>
                     </button>
@@ -1402,7 +1477,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const existing = await validateAdmision(admision, currentEditId);
             if (existing) {
-                showToast(`❌ La admisión ${admision} ya existe en otro registro`, 'error');
+                showToast(`❌ La admisión ${admision} ya existe`, 'error');
+                editAdmisionInput.focus();
                 return;
             }
 
@@ -1438,7 +1514,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 finalTotalItems = cantidad * finalPrecioUnitario;
 
-                const updatedData = {
+                const registroData = {
                     admision,
                     paciente,
                     medico,
@@ -1454,11 +1530,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     updatedAt: new Date()
                 };
 
-                await updateDoc(doc(db, "registrar_consignacion", currentEditId), updatedData);
-                await logAction(currentEditId, 'MODIFICADO', currentEditOldData, updatedData);
+                await updateDoc(doc(db, "registrar_consignacion", currentEditId), registroData);
+                
+                await logAction(currentEditId, 'ACTUALIZADO', currentEditOldData, registroData);
 
                 showToast('✅ Registro actualizado exitosamente', 'success');
                 closeModal(editModal);
+                currentPage = 1;
+                lastVisible = null;
                 await loadRegistros();
             } catch (error) {
                 console.error('Error updating registro:', error);
@@ -1475,16 +1554,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
             window.showLoading();
             try {
-                const registroRef = doc(db, "registrar_consignacion", currentDeleteId);
-                const registroSnap = await getDoc(registroRef);
-                const registroData = registroSnap.data();
-
-                await deleteDoc(registroRef);
-                await logAction(currentDeleteId, 'ELIMINADO', registroData, null);
-
-                showToast('✅ Registro eliminado exitosamente', 'success');
-                closeModal(deleteModal);
-                await loadRegistros();
+                const registroDoc = await getDoc(doc(db, "registrar_consignacion", currentDeleteId));
+                if (registroDoc.exists()) {
+                    const registroData = registroDoc.data();
+                    await logAction(currentDeleteId, 'ELIMINADO', registroData);
+                    await deleteDoc(doc(db, "registrar_consignacion", currentDeleteId));
+                    showToast(`✅ Registro de admisión ${currentDeleteAdmision} eliminado`, 'success');
+                    closeModal(deleteModal);
+                    currentPage = 1;
+                    lastVisible = null;
+                    await loadRegistros();
+                } else {
+                    showToast('❌ El registro no existe', 'error');
+                }
             } catch (error) {
                 console.error('Error deleting registro:', error);
                 showToast('❌ Error al eliminar registro: ' + error.message, 'error');
@@ -1494,57 +1576,28 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    if (medicoToggle) {
-        medicoToggle.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            if (medicos.length === 0) {
-                showToast('No hay datos de médicos disponibles', 'error');
-                return;
-            }
-            medicoDropdown.style.display = medicoDropdown.style.display === 'block' ? 'none' : 'block';
-        });
-    }
-
-    if (editMedicoToggle) {
-        editMedicoToggle.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            if (medicos.length === 0) {
-                showToast('No hay datos de médicos disponibles', 'error');
-                return;
-            }
-            editMedicoDropdown.style.display = editMedicoDropdown.style.display === 'block' ? 'none' : 'block';
-        });
-    }
-
-    document.addEventListener('click', (e) => {
-        if (!medicoToggle?.contains(e.target) && !medicoDropdown?.contains(e.target)) {
-            medicoDropdown.style.display = 'none';
+    onAuthStateChanged(auth, async (user) => {
+        if (!user) {
+            window.location.replace('../index.html');
+            return;
         }
-        if (!editMedicoToggle?.contains(e.target) && !editMedicoDropdown?.contains(e.target)) {
-            editMedicoDropdown.style.display = 'none';
+        try {
+            const userDocRef = doc(db, 'users', user.uid);
+            const userDoc = await getDoc(userDocRef);
+            if (userDoc.exists()) {
+                window.currentUserData = userDoc.data();
+            } else {
+                window.currentUserData = { fullName: user.displayName || 'Usuario Invitado', username: user.email || 'invitado' };
+            }
+            await loadMedicos();
+            await loadReferencias();
+            setupAutocomplete('medico', 'medicoToggle', 'medicoDropdown', medicos, 'nombre');
+            setupAutocomplete('editMedico', 'editMedicoToggle', 'editMedicoDropdown', medicos, 'nombre');
+            await loadRegistros();
+        } catch (error) {
+            console.error('Error loading user data:', error);
+            window.currentUserData = { fullName: 'Usuario Invitado', username: 'invitado' };
+            showToast('Error al cargar datos del usuario.', 'error');
         }
     });
-
-    cantidadInput?.addEventListener('input', () => updateTotalItems(false));
-    editCantidadInput?.addEventListener('input', () => updateTotalItems(true));
-    precioUnitarioInput?.addEventListener('input', () => updateTotalItems(false));
-    editPrecioUnitarioInput?.addEventListener('input', () => updateTotalItems(true));
-
-    async function initialize() {
-        await Promise.all([loadMedicos(), loadReferencias()]);
-        
-        if (medicos.length > 0) {
-            setupAutocomplete('medico', 'medicoToggle', 'medicoDropdown', medicos, 'nombre');
-        }
-        if (referencias.length > 0) {
-            setupAutocomplete('codigo', 'codigoToggle', 'codigoDropdown', referencias, 'codigo');
-            setupAutocomplete('descripcion', 'descripcionToggle', 'descripcionDropdown', referencias, 'descripcion');
-        }
-
-        await loadRegistros();
-    }
-
-    initialize();
 });
