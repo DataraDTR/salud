@@ -163,16 +163,16 @@ function setupColumnResize() {
     const headers = document.querySelectorAll('.referencias-table th');
 
     const initialWidths = [
-        100, // Acciones
-        130, // Referencia
-        300, // Detalles
-        80,  // Precio Unitario
-        80,  // Código
-        300, // Proveedor
-        300, // Descripción
-        120, // Tipo
-        120, // Atributo
-        80   // Estado
+        100,
+        130,
+        300,
+        80,
+        80,
+        300,
+        300,
+        120,
+        120,
+        80
     ];
 
     headers.forEach((header, index) => {
@@ -574,6 +574,111 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    ingresarNewCodeBtn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        showLoading();
+
+        const processedRow = {
+            referencia: referenciaInput.value.trim().toUpperCase(),
+            detalles: detallesInput.value.trim().toUpperCase(),
+            precioUnitario: precioUnitarioInput.value.replace(/[^\d]/g, ''),
+            proveedor: proveedorInput.value.trim().toUpperCase(),
+            descripcion: descripcionInput.value.trim().toUpperCase(),
+            tipo: tipoInput.value,
+            atributo: atributoInput.value,
+            estado: 'ACTIVO',
+            fullName: window.currentUserData.fullName
+        };
+
+        if (processedRow.referencia) {
+            try {
+                const existingRef = await getReferenciaByUniqueKey(processedRow.referencia);
+                if (existingRef) {
+                    hideLoading();
+                    showToast('La referencia ya existe.', 'error');
+                    return;
+                }
+
+                const docRef = await addDoc(collection(db, "referencias_implantes"), {
+                    ...processedRow,
+                    codigo: 'PENDIENTE',
+                    createdAt: new Date()
+                });
+
+                await logAction(docRef.id, 'create', null, processedRow);
+                hideLoading();
+                showToast(`Referencia ${processedRow.referencia} creada exitosamente`, 'success');
+                newCodeForm.reset();
+                descripcionInput.value = '';
+                await loadReferencias();
+            } catch (error) {
+                hideLoading();
+                showToast('Error al crear la referencia: ' + error.message, 'error');
+            }
+        } else {
+            hideLoading();
+            showToast('Falta la referencia', 'error');
+        }
+    });
+
+    ingresarExistingCodeBtn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        showLoading();
+
+        const processedRow = {
+            referencia: existReferenciaInput.value.trim().toUpperCase(),
+            detalles: existDetallesInput.value.trim().toUpperCase(),
+            precioUnitario: existPrecioUnitarioInput.value.replace(/[^\d]/g, ''),
+            codigo: existCodigoInput.value.trim().toUpperCase(),
+            proveedor: existProveedorInput.value.trim().toUpperCase(),
+            descripcion: existDescripcionInput.value.trim().toUpperCase(),
+            tipo: existTipoInput.value,
+            atributo: existAtributoInput.value,
+            estado: 'ACTIVO',
+            fullName: window.currentUserData.fullName
+        };
+
+        if (processedRow.codigo === '' || processedRow.codigo === '0') {
+            processedRow.codigo = 'PENDIENTE';
+        }
+
+        if (processedRow.referencia && processedRow.codigo) {
+            try {
+                const existingRef = await getReferenciaByUniqueKey(processedRow.referencia);
+                if (existingRef) {
+                    hideLoading();
+                    showToast('La referencia ya existe.', 'error');
+                    return;
+                }
+
+                const existingCod = await getCodigoByUniqueKey(processedRow.codigo);
+                if (existingCod) {
+                    hideLoading();
+                    showToast('El código ya existe.', 'error');
+                    return;
+                }
+
+                const docRef = await addDoc(collection(db, "referencias_implantes"), {
+                    ...processedRow,
+                    createdAt: new Date()
+                });
+
+                await logAction(docRef.id, 'create', null, processedRow);
+                hideLoading();
+                showToast(`Referencia ${processedRow.referencia} creada exitosamente`, 'success');
+                existingCodeForm.reset();
+                existDescripcionInput.value = '';
+                await loadReferencias();
+            } catch (error) {
+                hideLoading();
+                showToast('Error al crear la referencia: ' + error.message, 'error');
+            }
+        } else {
+            hideLoading();
+            showToast('Falta la referencia o el código', 'error');
+        }
+    });
+
     const debouncedLoadReferencias = debounce(loadReferencias, 300);
 
     if (buscarReferenciaInput) {
@@ -652,7 +757,7 @@ document.addEventListener('DOMContentLoaded', () => {
             currentPage = 1;
             lastVisible = null;
             firstVisible = null;
-            debouncedLoadReferencias();
+            debouncedLoadhammer();
         });
     }
 
@@ -984,6 +1089,45 @@ document.addEventListener('DOMContentLoaded', () => {
                 for (let i = 1; i <= totalRows; i++) {
                     const row = jsonData[i];
 
+                    let processed SymmetricalObject {
+                        top: 0px;
+                        left: 0px;
+                        width: 100%;
+                        height: 100%;
+                        background-color: transparent;
+                        border: none;
+                        cursor: pointer;
+                    }
+                    .modal-btn:hover {
+                        background-color: #0056b3;
+                    }
+                    .modal-btn-secondary {
+                        background-color: #6c757d;
+                        color: white;
+                    }
+                    .modal-btn-secondary:hover {
+                        background-color: #5a6268;
+                    }
+                    .modal-btn-danger {
+                        background-color: #dc3545;
+                        color: white;
+                    }
+                    .modal-btn-danger:hover {
+                        background-color: #c82333;
+                    }
+                    .delete-modal-text {
+                        font-size: 12px;
+                        margin-bottom: 20px;
+                        color: #333;
+                    }
+                    .history-entry {
+                        font-size: 11px;
+                        padding: 8px 0;
+                        border-bottom: 1px solid #ddd;
+                    }
+                    .history-entry:last-child {
+                        border-bottom: none;
+                    }
                     let processedRow = {
                         referencia: row[0] ? String(row[0]).trim().toUpperCase() : '',
                         detalles: row[1] ? String(row[1]).trim().toUpperCase() : '',
