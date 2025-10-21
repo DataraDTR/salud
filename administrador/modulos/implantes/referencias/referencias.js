@@ -220,9 +220,9 @@ function setupColumnResize() {
 
             const cells = document.querySelectorAll(`.referencias-table td:nth-child(${index + 1})`);
             cells.forEach(cell => {
-                cell.style.width = `${newWidth}px`;
-                cell.style.minWidth = `${newWidth}px`;
-                cell.style.maxWidth = `${newWidth}px`;
+                cell.mainWidth = `${newWidth}px`;
+                cell.minWidth = `${newWidth}px`;
+                cell.maxWidth = `${newWidth}px`;
             });
 
             e.preventDefault();
@@ -281,7 +281,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const progressText = document.getElementById('progressText');
     const referenciasBody = document.getElementById('referenciasBody');
     const prevBtn = document.getElementById('prevBtn');
-    const nextBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
     const pageNumbers = document.getElementById('pageNumbers');
     const paginationInfo = document.getElementById('paginationInfo');
     const newCodeForm = document.getElementById('newCodeForm');
@@ -509,7 +509,7 @@ document.addEventListener('DOMContentLoaded', () => {
             tipo: document.getElementById('editTipo').value,
             atributo: document.getElementById('editAtributo').value,
             estado: document.getElementById('editEstado').value,
-            fullName: window.currentUserData.fullName
+            fullName: window.currentUserData ? window.currentUserData.fullName : 'Usuario Invitado'
         };
 
         if (processedRow.codigo === '' || processedRow.codigo === '0') {
@@ -575,76 +575,74 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     ingresarNewCodeBtn.addEventListener('click', async (e) => {
-    e.preventDefault();
-    showLoading();
+        e.preventDefault();
+        showLoading();
 
-    if (!proveedorInput) {
-        hideLoading();
-        showToast('Error: Campo proveedor no encontrado.', 'error');
-        return;
-    }
-
-    const processedRow = {
-        referencia: referenciaInput.value.trim().toUpperCase(),
-        detalles: detallesInput.value.trim().toUpperCase(),
-        precioUnitario: precioUnitarioInput.value.replace(/[^\d]/g, ''),
-        proveedor: proveedorInput.value.trim().toUpperCase(),
-        descripcion: descripcionInput.value.trim().toUpperCase(),
-        tipo: tipoInput.value,
-        atributo: atributoInput.value,
-        estado: 'ACTIVO',
-        fullName: window.currentUserData ? window.currentUserData.fullName : 'Usuario Invitado'
-    };
-
-    if (processedRow.referencia) {
-        try {
-            const existingRef = await getReferenciaByUniqueKey(processedRow.referencia);
-            if (existingRef) {
-                hideLoading();
-                showToast('La referencia ya existe.', 'error');
-                return;
-            }
-
-            const docRef = await addDoc(collection(db, "referencias_implantes"), {
-                ...processedRow,
-                codigo: 'PENDIENTE',
-                createdAt: new Date()
-            });
-
-            await logAction(docRef.id, 'create', null, processedRow);
+        if (!proveedorInput) {
             hideLoading();
-            showToast(`Referencia ${processedRow.referencia} creada exitosamente`, 'success');
-
-            // Limpiar los campos manualmente en lugar de usar reset()
-            if (newCodeForm) {
-                const inputs = newCodeForm.querySelectorAll('input, select');
-                inputs.forEach(input => {
-                    if (input.type !== 'button' && input.type !== 'submit') {
-                        input.value = '';
-                    }
-                });
-                descripcionInput.value = ''; // Limpiar campo descripción explícitamente
-            } else {
-                // Fallback: limpiar campos individuales si newCodeForm no existe
-                referenciaInput.value = '';
-                detallesInput.value = '';
-                precioUnitarioInput.value = '';
-                proveedorInput.value = '';
-                descripcionInput.value = '';
-                tipoInput.value = 'IMPLANTES';
-                atributoInput.value = 'COTIZACION';
-            }
-
-            await loadReferencias();
-        } catch (error) {
-            hideLoading();
-            showToast('Error al crear la referencia: ' + error.message, 'error');
+            showToast('Error: Campo proveedor no encontrado.', 'error');
+            return;
         }
-    } else {
-        hideLoading();
-        showToast('Falta la referencia', 'error');
-    }
-});
+
+        const processedRow = {
+            referencia: referenciaInput.value.trim().toUpperCase(),
+            detalles: detallesInput.value.trim().toUpperCase(),
+            precioUnitario: precioUnitarioInput.value.replace(/[^\d]/g, ''),
+            proveedor: proveedorInput.value.trim().toUpperCase(),
+            descripcion: descripcionInput.value.trim().toUpperCase(),
+            tipo: tipoInput.value,
+            atributo: atributoInput.value,
+            estado: 'ACTIVO',
+            fullName: window.currentUserData ? window.currentUserData.fullName : 'Usuario Invitado'
+        };
+
+        if (processedRow.referencia) {
+            try {
+                const existingRef = await getReferenciaByUniqueKey(processedRow.referencia);
+                if (existingRef) {
+                    hideLoading();
+                    showToast('La referencia ya existe.', 'error');
+                    return;
+                }
+
+                const docRef = await addDoc(collection(db, "referencias_implantes"), {
+                    ...processedRow,
+                    codigo: 'PENDIENTE',
+                    createdAt: new Date()
+                });
+
+                await logAction(docRef.id, 'create', null, processedRow);
+                hideLoading();
+                showToast(`Referencia ${processedRow.referencia} creada exitosamente`, 'success');
+
+                if (newCodeForm) {
+                    const inputs = newCodeForm.querySelectorAll('input, select');
+                    inputs.forEach(input => {
+                        if (input.type !== 'button' && input.type !== 'submit') {
+                            input.value = '';
+                        }
+                    });
+                    descripcionInput.value = '';
+                } else {
+                    referenciaInput.value = '';
+                    detallesInput.value = '';
+                    precioUnitarioInput.value = '';
+                    proveedorInput.value = '';
+                    descripcionInput.value = '';
+                    tipoInput.value = 'IMPLANTES';
+                    atributoInput.value = 'COTIZACION';
+                }
+
+                await loadReferencias();
+            } catch (error) {
+                hideLoading();
+                showToast('Error al crear la referencia: ' + error.message, 'error');
+            }
+        } else {
+            hideLoading();
+            showToast('Falta la referencia', 'error');
+        }
+    });
 
     ingresarExistingCodeBtn.addEventListener('click', async (e) => {
         e.preventDefault();
@@ -660,7 +658,7 @@ document.addEventListener('DOMContentLoaded', () => {
             tipo: existTipoInput.value,
             atributo: existAtributoInput.value,
             estado: 'ACTIVO',
-            fullName: window.currentUserData.fullName
+            fullName: window.currentUserData ? window.currentUserData.fullName : 'Usuario Invitado'
         };
 
         if (processedRow.codigo === '' || processedRow.codigo === '0') {
@@ -691,8 +689,26 @@ document.addEventListener('DOMContentLoaded', () => {
                 await logAction(docRef.id, 'create', null, processedRow);
                 hideLoading();
                 showToast(`Referencia ${processedRow.referencia} creada exitosamente`, 'success');
-                existingCodeForm.reset();
-                existDescripcionInput.value = '';
+
+                if (existingCodeForm) {
+                    const inputs = existingCodeForm.querySelectorAll('input, select');
+                    inputs.forEach(input => {
+                        if (input.type !== 'button' && input.type !== 'submit') {
+                            input.value = '';
+                        }
+                    });
+                    existDescripcionInput.value = '';
+                } else {
+                    existReferenciaInput.value = '';
+                    existDetallesInput.value = '';
+                    existPrecioUnitarioInput.value = '';
+                    existCodigoInput.value = '';
+                    existProveedorInput.value = '';
+                    existDescripcionInput.value = '';
+                    existTipoInput.value = 'IMPLANTES';
+                    existAtributoInput.value = 'COTIZACION';
+                }
+
                 await loadReferencias();
             } catch (error) {
                 hideLoading();
@@ -1123,7 +1139,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         tipo: row[6] ? String(row[6]).trim().toUpperCase() : 'IMPLANTES',
                         atributo: row[7] ? String(row[7]).trim().toUpperCase() : 'COTIZACION',
                         estado: 'ACTIVO',
-                        fullName: window.currentUserData.fullName
+                        fullName: window.currentUserData ? window.currentUserData.fullName : 'Usuario Invitado'
                     };
 
                     if (processedRow.codigo === '' || processedRow.codigo === '0') {
@@ -1205,4 +1221,4 @@ document.addEventListener('DOMContentLoaded', () => {
             showToast('Error al cargar datos del usuario.', 'error');
         }
     });
-});
+}
