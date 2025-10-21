@@ -306,7 +306,7 @@ function setupColumnResize() {
     const headers = document.querySelectorAll('.registrar-table th');
     
     const initialWidths = [
-        100, 130, 200, 120, 100, 300, 80, 130, 150, 100, 120, 100, 65
+        70, 130, 200, 80, 100, 300, 80, 130, 150, 100, 80, 100, 65
     ];
 
     headers.forEach((header, index) => {
