@@ -10,22 +10,29 @@ let loadingCounter = 0;
 
 // Definir showLoading y hideLoading al inicio para que estén disponibles
 const loading = document.getElementById('loading');
-window.showLoading = function () {
-    loadingCounter++;
-    if (loading) {
-        loading.classList.add('show');
-        document.body.style.overflow = 'hidden';
+
+window.showLoading = function (caller = 'unknown') {
+    if (!loading) {
+        console.warn('Elemento loading no encontrado');
+        return;
     }
+    loadingCounter++;
+    console.log(`showLoading called by ${caller}, loadingCounter: ${loadingCounter}`);
+    loading.classList.add('show');
+    document.body.style.overflow = 'hidden';
 };
 
-window.hideLoading = function () {
+window.hideLoading = function (caller = 'unknown') {
+    if (!loading) {
+        console.warn('Elemento loading no encontrado');
+        return;
+    }
     loadingCounter--;
+    console.log(`hideLoading called by ${caller}, loadingCounter: ${loadingCounter}`);
     if (loadingCounter <= 0) {
         loadingCounter = 0; // Evitar valores negativos
-        if (loading) {
-            loading.classList.remove('show');
-            document.body.style.overflow = '';
-        }
+        loading.classList.remove('show');
+        document.body.style.overflow = '';
     }
 };
 
@@ -73,7 +80,7 @@ function formatNumberWithThousandsSeparator(number) {
 }
 
 async function loadMedicos() {
-    window.showLoading();
+    window.showLoading('loadMedicos');
     try {
         const querySnapshot = await getDocs(collection(db, "medicos"));
         medicos = [];
@@ -85,13 +92,17 @@ async function loadMedicos() {
         console.error('Error en loadMedicos:', error);
         showToast('Error al cargar médicos: ' + error.message, 'error');
     } finally {
-        window.hideLoading();
+        window.hideLoading('loadMedicos');
     }
 }
 
 async function loadReferencias() {
+    if (isLoadingReferencias) {
+        console.log('loadReferencias skipped: already loading');
+        return;
+    }
     isLoadingReferencias = true;
-    window.showLoading();
+    window.showLoading('loadReferencias');
     console.log(`Cargando referencias para atributoFilter: ${atributoFilter}`);
     try {
         const normalizedAtributoFilter = atributoFilter.trim().toUpperCase();
@@ -113,7 +124,7 @@ async function loadReferencias() {
         showToast('Error al cargar referencias: ' + error.message, 'error');
     } finally {
         isLoadingReferencias = false;
-        window.hideLoading();
+        window.hideLoading('loadReferencias');
     }
 }
 
@@ -530,6 +541,12 @@ function parseFechaCX(fecha) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+    // Inicializar spinner como oculto
+    if (loading) {
+        loading.classList.remove('show');
+        document.body.style.overflow = '';
+    }
+
     const registrarTable = document.getElementById('registrarTable');
     const registrarBody = registrarTable?.querySelector('tbody');
     const prevPage = document.getElementById('prevPage');
@@ -694,7 +711,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (cancelDeleteBtn) cancelDeleteBtn.addEventListener('click', () => closeModal(deleteModal));
 
     async function loadRegistros() {
-        window.showLoading();
+        window.showLoading('loadRegistros');
         try {
             let q = query(collection(db, "registrar_consignacion"), orderBy("fechaCX", "asc"));
             const conditions = [];
@@ -772,7 +789,7 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error('Error en loadRegistros:', error);
             showToast('Error al cargar los registros: ' + error.message, 'error');
         } finally {
-            window.hideLoading();
+            window.hideLoading('loadRegistros');
         }
     }
 
@@ -1115,11 +1132,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const updateAtributoFilter = async (e) => {
             atributoFilter = e.target.value;
-            window.showLoading();
+            window.showLoading('updateAtributoFilter');
             try {
                 await loadReferencias();
             } finally {
-                window.hideLoading();
+                window.hideLoading('updateAtributoFilter');
             }
         };
 
@@ -1153,7 +1170,7 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             e.stopPropagation();
             
-            window.showLoading();
+            window.showLoading('downloadAll');
             try {
                 let allQuery = query(collection(db, "registrar_consignacion"), orderBy("fechaCX", "asc"));
                 
@@ -1215,7 +1232,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.error('Error exporting all:', error);
                 showToast('❌ Error al exportar todos los registros', 'error');
             } finally {
-                window.hideLoading();
+                window.hideLoading('downloadAll');
             }
         });
     }
@@ -1302,7 +1319,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            window.showLoading();
+            window.showLoading('registrarBtn');
             try {
                 let finalCodigo = codigo;
                 let finalDescripcion = descripcion;
@@ -1364,7 +1381,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.error('Error creating registro:', error);
                 showToast('❌ Error al crear registro: ' + error.message, 'error');
             } finally {
-                window.hideLoading();
+                window.hideLoading('registrarBtn');
             }
         });
     }
@@ -1401,14 +1418,14 @@ document.addEventListener('DOMContentLoaded', () => {
             radio.checked = radio.value === atributoFilter;
         });
 
-        window.showLoading();
+        window.showLoading('openEditModal');
         try {
             await loadReferencias(); // Recargar referencias con el atributo del registro
             if (medicos.length > 0) {
                 setupAutocomplete('editMedico', 'editMedicoToggle', 'editMedicoDropdown', medicos, 'nombre');
             }
         } finally {
-            window.hideLoading();
+            window.hideLoading('openEditModal');
             if (editModal) editModal.style.display = 'block';
         }
     };
@@ -1426,7 +1443,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     window.openHistoryModal = async function(id, admision) {
-        window.showLoading();
+        window.showLoading('openHistoryModal');
         try {
             const q = query(
                 collection(db, "registrar_consignacion_historial"), 
@@ -1478,7 +1495,7 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error('Error loading history:', error);
             showToast('Error al cargar historial: ' + error.message, 'error');
         } finally {
-            window.hideLoading();
+            window.hideLoading('openHistoryModal');
         }
     };
 
@@ -1511,7 +1528,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            window.showLoading();
+            window.showLoading('saveEditBtn');
             try {
                 let finalCodigo = codigo;
                 let finalDescripcion = descripcion;
@@ -1572,7 +1589,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.error('Error updating registro:', error);
                 showToast('❌ Error al actualizar registro: ' + error.message, 'error');
             } finally {
-                window.hideLoading();
+                window.hideLoading('saveEditBtn');
             }
         });
     }
@@ -1581,7 +1598,7 @@ document.addEventListener('DOMContentLoaded', () => {
         confirmDeleteBtn.addEventListener('click', async () => {
             if (!currentDeleteId) return;
 
-            window.showLoading();
+            window.showLoading('confirmDeleteBtn');
             try {
                 const registroDoc = await getDoc(doc(db, "registrar_consignacion", currentDeleteId));
                 if (registroDoc.exists()) {
@@ -1600,7 +1617,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.error('Error deleting registro:', error);
                 showToast('❌ Error al eliminar registro: ' + error.message, 'error');
             } finally {
-                window.hideLoading();
+                window.hideLoading('confirmDeleteBtn');
             }
         });
     }
@@ -1611,7 +1628,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
         try {
-            window.showLoading();
+            window.showLoading('onAuthStateChanged');
             const userDocRef = doc(db, 'users', user.uid);
             const userDoc = await getDoc(userDocRef);
             if (userDoc.exists()) {
@@ -1630,7 +1647,7 @@ document.addEventListener('DOMContentLoaded', () => {
             window.currentUserData = { fullName: 'Usuario Invitado', username: 'invitado' };
             showToast('Error al cargar datos del usuario.', 'error');
         } finally {
-            window.hideLoading();
+            window.hideLoading('onAuthStateChanged');
         }
     });
 });
