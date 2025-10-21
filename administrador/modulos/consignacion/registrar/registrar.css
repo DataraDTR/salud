@@ -12,7 +12,7 @@ html, body {
     width: 100%;
     height: 100%;
     background: white;
-    padding: 10px 20px;
+    padding: 5px 20px 20px 20px;
     box-sizing: border-box;
     overflow-y: auto;
     border-radius: 8px;
@@ -39,9 +39,10 @@ html, body {
 
 .registrar-first-row, .registrar-second-row, .registrar-search-row {
     display: flex;
-    flex-wrap: wrap;
+    justify-content: flex-start;
     gap: 10px;
-    align-items: flex-start;
+    align-items: flex-end;
+    flex-wrap: wrap;
     width: 100%;
 }
 
@@ -49,25 +50,59 @@ html, body {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    gap: 5px;
+    gap: 4px;
     flex: 1;
-    min-width: 140px;
-    max-width: 180px;
+    min-width: 120px;
+    max-width: 160px;
 }
 
 .registrar-form-group.button-group {
     flex: 0;
     min-width: auto;
     max-width: none;
-    align-self: flex-end;
+    margin-bottom: 8px;
 }
 
 .registrar-form-group.registrar-actions-menu {
     flex: 0;
     min-width: auto;
     max-width: none;
+    margin-bottom: 8px;
     position: relative;
-    align-self: flex-end;
+    margin-left: auto;
+}
+
+.registrar-radio-group {
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+    align-items: center;
+    flex: 0;
+    min-width: 160px;
+    max-width: 200px;
+    margin-bottom: 8px;
+}
+
+.registrar-radio-group label {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 10px;
+    font-weight: bold;
+    color: #333;
+    white-space: nowrap;
+}
+
+.registrar-radio-group input[type="radio"] {
+    width: 14px;
+    height: 14px;
+    margin: 0;
+    cursor: pointer;
+}
+
+.registrar-radio-group input[type="radio"]:focus {
+    outline: none;
+    box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
 }
 
 .registrar-label {
@@ -75,33 +110,6 @@ html, body {
     font-weight: bold;
     color: #333;
     white-space: nowrap;
-}
-
-.registrar-radio-group {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-    margin-bottom: 10px;
-}
-
-.registrar-radio-group label {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    font-size: 10px;
-    color: #333;
-}
-
-.registrar-radio-group input[type="radio"] {
-    margin: 0;
-    width: 14px;
-    height: 14px;
-    cursor: pointer;
-}
-
-.registrar-radio-group input[type="radio"]:focus {
-    outline: none;
-    box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
 }
 
 #admision, #paciente, #medico, #fechaCX, #codigo, #descripcion, #cantidad,
@@ -193,33 +201,36 @@ html, body {
 }
 
 .registrar-date-search {
-    min-width: 300px;
-    max-width: 450px;
+    min-width: 400px;
+    max-width: 500px;
+    flex-shrink: 1;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 4px;
 }
 
 .registrar-date-options {
     display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
+    flex-wrap: nowrap;
+    gap: 6px;
     align-items: center;
+    flex-shrink: 1;
 }
 
 .registrar-date-options label {
     display: flex;
     align-items: center;
-    gap: 5px;
+    gap: 4px;
     font-size: 10px;
     white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .registrar-date-group {
     display: flex;
-    gap: 8px;
+    gap: 6px;
     align-items: center;
-    flex-wrap: wrap;
+    flex-shrink: 1;
 }
 
 #dateDay, #dateWeek, #dateMonth {
@@ -229,23 +240,25 @@ html, body {
 }
 
 #fechaDia, #fechaDesde, #fechaHasta {
-    width: 120px;
+    width: 100px;
     min-width: 100px;
 }
 
 #mesSelect {
-    width: 100px;
+    width: 90px;
     min-width: 90px;
 }
 
 #anioSelect {
-    width: 80px;
+    width: 70px;
     min-width: 70px;
 }
 
 .registrar-actions-menu {
+    flex-shrink: 0;
     position: relative;
     align-self: center;
+    min-width: 120px;
 }
 
 #actionsBtn {
@@ -257,7 +270,7 @@ html, body {
     padding: 8px 16px;
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 5px;
 }
 
 #actionsBtn:hover {
@@ -304,7 +317,7 @@ html, body {
     max-height: 500px;
     overflow-y: auto;
     overflow-x: auto;
-    margin-bottom: 15px;
+    margin-bottom: 20px;
     border: 1px solid #ddd;
     border-radius: 4px;
     flex-grow: 1;
@@ -319,7 +332,7 @@ html, body {
 }
 
 .registrar-table th, .registrar-table td {
-    padding: 6px 8px;
+    padding: 4px;
     text-align: left;
     border: 1px solid #ddd;
     white-space: nowrap;
@@ -355,35 +368,36 @@ html, body {
     background-color: #f8f9fa;
 }
 
-.registrar-table th:nth-child(1), .registrar-table td:nth-child(1) { width: 100px; min-width: 100px; max-width: 100px; }
+.registrar-table th:nth-child(1), .registrar-table td:nth-child(1) { width: 70px; min-width: 70px; max-width: 70px; }
 .registrar-table th:nth-child(2), .registrar-table td:nth-child(2) { width: 130px; min-width: 130px; max-width: 130px; }
 .registrar-table th:nth-child(3), .registrar-table td:nth-child(3) { width: 200px; min-width: 200px; max-width: 200px; }
-.registrar-table th:nth-child(4), .registrar-table td:nth-child(4) { width: 120px; min-width: 120px; max-width: 120px; }
+.registrar-table th:nth-child(4), .registrar-table td:nth-child(4) { width: 80px; min-width: 80px; max-width: 80px; }
 .registrar-table th:nth-child(5), .registrar-table td:nth-child(5) { width: 100px; min-width: 100px; max-width: 100px; }
 .registrar-table th:nth-child(6), .registrar-table td:nth-child(6) { width: 300px; min-width: 300px; max-width: 300px; }
 .registrar-table th:nth-child(7), .registrar-table td:nth-child(7) { width: 80px; min-width: 80px; max-width: 80px; }
 .registrar-table th:nth-child(8), .registrar-table td:nth-child(8) { width: 130px; min-width: 130px; max-width: 130px; }
 .registrar-table th:nth-child(9), .registrar-table td:nth-child(9) { width: 150px; min-width: 150px; max-width: 150px; }
 .registrar-table th:nth-child(10), .registrar-table td:nth-child(10) { width: 100px; min-width: 100px; max-width: 100px; }
-.registrar-table th:nth-child(11), .registrar-table td:nth-child(11) { width: 120px; min-width: 120px; max-width: 120px; }
+.registrar-table th:nth-child(11), .registrar-table td:nth-child(11) { width: 80px; min-width: 80px; max-width: 80px; }
 .registrar-table th:nth-child(12), .registrar-table td:nth-child(12) { width: 100px; min-width: 100px; max-width: 100px; }
 .registrar-table th:nth-child(13), .registrar-table td:nth-child(13) { width: 65px; min-width: 65px; max-width: 65px; }
 
 .registrar-actions {
     display: flex;
-    gap: 4px;
+    gap: 2px;
     align-items: center;
     justify-content: flex-start;
-    padding: 2px;
+    padding: 0;
+    margin: 0;
 }
 
 .registrar-actions button {
     border: none;
-    border-radius: 3px;
+    border-radius: 2px;
     cursor: pointer;
-    font-size: 10px;
-    width: 20px;
-    height: 20px;
+    font-size: 9px;
+    width: 18px;
+    height: 18px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -392,7 +406,7 @@ html, body {
 .registrar-table td:last-child {
     display: flex;
     align-items: center;
-    padding: 2px 4px;
+    padding: 1px;
 }
 
 .registrar-btn-edit {
@@ -443,11 +457,11 @@ html, body {
 .registrar-pagination-controls {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 5px;
 }
 
 .registrar-pagination-controls button {
-    padding: 6px 12px;
+    padding: 6px 10px;
     background-color: #007bff;
     color: white;
     border: none;
@@ -467,12 +481,12 @@ html, body {
 
 .registrar-page-numbers {
     display: flex;
-    gap: 6px;
+    gap: 5px;
     align-items: center;
 }
 
 .registrar-page-numbers button {
-    padding: 4px 10px;
+    padding: 4px 8px;
     border: 1px solid #ddd;
     background: white;
     cursor: pointer;
@@ -493,6 +507,26 @@ html, body {
 .registrar-page-numbers .registrar-dots {
     padding: 4px;
     font-size: 11px;
+}
+
+#registrar-message {
+    margin-bottom: 10px;
+    padding: 8px;
+    border-radius: 4px;
+    display: none;
+    font-size: 11px;
+}
+
+.registrar-message-error {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+.registrar-message-success {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
 }
 
 .registrar-loading {
@@ -605,7 +639,7 @@ html, body {
     position: sticky;
     top: 0;
     background-color: #f8f9fa;
-    padding: 12px 20px;
+    padding: 10px 20px;
     border-bottom: 1px solid #ddd;
     z-index: 10;
     display: flex;
@@ -643,10 +677,10 @@ html, body {
 .modal-form-group {
     display: flex;
     flex-direction: column;
-    gap: 5px;
+    gap: 4px;
     flex: 1;
-    min-width: 140px;
-    max-width: 180px;
+    min-width: 120px;
+    max-width: 160px;
 }
 
 .modal-form-group label {
@@ -668,24 +702,65 @@ html, body {
 
 .modal .registrar-radio-group {
     display: flex;
-    flex-direction: column;
-    gap: 5px;
-    margin-bottom: 10px;
+    flex-direction: row;
+    gap: 10px;
+    align-items: center;
+    flex: 0;
+    min-width: 160px;
+    max-width: 200px;
+    margin-bottom: 8px;
 }
 
 .modal .registrar-radio-group label {
     display: flex;
     align-items: center;
-    gap: 5px;
+    gap: 4px;
     font-size: 10px;
+    font-weight: bold;
     color: #333;
 }
 
 .modal .registrar-radio-group input[type="radio"] {
-    margin: 0;
     width: 14px;
     height: 14px;
+    margin: 0;
     cursor: pointer;
+}
+
+.modal .medico-input-container,
+.modal .codigo-input-container,
+.modal .descripcion-input-container {
+    position: relative;
+    width: 100%;
+}
+
+.modal .medico-input-wrapper,
+.modal .codigo-input-wrapper,
+.modal .descripcion-input-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.modal .medico-icon,
+.modal .codigo-icon,
+.modal .descripcion-icon {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #007bff;
+    cursor: pointer;
+    font-size: 12px;
+    z-index: 10;
+    height: 100%;
+    display: flex;
+    align-items: center;
+}
+
+.modal-form-group input:focus,
+.modal-form-group select:focus {
+    box-shadow: 0 0 8px rgba(0, 123, 255, 0.3);
+    outline: none;
 }
 
 .modal-buttons {
@@ -754,28 +829,28 @@ html, body {
 
 @media screen and (max-width: 1200px) {
     .registrar-date-search {
-        min-width: 280px;
+        min-width: 300px;
         max-width: 400px;
     }
     .registrar-first-row, .registrar-second-row, .registrar-search-row {
         flex-direction: column;
         align-items: stretch;
     }
-    .registrar-form-group {
+    .registrar-form-group, .registrar-radio-group {
         max-width: 100%;
         min-width: 100%;
     }
     .registrar-form-group.button-group, .registrar-form-group.registrar-actions-menu {
-        align-self: stretch;
         margin-left: 0;
+        align-self: stretch;
     }
 }
 
 @media screen and (max-width: 768px) {
     .registrar-main-container {
-        padding: 10px;
+        padding: 5px 10px 10px 10px;
     }
-    .registrar-form-group {
+    .registrar-form-group, .registrar-radio-group {
         min-width: 100%;
     }
     #fechaDia, #fechaDesde, #fechaHasta, #mesSelect, #anioSelect {
@@ -790,12 +865,11 @@ html, body {
         flex-direction: column;
         width: 100%;
     }
-    .modal-form-group {
+    .modal-form-group, .modal .registrar-radio-group {
         min-width: 100%;
         max-width: 100%;
     }
     .modal-btn {
         width: 100%;
-        min-width: 0;
     }
 }
