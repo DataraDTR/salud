@@ -281,7 +281,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const progressText = document.getElementById('progressText');
     const referenciasBody = document.getElementById('referenciasBody');
     const prevBtn = document.getElementById('prevBtn');
-    const nextBtn = document.getElementById('nextBtn');
+    const nextBtn = document.getElementById('prevBtn');
     const pageNumbers = document.getElementById('pageNumbers');
     const paginationInfo = document.getElementById('paginationInfo');
     const newCodeForm = document.getElementById('newCodeForm');
@@ -578,11 +578,17 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         showLoading();
 
+        if (!proveedorInput) {
+            hideLoading();
+            showToast('Error: Campo proveedor no encontrado.', 'error');
+            return;
+        }
+
         const processedRow = {
             referencia: referenciaInput.value.trim().toUpperCase(),
             detalles: detallesInput.value.trim().toUpperCase(),
             precioUnitario: precioUnitarioInput.value.replace(/[^\d]/g, ''),
-            proveedor: proveedoInput.value.trim().toUpperCase(),
+            proveedor: proveedorInput.value.trim().toUpperCase(),
             descripcion: descripcionInput.value.trim().toUpperCase(),
             tipo: tipoInput.value,
             atributo: atributoInput.value,
