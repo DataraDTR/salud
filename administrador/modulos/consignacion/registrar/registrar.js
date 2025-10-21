@@ -13,26 +13,24 @@ const loading = document.getElementById('loading');
 
 window.showLoading = function (caller = 'unknown') {
     if (!loading) {
-        console.warn('Elemento loading no encontrado');
+        console.warn(`Elemento con ID 'loading' no encontrado en el DOM (caller: ${caller})`);
         return;
     }
     loadingCounter++;
-    console.log(`showLoading called by ${caller}, loadingCounter: ${loadingCounter}`);
+    console.log(`showLoading called by ${caller}, loadingCounter: ${loadingCounter}, classList: ${loading.classList}`);
     loading.classList.add('show');
-    document.body.style.overflow = 'hidden';
 };
 
 window.hideLoading = function (caller = 'unknown') {
     if (!loading) {
-        console.warn('Elemento loading no encontrado');
+        console.warn(`Elemento con ID 'loading' no encontrado en el DOM (caller: ${caller})`);
         return;
     }
     loadingCounter--;
-    console.log(`hideLoading called by ${caller}, loadingCounter: ${loadingCounter}`);
+    console.log(`hideLoading called by ${caller}, loadingCounter: ${loadingCounter}, classList: ${loading.classList}`);
     if (loadingCounter <= 0) {
         loadingCounter = 0; // Evitar valores negativos
         loading.classList.remove('show');
-        document.body.style.overflow = '';
     }
 };
 
@@ -544,7 +542,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // Inicializar spinner como oculto
     if (loading) {
         loading.classList.remove('show');
-        document.body.style.overflow = '';
     }
 
     const registrarTable = document.getElementById('registrarTable');
