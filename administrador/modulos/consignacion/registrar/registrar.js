@@ -43,7 +43,8 @@ let fechaDesde = null;
 let fechaHasta = null;
 let mes = null;
 let anio = null;
-let atributoFilter = 'CONSIGNACION'; // Filtro por defecto
+let atributoFilter = 'CONSIGNACION'; 
+let isLoadingReferencias = false;
 
 function formatNumberWithThousandsSeparator(number) {
     if (!number) return '';
@@ -65,6 +66,7 @@ async function loadMedicos() {
 }
 
 async function loadReferencias() {
+    isLoadingReferencias = true;
     try {
         const querySnapshot = await getDocs(
             query(collection(db, "referencias_implantes"), where("atributo", "==", atributoFilter))
@@ -81,6 +83,8 @@ async function loadReferencias() {
         setupAutocomplete('editDescripcion', 'editDescripcionToggle', 'editDescripcionDropdown', referencias, 'descripcion');
     } catch (error) {
         showToast('Error al cargar referencias: ' + error.message, 'error');
+    } finally {
+        isLoadingReferencias = false;
     }
 }
 
@@ -151,8 +155,12 @@ function setupAutocomplete(inputId, iconId, listId, data, key) {
     }
 
     function showAll() {
-        list.innerHTML = '';
+        list.innerHTML = ''; // Limpiar el dropdown
         list.style.display = 'none';
+        if (isLoadingReferencias) {
+            // No mostrar mensaje si las referencias están cargando
+            return;
+        }
         if (data.length === 0) {
             showToast(`No hay ${key}s disponibles para ${atributoFilter}`, 'error');
             return;
@@ -1577,27 +1585,28 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     onAuthStateChanged(auth, async (user) => {
-        if (!user) {
-            window.location.replace('../index.html');
-            return;
+    if (!user) {
+        window.location.replace('../index.html');
+        return;
+    }
+    try {
+        const userDocRef = doc(db, 'users', user.uid);
+        const userDoc = await getDoc(userDocRef);
+        if (userDoc.exists()) {
+            window.currentUserData = userDoc.data();
+        } else {
+            window.currentUserData = { fullName: user.displayName || 'Usuario Invitado', username: user.email || 'invitado' };
         }
-        try {
-            const userDocRef = doc(db, 'users', user.uid);
-            const userDoc = await getDoc(userDocRef);
-            if (userDoc.exists()) {
-                window.currentUserData = userDoc.data();
-            } else {
-                window.currentUserData = { fullName: user.displayName || 'Usuario Invitado', username: user.email || 'invitado' };
-            }
-            await loadMedicos();
-            await loadReferencias();
-            setupAutocomplete('medico', 'medicoToggle', 'medicoDropdown', medicos, 'nombre');
-            setupAutocomplete('editMedico', 'editMedicoToggle', 'editMedicoDropdown', medicos, 'nombre');
-            await loadRegistros();
-        } catch (error) {
-            console.error('Error loading user data:', error);
-            window.currentUserData = { fullName: 'Usuario Invitado', username: 'invitado' };
-            showToast('Error al cargar datos del usuario.', 'error');
-        }
-    });
+        await loadMedicos();
+        atributoFilter = 'CONSIGNACION'; // Valor por defecto
+        await loadReferencias();
+        setupAutocomplete('medico', 'medicoToggle', 'medicoDropdown', medicos, 'nombre');
+        setupAutocomplete('editMedico', 'editMedicoToggle', 'editMedicoDropdown', medicos, 'nombre');
+        await loadRegistros();
+    } catch (error) {
+        console.error('Error loading user data:', error);
+        window.currentUserData = { fullName: 'Usuario Invitado', username: 'invitado' };
+        showToast('Error al cargar datos del usuario.', 'error');
+    }
+});
 });
