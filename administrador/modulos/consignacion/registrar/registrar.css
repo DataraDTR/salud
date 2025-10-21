@@ -818,8 +818,8 @@ html, body {
     align-items: center;
 }
 
-.loading-modal.show {
-    display: flex;
+.loading-modal:not(.show) {
+    display: none !important;
 }
 
 .spinner {
