@@ -106,7 +106,7 @@ html, body {
     transform: translateY(-50%);
     cursor: pointer;
     color: #333;
-    font-size: 12px;
+    font-size: 10px;
 }
 
 .referencias-icon:hover {
