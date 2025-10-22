@@ -772,21 +772,35 @@ document.addEventListener('DOMContentLoaded', () => {
             let q = query(collection(db, "registrar_consignacion"), orderBy("fechaCX", "asc"));
             const conditions = [];
 
-            if (searchAdmision) {
-                conditions.push(where("admision", ">=", searchAdmision));
-                conditions.push(where("admision", "<=", searchAdmision + '\uf8ff'));
+            console.log('Filtros aplicados:', {
+                searchAdmision,
+                searchPaciente,
+                searchMedico,
+                searchProveedor,
+                searchDescripcion,
+                dateFilter,
+                fechaDia,
+                fechaDesde,
+                fechaHasta,
+                mes,
+                anio
+            });
+
+            if (searchAdmision?.trim()) {
+                conditions.push(where("admision", ">=", searchAdmision.toUpperCase()));
+                conditions.push(where("admision", "<=", searchAdmision.toUpperCase() + '\uf8ff'));
             }
-            if (searchPaciente) {
-                conditions.push(where("paciente", ">=", searchPaciente));
-                conditions.push(where("paciente", "<=", searchPaciente + '\uf8ff'));
+            if (searchPaciente?.trim()) {
+                conditions.push(where("paciente", ">=", searchPaciente.toUpperCase()));
+                conditions.push(where("paciente", "<=", searchPaciente.toUpperCase() + '\uf8ff'));
             }
-            if (searchMedico) {
-                conditions.push(where("medico", ">=", searchMedico));
-                conditions.push(where("medico", "<=", searchMedico + '\uf8ff'));
+            if (searchMedico?.trim()) {
+                conditions.push(where("medico", ">=", searchMedico.toUpperCase()));
+                conditions.push(where("medico", "<=", searchMedico.toUpperCase() + '\uf8ff'));
             }
-            if (searchProveedor) {
-                conditions.push(where("proveedor", ">=", searchProveedor));
-                conditions.push(where("proveedor", "<=", searchProveedor + '\uf8ff'));
+            if (searchProveedor?.trim()) {
+                conditions.push(where("proveedor", ">=", searchProveedor.toUpperCase()));
+                conditions.push(where("proveedor", "<=", searchProveedor.toUpperCase() + '\uf8ff'));
             }
 
             if (dateFilter === 'day' && fechaDia) {
@@ -822,7 +836,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 tempRegistros.push(registro);
             });
 
-            if (searchDescripcion) {
+            if (searchDescripcion?.trim()) {
                 tempRegistros = tempRegistros.filter(reg => 
                     reg.descripcion?.toUpperCase().includes(searchDescripcion.toUpperCase())
                 );
@@ -840,6 +854,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
             totalRecords = await getTotalRecordsCount();
 
+            console.log(`Registros cargados: ${registros.length}, Total estimado: ${totalRecords}`);
+
             renderTable();
         } catch (error) {
             console.error('Error en loadRegistros:', error);
@@ -853,28 +869,28 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             let countQuery = query(collection(db, "registrar_consignacion"));
             
-            if (searchAdmision) {
+            if (searchAdmision?.trim()) {
                 countQuery = query(countQuery,
-                    where("admision", ">=", searchAdmision),
-                    where("admision", "<=", searchAdmision + '\uf8ff')
+                    where("admision", ">=", searchAdmision.toUpperCase()),
+                    where("admision", "<=", searchAdmision.toUpperCase() + '\uf8ff')
                 );
             }
-            if (searchPaciente) {
+            if (searchPaciente?.trim()) {
                 countQuery = query(countQuery,
-                    where("paciente", ">=", searchPaciente),
-                    where("paciente", "<=", searchPaciente + '\uf8ff')
+                    where("paciente", ">=", searchPaciente.toUpperCase()),
+                    where("paciente", "<=", searchPaciente.toUpperCase() + '\uf8ff')
                 );
             }
-            if (searchMedico) {
+            if (searchMedico?.trim()) {
                 countQuery = query(countQuery,
-                    where("medico", ">=", searchMedico),
-                    where("medico", "<=", searchMedico + '\uf8ff')
+                    where("medico", ">=", searchMedico.toUpperCase()),
+                    where("medico", "<=", searchMedico.toUpperCase() + '\uf8ff')
                 );
             }
-            if (searchProveedor) {
+            if (searchProveedor?.trim()) {
                 countQuery = query(countQuery,
-                    where("proveedor", ">=", searchProveedor),
-                    where("proveedor", "<=", searchProveedor + '\uf8ff')
+                    where("proveedor", ">=", searchProveedor.toUpperCase()),
+                    where("proveedor", "<=", searchProveedor.toUpperCase() + '\uf8ff')
                 );
             }
             if (dateFilter === 'day' && fechaDia) {
@@ -900,7 +916,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const countSnapshot = await getDocs(countQuery);
-            return searchDescripcion ? registros.length : countSnapshot.size;
+            return searchDescripcion?.trim() ? registros.length : countSnapshot.size;
         } catch (error) {
             console.error('Error counting records:', error);
             return 0;
@@ -1071,8 +1087,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const debouncedLoadRegistros = debounce(() => {
         currentPage = 1;
         lastVisible = null;
+        console.log('debouncedLoadRegistros triggered');
         loadRegistros();
-    }, 500);
+    }, 300); // Reducido de 500ms a 300ms para mejor responsividad
 
     const searchInputs = [
         { input: buscarAdmisionInput, filter: 'searchAdmision' },
@@ -1085,9 +1102,12 @@ document.addEventListener('DOMContentLoaded', () => {
     searchInputs.forEach(({ input, filter }) => {
         if (input) {
             input.addEventListener('input', (e) => {
+                console.log(`Input ${filter} changed to: ${e.target.value}`);
                 window[filter] = e.target.value.trim().toUpperCase();
                 debouncedLoadRegistros();
             });
+        } else {
+            console.warn(`Input ${filter} no encontrado en el DOM`);
         }
     });
 
@@ -1099,6 +1119,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (fechaDiaInput?.value) {
                         fechaDia = fechaDiaInput.value;
                     }
+                    console.log('Date filter changed to day:', fechaDia);
                     debouncedLoadRegistros();
                 }
             });
@@ -1110,6 +1131,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     dateFilter = 'week';
                     fechaDesde = fechaDesdeInput?.value || '';
                     fechaHasta = fechaHastaInput?.value || '';
+                    console.log('Date filter changed to week:', { fechaDesde, fechaHasta });
                     debouncedLoadRegistros();
                 }
             });
@@ -1121,6 +1143,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     dateFilter = 'month';
                     mes = mesSelect?.value || '';
                     anio = anioSelect?.value || '';
+                    console.log('Date filter changed to month:', { mes, anio });
                     debouncedLoadRegistros();
                 }
             });
@@ -1130,6 +1153,7 @@ document.addEventListener('DOMContentLoaded', () => {
             fechaDiaInput.addEventListener('change', (e) => {
                 if (dateFilter === 'day') {
                     fechaDia = e.target.value;
+                    console.log('FechaDia changed:', fechaDia);
                     debouncedLoadRegistros();
                 }
             });
@@ -1139,6 +1163,7 @@ document.addEventListener('DOMContentLoaded', () => {
             fechaDesdeInput.addEventListener('change', (e) => {
                 if (dateFilter === 'week') {
                     fechaDesde = e.target.value;
+                    console.log('FechaDesde changed:', fechaDesde);
                     debouncedLoadRegistros();
                 }
             });
@@ -1148,6 +1173,7 @@ document.addEventListener('DOMContentLoaded', () => {
             fechaHastaInput.addEventListener('change', (e) => {
                 if (dateFilter === 'week') {
                     fechaHasta = e.target.value;
+                    console.log('FechaHasta changed:', fechaHasta);
                     debouncedLoadRegistros();
                 }
             });
@@ -1157,6 +1183,7 @@ document.addEventListener('DOMContentLoaded', () => {
             mesSelect.addEventListener('change', (e) => {
                 if (dateFilter === 'month') {
                     mes = e.target.value;
+                    console.log('Mes changed:', mes);
                     debouncedLoadRegistros();
                 }
             });
@@ -1176,6 +1203,7 @@ document.addEventListener('DOMContentLoaded', () => {
             anioSelect.addEventListener('change', (e) => {
                 if (dateFilter === 'month') {
                     anio = e.target.value;
+                    console.log('Anio changed:', anio);
                     debouncedLoadRegistros();
                 }
             });
@@ -1188,6 +1216,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const updateAtributoFilter = async (e) => {
             atributoFilter = e.target.value;
+            console.log('AtributoFilter changed:', atributoFilter);
             window.showLoading('updateAtributoFilter');
             try {
                 await loadReferencias();
@@ -1230,28 +1259,28 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 let allQuery = query(collection(db, "registrar_consignacion"), orderBy("fechaCX", "asc"));
                 
-                if (searchAdmision) {
+                if (searchAdmision?.trim()) {
                     allQuery = query(allQuery,
-                        where("admision", ">=", searchAdmision),
-                        where("admision", "<=", searchAdmision + '\uf8ff')
+                        where("admision", ">=", searchAdmision.toUpperCase()),
+                        where("admision", "<=", searchAdmision.toUpperCase() + '\uf8ff')
                     );
                 }
-                if (searchPaciente) {
+                if (searchPaciente?.trim()) {
                     allQuery = query(allQuery,
-                        where("paciente", ">=", searchPaciente),
-                        where("paciente", "<=", searchPaciente + '\uf8ff')
+                        where("paciente", ">=", searchPaciente.toUpperCase()),
+                        where("paciente", "<=", searchPaciente.toUpperCase() + '\uf8ff')
                     );
                 }
-                if (searchMedico) {
+                if (searchMedico?.trim()) {
                     allQuery = query(allQuery,
-                        where("medico", ">=", searchMedico),
-                        where("medico", "<=", searchMedico + '\uf8ff')
+                        where("medico", ">=", searchMedico.toUpperCase()),
+                        where("medico", "<=", searchMedico.toUpperCase() + '\uf8ff')
                     );
                 }
-                if (searchProveedor) {
+                if (searchProveedor?.trim()) {
                     allQuery = query(allQuery,
-                        where("proveedor", ">=", searchProveedor),
-                        where("proveedor", "<=", searchProveedor + '\uf8ff')
+                        where("proveedor", ">=", searchProveedor.toUpperCase()),
+                        where("proveedor", "<=", searchProveedor.toUpperCase() + '\uf8ff')
                     );
                 }
                 if (dateFilter === 'day' && fechaDia) {
@@ -1326,6 +1355,7 @@ document.addEventListener('DOMContentLoaded', () => {
             anio = null;
             currentPage = 1;
             lastVisible = null;
+            console.log('Form and filters cleared');
             loadRegistros();
         });
     }
