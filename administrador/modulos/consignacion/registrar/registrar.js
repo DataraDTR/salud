@@ -1084,32 +1084,52 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    const debouncedLoadRegistros = debounce(() => {
-        currentPage = 1;
-        lastVisible = null;
-        console.log('debouncedLoadRegistros triggered');
-        loadRegistros();
-    }, 300); // Reducido de 500ms a 300ms para mejor responsividad
-
-    const searchInputs = [
-        { input: buscarAdmisionInput, filter: 'searchAdmision' },
-        { input: buscarPacienteInput, filter: 'searchPaciente' },
-        { input: buscarMedicoInput, filter: 'searchMedico' },
-        { input: buscarDescripcionInput, filter: 'searchDescripcion' },
-        { input: buscarProveedorInput, filter: 'searchProveedor' }
-    ];
-
-    searchInputs.forEach(({ input, filter }) => {
-        if (input) {
-            input.addEventListener('input', (e) => {
-                console.log(`Input ${filter} changed to: ${e.target.value}`);
-                window[filter] = e.target.value.trim().toUpperCase();
-                debouncedLoadRegistros();
-            });
-        } else {
-            console.warn(`Input ${filter} no encontrado en el DOM`);
-        }
+const debouncedLoadRegistros = debounce(() => {
+    console.log('debouncedLoadRegistros triggered with filters:', {
+        searchAdmision,
+        searchPaciente,
+        searchMedico,
+        searchDescripcion,
+        searchProveedor,
+        dateFilter,
+        fechaDia,
+        fechaDesde,
+        fechaHasta,
+        mes,
+        anio
     });
+    currentPage = 1;
+    lastVisible = null;
+    loadRegistros();
+}, 300);
+
+const searchInputs = [
+    { input: buscarAdmisionInput, filter: 'searchAdmision' },
+    { input: buscarPacienteInput, filter: 'searchPaciente' },
+    { input: buscarMedicoInput, filter: 'searchMedico' },
+    { input: buscarDescripcionInput, filter: 'searchDescripcion' },
+    { input: buscarProveedorInput, filter: 'searchProveedor' }
+];
+
+searchInputs.forEach(({ input, filter }) => {
+    if (input) {
+        input.addEventListener('input', (e) => {
+            const value = e.target.value.trim().toUpperCase();
+            console.log(`Input ${filter} changed to: "${value}"`);
+            window[filter] = value; // Actualiza la variable global
+            console.log(`Global ${filter} set to: "${window[filter]}"`);
+            debouncedLoadRegistros();
+        });
+        // Forzar mayúsculas al salir del campo
+        input.addEventListener('change', (e) => {
+            e.target.value = e.target.value.trim().toUpperCase();
+            window[filter] = e.target.value;
+            console.log(`Input ${filter} changed (on change) to: "${window[filter]}"`);
+        });
+    } else {
+        console.warn(`Input ${filter} no encontrado en el DOM`);
+    }
+});
 
     function setupDateFilters() {
         if (dateDay) {
