@@ -1221,4 +1221,4 @@ document.addEventListener('DOMContentLoaded', () => {
             showToast('Error al cargar datos del usuario.', 'error');
         }
     });
-}
+})
