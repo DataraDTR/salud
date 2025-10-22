@@ -220,9 +220,9 @@ function setupColumnResize() {
 
             const cells = document.querySelectorAll(`.referencias-table td:nth-child(${index + 1})`);
             cells.forEach(cell => {
-                cell.mainWidth = `${newWidth}px`;
-                cell.minWidth = `${newWidth}px`;
-                cell.maxWidth = `${newWidth}px`;
+                cell.style.width = `${newWidth}px`;
+                cell.style.minWidth = `${newWidth}px`;
+                cell.style.maxWidth = `${newWidth}px`;
             });
 
             e.preventDefault();
@@ -367,16 +367,8 @@ document.addEventListener('DOMContentLoaded', () => {
         descripcionInput.value = referencia && detalles ? `${referencia} ${detalles}` : '';
     }
 
-    function updateExistDescripcion() {
-        const referencia = existReferenciaInput.value.trim().toUpperCase();
-        const detalles = existDetallesInput.value.trim().toUpperCase();
-        existDescripcionInput.value = referencia && detalles ? `${referencia} ${detalles}` : '';
-    }
-
     referenciaInput.addEventListener('input', updateDescripcion);
     detallesInput.addEventListener('input', updateDescripcion);
-    existReferenciaInput.addEventListener('input', updateExistDescripcion);
-    existDetallesInput.addEventListener('input', updateExistDescripcion);
 
     document.querySelectorAll('input[name="formType"]').forEach(radio => {
         radio.addEventListener('change', (e) => {
