@@ -85,6 +85,11 @@ function formatNumberWithThousandsSeparator(number) {
     return cleaned ? Number(cleaned).toLocaleString('es-CL') : '';
 }
 
+// Función para normalizar texto
+function normalizeText(text) {
+    return text?.trim().toUpperCase() || '';
+}
+
 async function loadMedicos() {
     window.showLoading('loadMedicos');
     try {
@@ -111,7 +116,7 @@ async function loadReferencias() {
     window.showLoading('loadReferencias');
     console.log(`Cargando referencias para atributoFilter: ${atributoFilter}`);
     try {
-        const normalizedAtributoFilter = atributoFilter.trim().toUpperCase();
+        const normalizedAtributoFilter = normalizeText(atributoFilter);
         const querySnapshot = await getDocs(
             query(collection(db, "referencias_implantes"), where("atributo", "==", normalizedAtributoFilter))
         );
@@ -140,7 +145,7 @@ async function getReferenciaByDescripcion(descripcion) {
     try {
         const q = query(
             collection(db, "referencias_implantes"), 
-            where("descripcion", "==", descripcion.trim().toUpperCase()),
+            where("descripcion", "==", normalizeText(descripcion)),
             where("atributo", "==", atributoFilter)
         );
         const querySnapshot = await getDocs(q);
@@ -171,7 +176,7 @@ function setupAutocomplete(inputId, iconId, listId, data, key) {
         if (!value.trim()) return;
         
         const filtered = data.filter(item => 
-            item[key]?.toUpperCase().includes(value.toUpperCase())
+            item[key]?.toUpperCase().includes(normalizeText(value))
         );
         
         if (filtered.length === 0) return;
@@ -515,7 +520,7 @@ async function validateAdmision(admision, excludeId = null) {
     try {
         const q = query(
             collection(db, "registrar_consignacion"), 
-            where("admision", "==", admision.trim().toUpperCase())
+            where("admision", "==", normalizeText(admision))
         );
         const querySnapshot = await getDocs(q);
         
@@ -537,7 +542,7 @@ async function getProductoByCodigo(codigo) {
     try {
         const q = query(
             collection(db, "referencias_implantes"), 
-            where("codigo", "==", codigo.trim().toUpperCase()),
+            where("codigo", "==", normalizeText(codigo)),
             where("atributo", "==", atributoFilter)
         );
         const querySnapshot = await getDocs(q);
@@ -708,7 +713,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     e.target.value = e.target.value.toUpperCase();
                 });
                 input.addEventListener('change', (e) => {
-                    e.target.value = e.target.value.toUpperCase().trim();
+                    e.target.value = normalizeText(e.target.value);
                 });
             }
         });
@@ -718,7 +723,8 @@ document.addEventListener('DOMContentLoaded', () => {
         admisionInput, pacienteInput, medicoInput, codigoInput, descripcionInput, 
         referenciaInput, proveedorInput, atributoInput,
         editAdmisionInput, editPacienteInput, editMedicoInput, editCodigoInput, 
-        editDescripcionInput, editReferenciaInput, editProveedorInput, editAtributoInput
+        editDescripcionInput, editReferenciaInput, editProveedorInput, editAtributoInput,
+        buscarAdmisionInput, buscarPacienteInput, buscarMedicoInput, buscarDescripcionInput, buscarProveedorInput
     ];
     enforceUpperCase(upperCaseInputs.filter(Boolean));
 
@@ -774,23 +780,32 @@ document.addEventListener('DOMContentLoaded', () => {
             let q = query(collection(db, "registrar_consignacion"), orderBy("fechaCX", "asc"));
             const conditions = [];
 
-            console.log('Filtros aplicados:', filters);
+            console.log('Filtros aplicados:', JSON.stringify(filters, null, 2));
 
-            if (filters.searchAdmision?.trim()) {
-                conditions.push(where("admision", ">=", filters.searchAdmision.toUpperCase()));
-                conditions.push(where("admision", "<=", filters.searchAdmision.toUpperCase() + '\uf8ff'));
+            if (filters.searchAdmision) {
+                const normalizedAdmision = normalizeText(filters.searchAdmision);
+                conditions.push(where("admision", ">=", normalizedAdmision));
+                conditions.push(where("admision", "<=", normalizedAdmision + '\uf8ff'));
             }
-            if (filters.searchPaciente?.trim()) {
-                conditions.push(where("paciente", ">=", filters.searchPaciente.toUpperCase()));
-                conditions.push(where("paciente", "<=", filters.searchPaciente.toUpperCase() + '\uf8ff'));
+            if (filters.searchPaciente) {
+                const normalizedPaciente = normalizeText(filters.searchPaciente);
+                conditions.push(where("paciente", ">=", normalizedPaciente));
+                conditions.push(where("paciente", "<=", normalizedPaciente + '\uf8ff'));
             }
-            if (filters.searchMedico?.trim()) {
-                conditions.push(where("medico", ">=", filters.searchMedico.toUpperCase()));
-                conditions.push(where("medico", "<=", filters.searchMedico.toUpperCase() + '\uf8ff'));
+            if (filters.searchMedico) {
+                const normalizedMedico = normalizeText(filters.searchMedico);
+                conditions.push(where("medico", ">=", normalizedMedico));
+                conditions.push(where("medico", "<=", normalizedMedico + '\uf8ff'));
             }
-            if (filters.searchProveedor?.trim()) {
-                conditions.push(where("proveedor", ">=", filters.searchProveedor.toUpperCase()));
-                conditions.push(where("proveedor", "<=", filters.searchProveedor.toUpperCase() + '\uf8ff'));
+            if (filters.searchProveedor) {
+                const normalizedProveedor = normalizeText(filters.searchProveedor);
+                conditions.push(where("proveedor", ">=", normalizedProveedor));
+                conditions.push(where("proveedor", "<=", normalizedProveedor + '\uf8ff'));
+            }
+            if (filters.searchDescripcion) {
+                const normalizedDescripcion = normalizeText(filters.searchDescripcion);
+                conditions.push(where("descripcion", ">=", normalizedDescripcion));
+                conditions.push(where("descripcion", "<=", normalizedDescripcion + '\uf8ff'));
             }
 
             if (filters.dateFilter === 'day' && filters.fechaDia) {
@@ -826,12 +841,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 tempRegistros.push(registro);
             });
 
-            if (filters.searchDescripcion?.trim()) {
-                tempRegistros = tempRegistros.filter(reg => 
-                    reg.descripcion?.toUpperCase().includes(filters.searchDescripcion.toUpperCase())
-                );
-            }
-
             registros = tempRegistros;
 
             if (querySnapshot.docs.length > 0) {
@@ -863,28 +872,39 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             let countQuery = query(collection(db, "registrar_consignacion"));
             
-            if (filters.searchAdmision?.trim()) {
+            if (filters.searchAdmision) {
+                const normalizedAdmision = normalizeText(filters.searchAdmision);
                 countQuery = query(countQuery,
-                    where("admision", ">=", filters.searchAdmision.toUpperCase()),
-                    where("admision", "<=", filters.searchAdmision.toUpperCase() + '\uf8ff')
+                    where("admision", ">=", normalizedAdmision),
+                    where("admision", "<=", normalizedAdmision + '\uf8ff')
                 );
             }
-            if (filters.searchPaciente?.trim()) {
+            if (filters.searchPaciente) {
+                const normalizedPaciente = normalizeText(filters.searchPaciente);
                 countQuery = query(countQuery,
-                    where("paciente", ">=", filters.searchPaciente.toUpperCase()),
-                    where("paciente", "<=", filters.searchPaciente.toUpperCase() + '\uf8ff')
+                    where("paciente", ">=", normalizedPaciente),
+                    where("paciente", "<=", normalizedPaciente + '\uf8ff')
                 );
             }
-            if (filters.searchMedico?.trim()) {
+            if (filters.searchMedico) {
+                const normalizedMedico = normalizeText(filters.searchMedico);
                 countQuery = query(countQuery,
-                    where("medico", ">=", filters.searchMedico.toUpperCase()),
-                    where("medico", "<=", filters.searchMedico.toUpperCase() + '\uf8ff')
+                    where("medico", ">=", normalizedMedico),
+                    where("medico", "<=", normalizedMedico + '\uf8ff')
                 );
             }
-            if (filters.searchProveedor?.trim()) {
+            if (filters.searchProveedor) {
+                const normalizedProveedor = normalizeText(filters.searchProveedor);
                 countQuery = query(countQuery,
-                    where("proveedor", ">=", filters.searchProveedor.toUpperCase()),
-                    where("proveedor", "<=", filters.searchProveedor.toUpperCase() + '\uf8ff')
+                    where("proveedor", ">=", normalizedProveedor),
+                    where("proveedor", "<=", normalizedProveedor + '\uf8ff')
+                );
+            }
+            if (filters.searchDescripcion) {
+                const normalizedDescripcion = normalizeText(filters.searchDescripcion);
+                countQuery = query(countQuery,
+                    where("descripcion", ">=", normalizedDescripcion),
+                    where("descripcion", "<=", normalizedDescripcion + '\uf8ff')
                 );
             }
             if (filters.dateFilter === 'day' && filters.fechaDia) {
@@ -910,7 +930,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const countSnapshot = await getDocs(countQuery);
-            return filters.searchDescripcion?.trim() ? registros.length : countSnapshot.size;
+            return countSnapshot.size;
         } catch (error) {
             console.error('Error counting records:', error);
             return 0;
@@ -1143,7 +1163,7 @@ document.addEventListener('DOMContentLoaded', () => {
             mes,
             anio
         });
-    }, 300);
+    }, 150); // Reducido de 300ms a 150ms para una respuesta más rápida
 
     const searchInputs = [
         { input: buscarAdmisionInput, filter: 'searchAdmision' },
@@ -1156,17 +1176,16 @@ document.addEventListener('DOMContentLoaded', () => {
     searchInputs.forEach(({ input, filter }) => {
         if (input) {
             input.addEventListener('input', (e) => {
-                const value = e.target.value.trim().toUpperCase();
+                const value = normalizeText(e.target.value);
                 console.log(`Input ${filter} changed to: "${value}"`);
                 window[filter] = value;
-                console.log(`Global ${filter} set to: "${window[filter]}"`);
                 debouncedLoadRegistros();
             });
             input.addEventListener('change', (e) => {
-                const value = e.target.value.trim().toUpperCase();
+                const value = normalizeText(e.target.value);
                 e.target.value = value;
                 window[filter] = value;
-                console.log(`Input ${filter} changed (on change) to: "${window[filter]}"`);
+                console.log(`Input ${filter} changed (on change) to: "${value}"`);
                 debouncedLoadRegistros();
             });
         } else {
@@ -1322,28 +1341,39 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 let allQuery = query(collection(db, "registrar_consignacion"), orderBy("fechaCX", "asc"));
                 
-                if (searchAdmision?.trim()) {
+                if (searchAdmision) {
+                    const normalizedAdmision = normalizeText(searchAdmision);
                     allQuery = query(allQuery,
-                        where("admision", ">=", searchAdmision.toUpperCase()),
-                        where("admision", "<=", searchAdmision.toUpperCase() + '\uf8ff')
+                        where("admision", ">=", normalizedAdmision),
+                        where("admision", "<=", normalizedAdmision + '\uf8ff')
                     );
                 }
-                if (searchPaciente?.trim()) {
+                if (searchPaciente) {
+                    const normalizedPaciente = normalizeText(searchPaciente);
                     allQuery = query(allQuery,
-                        where("paciente", ">=", searchPaciente.toUpperCase()),
-                        where("paciente", "<=", searchPaciente.toUpperCase() + '\uf8ff')
+                        where("paciente", ">=", normalizedPaciente),
+                        where("paciente", "<=", normalizedPaciente + '\uf8ff')
                     );
                 }
-                if (searchMedico?.trim()) {
+                if (searchMedico) {
+                    const normalizedMedico = normalizeText(searchMedico);
                     allQuery = query(allQuery,
-                        where("medico", ">=", searchMedico.toUpperCase()),
-                        where("medico", "<=", searchMedico.toUpperCase() + '\uf8ff')
+                        where("medico", ">=", normalizedMedico),
+                        where("medico", "<=", normalizedMedico + '\uf8ff')
                     );
                 }
-                if (searchProveedor?.trim()) {
+                if (searchProveedor) {
+                    const normalizedProveedor = normalizeText(searchProveedor);
                     allQuery = query(allQuery,
-                        where("proveedor", ">=", searchProveedor.toUpperCase()),
-                        where("proveedor", "<=", searchProveedor.toUpperCase() + '\uf8ff')
+                        where("proveedor", ">=", normalizedProveedor),
+                        where("proveedor", "<=", normalizedProveedor + '\uf8ff')
+                    );
+                }
+                if (searchDescripcion) {
+                    const normalizedDescripcion = normalizeText(searchDescripcion);
+                    allQuery = query(allQuery,
+                        where("descripcion", ">=", normalizedDescripcion),
+                        where("descripcion", "<=", normalizedDescripcion + '\uf8ff')
                     );
                 }
                 if (dateFilter === 'day' && fechaDia) {
@@ -1426,17 +1456,17 @@ document.addEventListener('DOMContentLoaded', () => {
     if (registrarBtn) {
         registrarBtn.addEventListener('click', async (e) => {
             e.preventDefault();
-            const admision = admisionInput?.value.trim().toUpperCase();
-            const paciente = pacienteInput?.value.trim().toUpperCase();
-            const medico = medicoInput?.value.trim().toUpperCase();
+            const admision = normalizeText(admisionInput?.value);
+            const paciente = normalizeText(pacienteInput?.value);
+            const medico = normalizeText(medicoInput?.value);
             const fechaCX = fechaCXInput?.value ? new Date(fechaCXInput.value) : null;
-            const codigo = codigoInput?.value.trim().toUpperCase();
-            const descripcion = descripcionInput?.value.trim().toUpperCase();
+            const codigo = normalizeText(codigoInput?.value);
+            const descripcion = normalizeText(descripcionInput?.value);
             const cantidad = parseInt(cantidadInput?.value) || 0;
-            const referencia = referenciaInput?.value.trim().toUpperCase();
-            const proveedor = proveedorInput?.value.trim().toUpperCase();
+            const referencia = normalizeText(referenciaInput?.value);
+            const proveedor = normalizeText(proveedorInput?.value);
             const precioUnitario = parseInt((precioUnitarioInput?.value || '').replace(/[^\d]/g, '')) || 0;
-            const atributo = atributoInput?.value.trim().toUpperCase();
+            const atributo = normalizeText(atributoInput?.value);
             const totalItems = parseInt((totalItemsInput?.value || '').replace(/[^\d]/g, '')) || 0;
 
             if (!admision || !paciente || !medico || !fechaCX || !codigo || !descripcion || !cantidad || !referencia || !proveedor || !precioUnitario || !atributo) {
@@ -1540,17 +1570,17 @@ document.addEventListener('DOMContentLoaded', () => {
     if (saveEditBtn) {
         saveEditBtn.addEventListener('click', async (e) => {
             e.preventDefault();
-            const admision = editAdmisionInput?.value.trim().toUpperCase();
-            const paciente = editPacienteInput?.value.trim().toUpperCase();
-            const medico = editMedicoInput?.value.trim().toUpperCase();
+            const admision = normalizeText(editAdmisionInput?.value);
+            const paciente = normalizeText(editPacienteInput?.value);
+            const medico = normalizeText(editMedicoInput?.value);
             const fechaCX = editFechaCXInput?.value ? new Date(editFechaCXInput.value) : null;
-            const codigo = editCodigoInput?.value.trim().toUpperCase();
-            const descripcion = editDescripcionInput?.value.trim().toUpperCase();
+            const codigo = normalizeText(editCodigoInput?.value);
+            const descripcion = normalizeText(editDescripcionInput?.value);
             const cantidad = parseInt(editCantidadInput?.value) || 0;
-            const referencia = editReferenciaInput?.value.trim().toUpperCase();
-            const proveedor = editProveedorInput?.value.trim().toUpperCase();
+            const referencia = normalizeText(editReferenciaInput?.value);
+            const proveedor = normalizeText(editProveedorInput?.value);
             const precioUnitario = parseInt((editPrecioUnitarioInput?.value || '').replace(/[^\d]/g, '')) || 0;
-            const atributo = editAtributoInput?.value.trim().toUpperCase();
+            const atributo = normalizeText(editAtributoInput?.value);
             const totalItems = parseInt((editTotalItemsInput?.value || '').replace(/[^\d]/g, '')) || 0;
 
             if (!admision || !paciente || !medico || !fechaCX || !codigo || !descripcion || !cantidad || !referencia || !proveedor || !precioUnitario || !atributo) {
@@ -1730,7 +1760,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!value.trim()) return;
 
             const filtered = medicos.filter(medico => 
-                medico.nombre?.toUpperCase().includes(value.toUpperCase())
+                medico.nombre?.toUpperCase().includes(normalizeText(value))
             );
 
             if (filtered.length === 0) return;
