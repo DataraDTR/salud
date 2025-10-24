@@ -137,13 +137,13 @@
         <h2>Recuperar Acceso</h2>
         <form id="emailForm">
             <div class="form-group">
-                <label for="email">Correo Electrónico</label>
+                <label for="email">Correo Electrónico Registrado</label>
                 <div class="input-wrapper">
                     <i class="fas fa-envelope input-icon"></i>
-                    <input type="email" id="email" name="email" placeholder="tu@midatara.com" required>
+                    <input type="email" id="email" name="email" placeholder="tucorreo@midatara.com" required>
                 </div>
             </div>
-            <button type="submit" class="btn" id="verifyBtn" disabled>Verificar Correo</button>
+            <button type="submit" class="btn" id="verifyBtn" disabled>Enviar Código</button>
         </form>
 
         <div id="codeSection" style="display: none; margin-top: 30px;">
@@ -162,7 +162,7 @@
         </div>
 
         <div id="message"></div>
-        <a href="index.html" class="back-link">← Volver al inicio de sesión</a>
+        <a href="index.html" class="back-link">Volver al inicio de sesión</a>
     </div>
 
     <script type="module">
@@ -196,8 +196,8 @@
         // Habilitar botón si el correo parece válido
         emailInput.addEventListener('input', () => {
             const email = emailInput.value.trim();
-            const isValidFormat = /^[\w.-]+@midatara\.com$/.test(email);
-            verifyBtn.disabled = !isValidFormat || !email;
+            const isValid = /^[\w.-]+@[\w.-]+\.\w+$/.test(email); // Formato válido
+            verifyBtn.disabled = !isValid;
         });
 
         // Enviar código
@@ -207,43 +207,40 @@
 
             verifyBtn.disabled = true;
             verifyBtn.textContent = 'Verificando...';
-            showMessage('Buscando usuario...', 'loading');
+            showMessage('Buscando correo en el sistema...', 'loading');
 
             try {
                 const q = query(collection(db, 'users'), where('email', '==', email));
                 const snapshot = await getDocs(q);
 
                 if (snapshot.empty) {
-                    showMessage('Correo no encontrado.', 'error');
+                    showMessage('Este correo no está registrado.', 'error');
                     resetVerifyState();
                     return;
                 }
 
-                // Generar código de 8 dígitos
+                // Generar código de 8 dígitos únicos
                 verificationCode = Math.floor(10000000 + Math.random() * 90000000).toString();
                 targetEmail = email;
 
-                // Aquí simulas el envío por correo
-                // En producción usarías EmailJS, Firebase Functions + SendGrid, etc.
-                console.log(`Código enviado a ${email}: ${verificationCode}`);
+                // Simular envío de correo (en producción: EmailJS o Firebase Functions)
+                console.log(`CÓDIGO ENVIADO A ${email}: ${verificationCode}`);
 
-                // Mostrar campos de código
+                // Mostrar sección de código
                 codeSection.style.display = 'block';
-                showMessage(`Código enviado a ${email}`, 'success');
+                showMessage(`Código enviado a <strong>${email}</strong>`, 'success');
                 verifyBtn.style.display = 'none';
                 emailForm.style.display = 'none';
-
-                // Auto-enfocar primer input
                 codeInputs[0].focus();
 
             } catch (error) {
                 console.error(error);
-                showMessage('Error al verificar correo.', 'error');
+                showMessage('Error al verificar el correo.', 'error');
                 resetVerifyState();
             }
         });
 
-        // Manejar entrada de código
+        // Manejo de inputs de código
         codeInputs.forEach((input, index) => {
             input.addEventListener('input', (e) => {
                 const value = e.target.value;
@@ -267,32 +264,31 @@
         validateCodeBtn.addEventListener('click', () => {
             const enteredCode = Array.from(codeInputs).map(i => i.value).join('');
             if (enteredCode.length !== 8) {
-                showMessage('Ingresa los 8 dígitos.', 'error');
+                showMessage('Ingresa los 8 dígitos completos.', 'error');
                 return;
             }
 
             if (enteredCode === verificationCode) {
                 showMessage('Código correcto. Redirigiendo...', 'success');
+                localStorage.setItem('resetEmail', targetEmail); // Guardar correo
                 setTimeout(() => {
-                    // Guardar email temporalmente para usar en nueva-clave.html
-                    localStorage.setItem('resetEmail', targetEmail);
                     window.location.href = 'nueva-clave.html';
                 }, 1500);
             } else {
-                showMessage('Código incorrecto.', 'error');
+                showMessage('Código incorrecto. Inténtalo de nuevo.', 'error');
             }
         });
 
         function showMessage(text, type) {
-            message.textContent = text;
+            message.innerHTML = text;
             message.className = type;
             message.style.display = 'block';
-            setTimeout(() => { message.style.display = 'none'; }, 5000);
+            setTimeout(() => { message.style.display = 'none'; }, 6000);
         }
 
         function resetVerifyState() {
             verifyBtn.disabled = false;
-            verifyBtn.textContent = 'Verificar Correo';
+            verifyBtn.textContent = 'Enviar Código';
         }
     </script>
 </body>
