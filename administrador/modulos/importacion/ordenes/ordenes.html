@@ -150,11 +150,12 @@
         }
 
         .ordenes-table {
-            table-layout: fixed;
-            width: 100%;
+            width: max-content;
+            min-width: 100%;
             border-collapse: collapse;
             font-size: 11px;
             border: 1px solid #ddd;
+            table-layout: auto !important;
         }
 
         .ordenes-table th,
@@ -166,6 +167,8 @@
             overflow: hidden;
             text-overflow: ellipsis;
             position: relative;
+            min-width: 60px;
+            max-width: 300px;
         }
 
         .ordenes-table th {
@@ -175,25 +178,23 @@
             top: 0;
             z-index: 10;
             box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.1);
+            min-width: 60px;
+            max-width: 300px;
         }
 
-        .ordenes-table tbody tr:hover {
-            background-color: #f8f9fa !important;
-        }
-
-        .ordenes-table th:nth-child(1), .ordenes-table td:nth-child(1) { width: 8%; }
-        .ordenes-table th:nth-child(2), .ordenes-table td:nth-child(2) { width: 9%; }
-        .ordenes-table th:nth-child(3), .ordenes-table td:nth-child(3) { width: 9%; }
-        .ordenes-table th:nth-child(4), .ordenes-table td:nth-child(4) { width: 12%; }
-        .ordenes-table th:nth-child(5), .ordenes-table td:nth-child(5) { width: 10%; }
-        .ordenes-table th:nth-child(6), .ordenes-table td:nth-child(6) { width: 12%; }
-        .ordenes-table th:nth-child(7), .ordenes-table td:nth-child(7) { width: 10%; }
-        .ordenes-table th:nth-child(8), .ordenes-table td:nth-child(8) { width: 6%; }
-        .ordenes-table th:nth-child(9), .ordenes-table td:nth-child(9) { width: 6%; }
-        .ordenes-table th:nth-child(10), .ordenes-table td:nth-child(10) { width: 6%; }
-        .ordenes-table th:nth-child(11), .ordenes-table td:nth-child(11) { width: 7%; }
-        .ordenes-table th:nth-child(12), .ordenes-table td:nth-child(12) { width: 8%; }
-        .ordenes-table th:nth-child(13), .ordenes-table td:nth-child(13) { width: 15%; }
+        .ordenes-table th:nth-child(1), .ordenes-table td:nth-child(1) { width: 80px; min-width: 80px; max-width: 300px; }
+        .ordenes-table th:nth-child(2), .ordenes-table td:nth-child(2) { width: 90px; min-width: 90px; max-width: 300px; }
+        .ordenes-table th:nth-child(3), .ordenes-table td:nth-child(3) { width: 90px; min-width: 90px; max-width: 300px; }
+        .ordenes-table th:nth-child(4), .ordenes-table td:nth-child(4) { width: 120px; min-width: 120px; max-width: 300px; }
+        .ordenes-table th:nth-child(5), .ordenes-table td:nth-child(5) { width: 100px; min-width: 100px; max-width: 300px; }
+        .ordenes-table th:nth-child(6), .ordenes-table td:nth-child(6) { width: 120px; min-width: 120px; max-width: 300px; }
+        .ordenes-table th:nth-child(7), .ordenes-table td:nth-child(7) { width: 100px; min-width: 100px; max-width: 300px; }
+        .ordenes-table th:nth-child(8), .ordenes-table td:nth-child(8) { width: 60px; min-width: 60px; max-width: 300px; }
+        .ordenes-table th:nth-child(9), .ordenes-table td:nth-child(9) { width: 60px; min-width: 60px; max-width: 300px; }
+        .ordenes-table th:nth-child(10), .ordenes-table td:nth-child(10) { width: 60px; min-width: 60px; max-width: 300px; }
+        .ordenes-table th:nth-child(11), .ordenes-table td:nth-child(11) { width: 70px; min-width: 70px; max-width: 300px; }
+        .ordenes-table th:nth-child(12), .ordenes-table td:nth-child(12) { width: 80px; min-width: 80px; max-width: 300px; }
+        .ordenes-table th:nth-child(13), .ordenes-table td:nth-child(13) { width: 150px; min-width: 150px; max-width: 400px; }
 
         .resize-handle {
             position: absolute;
@@ -204,8 +205,10 @@
             cursor: col-resize;
             background: transparent;
             z-index: 11;
+            user-select: none;
         }
 
+        .resize-handle:hover,
         .resize-handle.active {
             background: #007bff;
         }
@@ -660,7 +663,7 @@
 
     <div id="downloadMesModal" class="modal">
         <div class="modal-content">
-            <span class="close" id="closeDownloadMes">×</span>
+            <span class="close" id="closeDownloadMes">x</span>
             <h2>Descargar por Mes</h2>
             <div class="modal-form-group">
                 <label for="selectDownloadAno">Año:</label>
@@ -730,10 +733,7 @@
             if (!value) return null;
             if (typeof value === 'number') {
                 const date = XLSX.SSF.parse_date_code(value);
-                if (date) {
-                    const d = new Date(date.y, date.m - 1, date.d);
-                    return d.toISOString();
-                }
+                if (date) return new Date(date.y, date.m - 1, date.d).toISOString();
             }
             if (typeof value === 'string') {
                 const cleaned = value.trim().replace(/[/\.]/g, '-');
@@ -741,14 +741,11 @@
                 if (match) {
                     const [_, d, m, y] = match.map(Number);
                     if (d >= 1 && d <= 31 && m >= 1 && m <= 12 && y >= 1900 && y <= 2100) {
-                        const date = new Date(y, m - 1, d);
-                        return date.toISOString();
+                        return new Date(y, m - 1, d).toISOString();
                     }
                 }
             }
-            if (value && typeof value === 'object') {
-                return parseExcelDate(value.w || value.v || '');
-            }
+            if (value && typeof value === 'object') return parseExcelDate(value.w || value.v || '');
             return null;
         }
 
@@ -931,7 +928,7 @@
         function populateMesSelect(select, ano) {
             select.innerHTML = '<option value="">Todos</option>';
             if (ano && mesesPorAno[ano]) {
-                const mesesOrden = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+                const mesesOrden = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
                 Array.from(mesesPorAno[ano])
                     .sort((a, b) => mesesOrden.indexOf(a.toLowerCase()) - mesesOrden.indexOf(b.toLowerCase()))
                     .forEach(mes => {
@@ -1028,7 +1025,6 @@
 
                     for (let i = 0; i < json.length; i++) {
                         const row = json[i];
-
                         const generacionISO = parseExcelDate(row.generacion);
                         const autorizacionISO = parseExcelDate(row.autorizacion);
 
@@ -1060,9 +1056,7 @@
                         const existing = await getOrdenByCodigo(processedRow.codigo);
                         if (existing) {
                             const hasChanges = Object.keys(processedRow).some(k => {
-                                if (k === 'generacion' || k === 'autorizacion') {
-                                    return processedRow[k] !== (existing[k] || '');
-                                }
+                                if (k === 'generacion' || k === 'autorizacion') return processedRow[k] !== (existing[k] || '');
                                 return processedRow[k] !== String(existing[k] || '').trim();
                             });
                             if (hasChanges) {
@@ -1141,7 +1135,7 @@
                 ordenesBody.appendChild(tr);
             });
             updatePagination(filtered.length);
-            setupColumnResize(); // Se llama después de renderizar
+            setupColumnResize();
         }
 
         function updatePagination(total) {
@@ -1174,11 +1168,8 @@
             if (currentPage < totalPages) { currentPage++; renderTable(); }
         });
 
-        // === REDIMENSIONAMIENTO DE COLUMNAS ===
         function setupColumnResize() {
             const headers = document.querySelectorAll('.ordenes-table th');
-            const initialWidths = [8, 9, 9, 12, 10, 12, 10, 6, 6, 6, 7, 8, 15].map(p => p * 10);
-
             headers.forEach((header, index) => {
                 const existingHandle = header.querySelector('.resize-handle');
                 if (existingHandle) existingHandle.remove();
@@ -1186,6 +1177,7 @@
                 const resizeHandle = document.createElement('div');
                 resizeHandle.className = 'resize-handle';
                 header.appendChild(resizeHandle);
+                header.style.position = 'relative';
 
                 let isResizing = false;
                 let startX, startWidth;
@@ -1193,7 +1185,7 @@
                 const startResize = (e) => {
                     isResizing = true;
                     startX = e.pageX || (e.touches?.[0].pageX);
-                    startWidth = parseFloat(getComputedStyle(header).width);
+                    startWidth = header.offsetWidth;
                     resizeHandle.classList.add('active');
                     e.preventDefault();
                 };
@@ -1202,10 +1194,17 @@
                     if (!isResizing) return;
                     const clientX = e.pageX || (e.touches?.[0].pageX);
                     if (!clientX) return;
-                    const newWidth = Math.max(30, startWidth + (clientX - startX));
+                    const diff = clientX - startX;
+                    const newWidth = Math.max(60, Math.min(400, startWidth + diff));
                     header.style.width = `${newWidth}px`;
+                    header.style.minWidth = `${newWidth}px`;
+                    header.style.maxWidth = `${newWidth}px`;
                     const cells = document.querySelectorAll(`.ordenes-table td:nth-child(${index + 1})`);
-                    cells.forEach(cell => cell.style.width = `${newWidth}px`);
+                    cells.forEach(cell => {
+                        cell.style.width = `${newWidth}px`;
+                        cell.style.minWidth = `${newWidth}px`;
+                        cell.style.maxWidth = `${newWidth}px`;
+                    });
                 };
 
                 const stopResize = () => {
@@ -1223,7 +1222,6 @@
                 document.addEventListener('touchend', stopResize);
             });
         }
-        // === FIN REDIMENSIONAMIENTO ===
     });
     </script>
 </body>
