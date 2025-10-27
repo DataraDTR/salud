@@ -512,6 +512,8 @@ document.addEventListener('DOMContentLoaded', () => {
             showToast('Error al cargar datos del usuario.', 'error');
         }
         await loadIngresos();
+        currentPage = mesesDisponibles.length || 1;
+        renderTable();
         populateAnoSelect(selectAno);
         selectAno.value = selectedAno;
         populateMesSelect(selectMes, selectedAno);
@@ -714,6 +716,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 await loadIngresos();
 
+                currentPage = mesesDisponibles.length || 1;
+                renderTable();
+
                 // No forzamos la selección del mes/año del nuevo ingreso
                 populateAnoSelect(selectAno);
                 populateMesSelect(selectMes, selectedAno);
@@ -732,9 +737,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (buscarSalidasInput) buscarSalidasInput.value = '';
                 if (fechaDesdeInput) fechaDesdeInput.value = '';
                 if (fechaHastaInput) fechaHastaInput.value = '';
-
-                currentPage = 1;
-                renderTable();
 
             } catch (error) {
                 hideLoading();
@@ -819,7 +821,6 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             ingresos.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-            renderTable();
             hideLoading();
         } catch (error) {
             hideLoading();
@@ -1255,6 +1256,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 hideImportProgress();
                 showToast(`Importación completada: ${addedCount} ingresos añadidos.`, 'success');
                 await loadIngresos();
+                currentPage = mesesDisponibles.length || 1;
+                renderTable();
             };
             reader.readAsArrayBuffer(file);
         } catch (error) {
