@@ -422,7 +422,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 showToast(`Ingreso ${processedRow.numeroFactura} actualizado exitosamente`, 'success');
                 closeEditModalHandler();
                 await loadIngresos();
-                currentPage = mesesDisponibles.length || 1;
+                setInitialPage();
                 renderTable();
             } catch (error) {
                 hideLoading();
@@ -447,7 +447,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 showToast(`Ingreso ${currentDeleteNumeroFactura} eliminado exitosamente`, 'success');
                 closeDeleteModalHandler();
                 await loadIngresos();
-                currentPage = mesesDisponibles.length || 1;
+                setInitialPage();
                 renderTable();
             } else {
                 hideLoading();
@@ -539,10 +539,28 @@ document.addEventListener('DOMContentLoaded', () => {
         populateAnoSelect(selectDownloadAno);
     });
 
+    function areFiltersEmpty() {
+        return (
+            !searchNumeroFactura &&
+            !searchProveedor &&
+            !searchOrdenCompra &&
+            !searchActa &&
+            !searchSalidas &&
+            !fechaDesde &&
+            !fechaHasta &&
+            !selectedAno &&
+            !selectedMes
+        );
+    }
+
     if (buscarNumeroFacturaInput) {
         buscarNumeroFacturaInput.addEventListener('input', (e) => {
             searchNumeroFactura = e.target.value.trim();
-            currentPage = 1;
+            if (areFiltersEmpty()) {
+                setInitialPage();
+            } else {
+                currentPage = 1;
+            }
             renderTable();
         });
     }
@@ -550,7 +568,11 @@ document.addEventListener('DOMContentLoaded', () => {
     if (buscarProveedorInput) {
         buscarProveedorInput.addEventListener('input', (e) => {
             searchProveedor = e.target.value.trim();
-            currentPage = 1;
+            if (areFiltersEmpty()) {
+                setInitialPage();
+            } else {
+                currentPage = 1;
+            }
             renderTable();
         });
     }
@@ -558,7 +580,11 @@ document.addEventListener('DOMContentLoaded', () => {
     if (buscarOrdenCompraInput) {
         buscarOrdenCompraInput.addEventListener('input', (e) => {
             searchOrdenCompra = e.target.value.trim();
-            currentPage = 1;
+            if (areFiltersEmpty()) {
+                setInitialPage();
+            } else {
+                currentPage = 1;
+            }
             renderTable();
         });
     }
@@ -566,7 +592,11 @@ document.addEventListener('DOMContentLoaded', () => {
     if (buscarActaInput) {
         buscarActaInput.addEventListener('input', (e) => {
             searchActa = e.target.value.trim();
-            currentPage = 1;
+            if (areFiltersEmpty()) {
+                setInitialPage();
+            } else {
+                currentPage = 1;
+            }
             renderTable();
         });
     }
@@ -574,7 +604,11 @@ document.addEventListener('DOMContentLoaded', () => {
     if (buscarSalidasInput) {
         buscarSalidasInput.addEventListener('input', (e) => {
             searchSalidas = e.target.value.trim();
-            currentPage = 1;
+            if (areFiltersEmpty()) {
+                setInitialPage();
+            } else {
+                currentPage = 1;
+            }
             renderTable();
         });
     }
@@ -582,7 +616,11 @@ document.addEventListener('DOMContentLoaded', () => {
     if (fechaDesdeInput) {
         fechaDesdeInput.addEventListener('change', (e) => {
             fechaDesde = e.target.value;
-            currentPage = 1;
+            if (areFiltersEmpty()) {
+                setInitialPage();
+            } else {
+                currentPage = 1;
+            }
             renderTable();
         });
     }
@@ -590,7 +628,11 @@ document.addEventListener('DOMContentLoaded', () => {
     if (fechaHastaInput) {
         fechaHastaInput.addEventListener('change', (e) => {
             fechaHasta = e.target.value;
-            currentPage = 1;
+            if (areFiltersEmpty()) {
+                setInitialPage();
+            } else {
+                currentPage = 1;
+            }
             renderTable();
         });
     }
@@ -599,7 +641,11 @@ document.addEventListener('DOMContentLoaded', () => {
         selectAno.addEventListener('change', (e) => {
             selectedAno = e.target.value;
             populateMesSelect(selectMes, selectedAno);
-            currentPage = 1;
+            if (areFiltersEmpty()) {
+                setInitialPage();
+            } else {
+                currentPage = 1;
+            }
             renderTable();
         });
     }
@@ -607,7 +653,11 @@ document.addEventListener('DOMContentLoaded', () => {
     if (selectMes) {
         selectMes.addEventListener('change', (e) => {
             selectedMes = e.target.value;
-            currentPage = 1;
+            if (areFiltersEmpty()) {
+                setInitialPage();
+            } else {
+                currentPage = 1;
+            }
             renderTable();
         });
     }
@@ -737,7 +787,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 setInitialPage();
                 renderTable();
 
-                // Mantener los filtros de búsqueda vacíos
+                // Limpiar los filtros de búsqueda
                 searchNumeroFactura = '';
                 searchProveedor = '';
                 searchOrdenCompra = '';
@@ -745,6 +795,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 searchSalidas = '';
                 fechaDesde = '';
                 fechaHasta = '';
+                selectedAno = '';
+                selectedMes = '';
                 if (buscarNumeroFacturaInput) buscarNumeroFacturaInput.value = '';
                 if (buscarProveedorInput) buscarProveedorInput.value = '';
                 if (buscarOrdenCompraInput) buscarOrdenCompraInput.value = '';
@@ -752,6 +804,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (buscarSalidasInput) buscarSalidasInput.value = '';
                 if (fechaDesdeInput) fechaDesdeInput.value = '';
                 if (fechaHastaInput) fechaHastaInput.value = '';
+                if (selectAno) selectAno.value = '';
+                if (selectMes) selectMes.value = '';
 
             } catch (error) {
                 hideLoading();
