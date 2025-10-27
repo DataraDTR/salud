@@ -40,9 +40,21 @@ function parseDateDDMMYYYY(dateStr) {
         return date && !isNaN(date) ? date : null;
     }
     const normalized = String(dateStr).replace(/[\/.]/g, '-');
-    const [day, month, year] = normalized.split('-').map(Number);
-    if (!day || !month || !year || isNaN(day) || isNaN(month) || isNaN(year)) return null;
-    return new Date(year, month - 1, day);
+    const parts = normalized.split('-');
+    if (parts.length !== 3) return null;
+    const [day, month, year] = parts.map(Number);
+    if (isNaN(day) || isNaN(month) || isNaN(year)) return null;
+    return new Date(year, month - 1, day, 12, 0, 0, 0);
+}
+
+function formatDateToYYYYMMDD(date) {
+    if (!date) return '';
+    const d = new Date(date);
+    if (isNaN(d)) return '';
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
 }
 
 function formatDateToDDMMYYYY(date) {
@@ -52,15 +64,6 @@ function formatDateToDDMMYYYY(date) {
     const month = String(d.getMonth() + 1).padStart(2, '0');
     const year = d.getFullYear();
     return `${day}-${month}-${year}`;
-}
-
-function formatDateToYYYYMMDD(date) {
-    if (!date || isNaN(new Date(date))) return '';
-    const d = new Date(date);
-    const day = String(d.getDate()).padStart(2, '0');
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const year = d.getFullYear();
-    return `${year}-${month}-${day}`;
 }
 
 function excelSerialToDate(serial) {
@@ -124,6 +127,7 @@ async function fixInvalidDateFormats() {
             const data = doc.data();
             let needsUpdate = false;
             const updates = {};
+
             const convertTimestampToString = (value) => {
                 if (value && typeof value === 'object' && 'toDate' in value) {
                     const date = value.toDate();
@@ -131,6 +135,7 @@ async function fixInvalidDateFormats() {
                 }
                 return value;
             };
+
             if (data.fechaIngreso && typeof data.fechaIngreso === 'object' && 'toDate' in data.fechaIngreso) {
                 updates.fechaIngreso = convertTimestampToString(data.fechaIngreso);
                 needsUpdate = true;
@@ -147,6 +152,7 @@ async function fixInvalidDateFormats() {
                 updates.fechaSalida = convertTimestampToString(data.fechaSalida);
                 needsUpdate = true;
             }
+
             if (needsUpdate) {
                 await updateDoc(doc.ref, updates);
                 fixedCount++;
@@ -259,7 +265,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (importProgress && progressBar && progressText) {
             importProgress.classList.add('show');
             progressBar.style.width = `${percent}%`;
-            progressText.textContent = `Importando: ${Math.round(percent)}%`;
+            progressText.textContent = `Import. ${Math.round(percent)}%`;
         }
     }
 
@@ -376,15 +382,15 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!currentEditId) return;
 
         const processedRow = {
-            fechaIngreso: document.getElementById('editFechaIngreso').value ? formatDateToDDMMYYYY(parseDateDDMMYYYY(document.getElementById('editFechaIngreso').value.replace(/-/g, '/'))) : '',
+            fechaIngreso: document.getElementById('editFechaIngreso').value ? formatDateToDDMMYYYY(parseDateDDMMYYYY(document.getElementById('editFechaIngreso').value)) : '',
             numeroFactura: document.getElementById('editNumeroFactura').value.trim(),
-            fechaFactura: document.getElementById('editFechaFactura').value ? formatDateToDDMMYYYY(parseDateDDMMYYYY(document.getElementById('editFechaFactura').value.replace(/-/g, '/'))) : '',
+            fechaFactura: document.getElementById('editFechaFactura').value ? formatDateToDDMMYYYY(parseDateDDMMYYYY(document.getElementById('editFechaFactura').value)) : '',
             monto: document.getElementById('editMonto').value.replace(/[^\d]/g, ''),
             oc: document.getElementById('editOrdenCompra').value.trim(),
             fechaOc: document.getElementById('editFechaOc').value,
             proveedor: document.getElementById('editProveedor').value,
             acta: document.getElementById('editActa').value.trim(),
-            fechaSalida: document.getElementById('editFechaSalida').value ? formatDateToDDMMYYYY(parseDateDDMMYYYY(document.getElementById('editFechaSalida').value.replace(/-/g, '/'))) : '',
+            fechaSalida: document.getElementById('editFechaSalida').value ? formatDateToDDMMYYYY(parseDateDDMMYYYY(document.getElementById('editFechaSalida').value)) : '',
             salida: document.getElementById('editSalida').value.trim(),
             fullName: window.currentUserData.fullName
         };
@@ -670,15 +676,15 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const processedRow = {
-                fechaIngreso: formatDateToDDMMYYYY(fechaIngresoRaw),
+                fechaIngreso: formatDateToDDMMYYYY(parseDateDDMMYYYY(fechaIngresoRaw)),
                 numeroFactura,
-                fechaFactura: fechaFacturaInput.value ? formatDateToDDMMYYYY(fechaFacturaInput.value) : '',
+                fechaFactura: fechaFacturaInput.value ? formatDateToDDMMYYYY(parseDateDDMMYYYY(fechaFacturaInput.value)) : '',
                 monto: montoInput.value.replace(/[^\d]/g, ''),
                 oc: ordenCompraInput.value.trim(),
                 fechaOc: fechaOcInput.value,
                 proveedor: proveedorInput.value,
                 acta: actaInput.value.trim(),
-                fechaSalida: fechaSalidaInput.value ? formatDateToDDMMYYYY(fechaSalidaInput.value) : '',
+                fechaSalida: fechaSalidaInput.value ? formatDateToDDMMYYYY(parseDateDDMMYYYY(fechaSalidaInput.value)) : '',
                 salida: salidaInput.value.trim(),
                 fullName: window.currentUserData?.fullName || 'Usuario Invitado',
                 createdAt: new Date()
@@ -867,8 +873,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     String(ingreso.oc || '').toLowerCase().includes(searchOrdenCompra.toLowerCase()) &&
                     String(ingreso.acta || '').toLowerCase().includes(searchActa.toLowerCase()) &&
                     String(ingreso.salida || '').toLowerCase().includes(searchSalidas.toLowerCase()) &&
-                    (!fechaDesde || parseDateDDMMYYYY(ingreso.fechaIngreso) >= parseDateDDMMYYYY(fechaDesde.replace(/-/g, '/'))) &&
-                    (!fechaHasta || parseDateDDMMYYYY(ingreso.fechaIngreso) <= parseDateDDMMYYYY(fechaHasta.replace(/-/g, '/'))) &&
+                    (!fechaDesde || parseDateDDMMYYYY(ingreso.fechaIngreso) >= parseDateDDMMYYYY(fechaDesde)) &&
+                    (!fechaHasta || parseDateDDMMYYYY(ingreso.fechaIngreso) <= parseDateDDMMYYYY(fechaHasta)) &&
                     (!selectedAno || parseDateDDMMYYYY(ingreso.fechaIngreso).getFullYear().toString() === selectedAno)
                 );
             }).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
@@ -883,8 +889,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 String(ingreso.oc || '').toLowerCase().includes(searchOrdenCompra.toLowerCase()) &&
                 String(ingreso.acta || '').toLowerCase().includes(searchActa.toLowerCase()) &&
                 String(ingreso.salida || '').toLowerCase().includes(searchSalidas.toLowerCase()) &&
-                (!fechaDesde || parseDateDDMMYYYY(ingreso.fechaIngreso) >= parseDateDDMMYYYY(fechaDesde.replace(/-/g, '/'))) &&
-                (!fechaHasta || parseDateDDMMYYYY(ingreso.fechaIngreso) <= parseDateDDMMYYYY(fechaHasta.replace(/-/g, '/'))) &&
+                (!fechaDesde || parseDateDDMMYYYY(ingreso.fechaIngreso) >= parseDateDDMMYYYY(fechaDesde)) &&
+                (!fechaHasta || parseDateDDMMYYYY(ingreso.fechaIngreso) <= parseDateDDMMYYYY(fechaHasta)) &&
                 (!selectedAno || fechaIngresoDate.getFullYear().toString() === selectedAno)
             );
         }).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
