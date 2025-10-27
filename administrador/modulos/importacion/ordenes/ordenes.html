@@ -146,6 +146,7 @@
             border: 1px solid #ddd;
             border-radius: 4px;
             margin-bottom: 20px;
+            position: relative;
         }
 
         .ordenes-table {
@@ -164,6 +165,7 @@
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+            position: relative;
         }
 
         .ordenes-table th {
@@ -192,6 +194,21 @@
         .ordenes-table th:nth-child(11), .ordenes-table td:nth-child(11) { width: 7%; }
         .ordenes-table th:nth-child(12), .ordenes-table td:nth-child(12) { width: 8%; }
         .ordenes-table th:nth-child(13), .ordenes-table td:nth-child(13) { width: 15%; }
+
+        .resize-handle {
+            position: absolute;
+            right: 0;
+            top: 0;
+            width: 5px;
+            height: 100%;
+            cursor: col-resize;
+            background: transparent;
+            z-index: 11;
+        }
+
+        .resize-handle.active {
+            background: #007bff;
+        }
 
         .ordenes-pagination {
             display: flex;
@@ -1124,6 +1141,7 @@
                 ordenesBody.appendChild(tr);
             });
             updatePagination(filtered.length);
+            setupColumnResize(); // Se llama después de renderizar
         }
 
         function updatePagination(total) {
@@ -1155,6 +1173,57 @@
             const totalPages = Math.ceil(getFilteredOrdenes().length / PAGE_SIZE);
             if (currentPage < totalPages) { currentPage++; renderTable(); }
         });
+
+        // === REDIMENSIONAMIENTO DE COLUMNAS ===
+        function setupColumnResize() {
+            const headers = document.querySelectorAll('.ordenes-table th');
+            const initialWidths = [8, 9, 9, 12, 10, 12, 10, 6, 6, 6, 7, 8, 15].map(p => p * 10);
+
+            headers.forEach((header, index) => {
+                const existingHandle = header.querySelector('.resize-handle');
+                if (existingHandle) existingHandle.remove();
+
+                const resizeHandle = document.createElement('div');
+                resizeHandle.className = 'resize-handle';
+                header.appendChild(resizeHandle);
+
+                let isResizing = false;
+                let startX, startWidth;
+
+                const startResize = (e) => {
+                    isResizing = true;
+                    startX = e.pageX || (e.touches?.[0].pageX);
+                    startWidth = parseFloat(getComputedStyle(header).width);
+                    resizeHandle.classList.add('active');
+                    e.preventDefault();
+                };
+
+                const resize = (e) => {
+                    if (!isResizing) return;
+                    const clientX = e.pageX || (e.touches?.[0].pageX);
+                    if (!clientX) return;
+                    const newWidth = Math.max(30, startWidth + (clientX - startX));
+                    header.style.width = `${newWidth}px`;
+                    const cells = document.querySelectorAll(`.ordenes-table td:nth-child(${index + 1})`);
+                    cells.forEach(cell => cell.style.width = `${newWidth}px`);
+                };
+
+                const stopResize = () => {
+                    if (isResizing) {
+                        isResizing = false;
+                        resizeHandle.classList.remove('active');
+                    }
+                };
+
+                resizeHandle.addEventListener('mousedown', startResize);
+                resizeHandle.addEventListener('touchstart', startResize, { passive: false });
+                document.addEventListener('mousemove', resize);
+                document.addEventListener('touchmove', resize, { passive: false });
+                document.addEventListener('mouseup', stopResize);
+                document.addEventListener('touchend', stopResize);
+            });
+        }
+        // === FIN REDIMENSIONAMIENTO ===
     });
     </script>
 </body>
