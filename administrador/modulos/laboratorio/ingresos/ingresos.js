@@ -42,30 +42,30 @@ function parseDateDDMMYYYY(dateStr) {
     const normalized = String(dateStr).replace(/[\/.]/g, '-');
     const [day, month, year] = normalized.split('-').map(Number);
     if (!day || !month || !year || isNaN(day) || isNaN(month) || isNaN(year)) return null;
-    return new Date(year, month - 1, day);
+    return new Date(Date.UTC(year, month - 1, day));
 }
 
 function formatDateToDDMMYYYY(date) {
     if (!date || isNaN(new Date(date))) return '';
     const d = new Date(date);
-    const day = String(d.getDate()).padStart(2, '0');
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const year = d.getFullYear();
+    const day = String(d.getUTCDate()).padStart(2, '0');
+    const month = String(d.getUTCMonth() + 1).padStart(2, '0');
+    const year = d.getUTCFullYear();
     return `${day}-${month}-${year}`;
 }
 
 function formatDateToYYYYMMDD(date) {
     if (!date || isNaN(new Date(date))) return '';
     const d = new Date(date);
-    const day = String(d.getDate()).padStart(2, '0');
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const year = d.getFullYear();
+    const day = String(d.getUTCDate()).padStart(2, '0');
+    const month = String(d.getUTCMonth() + 1).padStart(2, '0');
+    const year = d.getUTCFullYear();
     return `${year}-${month}-${day}`;
 }
 
 function excelSerialToDate(serial) {
     if (!serial || isNaN(serial)) return null;
-    const excelEpoch = new Date(1899, 11, 30);
+    const excelEpoch = new Date(Date.UTC(1899, 11, 30));
     const days = Math.floor(serial);
     const milliseconds = (serial - days) * 24 * 60 * 60 * 1000;
     const date = new Date(excelEpoch.getTime() + days * 24 * 60 * 60 * 1000 + milliseconds);
@@ -127,7 +127,7 @@ async function fixInvalidDateFormats() {
             const convertTimestampToString = (value) => {
                 if (value && typeof value === 'object' && 'toDate' in value) {
                     const date = value.toDate();
-                    return formatDateToDDMMYYYY(date);
+                    return date && !isNaN(date) ? formatDateToDDMMYYYY(date) : '';
                 }
                 return value;
             };
@@ -213,7 +213,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const deleteModal = document.getElementById('deleteModal');
     const historyModal = document.getElementById('historyModal');
     const closeEditModal = document.getElementById('closeEditModal');
-    const cancelEdit = document.getElementById('cancelEdit');
+    const/* Continuación del código */
+    cancelEdit = document.getElementById('cancelEdit');
     const editForm = document.getElementById('editForm');
     const closeDeleteModal = document.getElementById('closeDeleteModal');
     const cancelDelete = document.getElementById('cancelDelete');
