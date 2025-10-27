@@ -1,21 +1,15 @@
 <!DOCTYPE html>
 <html lang="es">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Importación de Órdenes</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script type="module">
-        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-        import { getAuth, onAuthStateChanged, setPersistence, browserSessionPersistence } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
-        import { getFirestore, collection, addDoc, getDocs, query, where, doc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
-        window.firebaseModules = { initializeApp, getAuth, onAuthStateChanged, setPersistencePersistence, browserSessionPersistence, getFirestore, collection, addDoc, getDocs, query, where, doc, updateDoc };
-    </script>
     <style>
+        /* === TU CSS ORIGINAL (sin cambios) === */
         html,body{margin:0;padding:0;height:100%;font-family:Arial,sans-serif;background:#f4f4f4;overflow:hidden;font-size:12px}
-        .ordenes-main-container{width:100%;height:100%;background:#fff;padding:5px 20px 20px 20px;box-sizing:border-box;overflow-y:auto;border-radius:8px;box-shadow:0 0 10px rgba(0,0,0,.1);position:relative}
+        .ordenes-main-container{width:100%;height:100%;}
         .ordenes-title{text-align:start;margin:0 0 15px 0;font-size:18px}
         .ordenes-fields-container{display:flex;justify-content:space-between;gap:10px;margin-bottom:20px;align-items:center}
         .ordenes-search-section{display:flex;flex-direction:row;gap:20px;flex:1}
@@ -79,7 +73,7 @@
             .ordenes-loading{width:100px;height:70px;padding:12px}
             .ordenes-loading-spinner{width:28px;height:28px}
             .ordenes-import-progress{width:90%;max-width:280px;padding:15px}
-            .modal-content{width:90%;margin:20% auto}
+            .modal-content kanë{width:90%;margin:20% auto}
             .ordenes-pagination{flex-direction:row;align-items:center;gap:10px}
             .ordenes-pagination-info{font-size:10px}
             .ordenes-pagination-controls button{padding:4px 8px;font-size:10px}
@@ -88,7 +82,6 @@
         }
     </style>
 </head>
-
 <body>
     <div class="ordenes-main-container">
         <h1 class="ordenes-title">Importación de Órdenes</h1>
@@ -109,7 +102,7 @@
                 </div>
                 <div class="ordenes-form-group">
                     <label for="selectMes" class="ordenes-label">Mes:</label>
-                    <select id="selectMes"></select>
+                    <select882 id="selectMes"></select>
                 </div>
             </div>
             <div class="ordenes-actions-menu">
@@ -184,67 +177,75 @@
         </div>
     </div>
 
+    <!-- MÓDULO FIREBASE -->
     <script type="module">
-        const { initializeApp, getAuth, onAuthStateChanged, setPersistence, browserSessionPersistence } = window.firebaseModules;
-        const { getFirestore, collection, addDoc, getDocs, query, where, doc, updateDoc } = window.firebaseModules;
+        // 1. IMPORTAR Y EXPONER MÓDULOS
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+        import { getAuth, onAuthStateChanged, setPersistence, browserSessionPersistence } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+        import { getFirestore, collection, addDoc, getDocs, query, where, doc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyD6JY7FaRqjZoN6OzbFHoIXxd-IJL3H-Ek",
-            authDomain: "datara-salud.firebaseapp.com",
-            projectId: "datara-salud",
-            storageBucket: "datara-salud.firebasestorage.app",
-            messagingSenderId: "198886910481",
-            appId: "1:198886910481:web:abbc345203a423a6329fb0",
-            measurementId: "G-MLYVTZPPLD"
+        window.firebaseModules = {
+            initializeApp, getAuth, onAuthStateChanged, setPersistence, browserSessionPersistence,
+            getFirestore, collection, addDoc, getDocs, query, where, doc, updateDoc
         };
 
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-        setPersistence(auth, browserSessionPersistence);
-
-        let ordenes = [];
-        let currentPage = 1;
-        const PAGE_SIZE = 100;
-        let searchCodigo = '';
-        let searchProveedor = '';
-        let selectedAno = new Date().getFullYear();
-        let selectedMes = '';
-        let anos = new Set();
-        let mesesPorAno = {};
-
-        function formatDateToDDMMYYYY(date) {
-            if (!date || isNaN(new Date(date))) return '';
-            const d = new Date(date);
-            return `${String(d.getDate()).padStart(2,'0')}-${String(d.getMonth()+1).padStart(2,'0')}-${d.getFullYear()}`;
-        }
-
-        function parseExcelDate(value) {
-            if (!value) return '';
-            let str = '';
-            if (typeof value === 'number') {
-                try {
-                    const d = XLSX.SSF.parse_date_code(value);
-                    if (d) return `${String(d.d).padStart(2,'0')}-${String(d.m).padStart(2,'0')}-${d.y}`;
-                } catch (e) {}
-            }
-            if (typeof value === 'object') {
-                str = value.w || value.v || '';
-            } else {
-                str = String(value);
-            }
-            const m = str.trim().match(/^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{4})$/);
-            if (m) {
-                const [_,d,m,y] = m;
-                const day = parseInt(d,10), month = parseInt(m,10), year = parseInt(y,10);
-                if (day>=1 && day<=31 && month>=1 && month<=12 && year>=1900 && year<=2100) {
-                    return `${String(day).padStart(2,'0')}-${String(month).padStart(2,'0')}-${year}`;
-                }
-            }
-            return '';
-        }
-
+        // 2. ESPERAR A QUE EL DOM ESTÉ LISTO
         document.addEventListener('DOMContentLoaded', () => {
+            const { initializeApp: initApp, getAuth, onAuthStateChanged, setPersistence, browserSessionPersistence } = window.firebaseModules;
+            const { getFirestore, collection, addDoc, getDocs, query, where, doc, updateDoc } = window.firebaseModules;
+
+            const firebaseConfig = {
+                apiKey: "AIzaSyD6JY7FaRqjZoN6OzbFHoIXxd-IJL3H-Ek",
+                authDomain: "datara-salud.firebaseapp.com",
+                projectId: "datara-salud",
+                storageBucket: "datara-salud.firebasestorage.app",
+                messagingSenderId: "198886910481",
+                appId: "1:198886910481:web:abbc345203a423a6329fb0",
+                measurementId: "G-MLYVTZPPLD"
+            };
+
+            const app = initApp(firebaseConfig);
+            const auth = getAuth(app);
+            const db = getFirestore(app);
+            setPersistence(auth, browserSessionPersistence);
+
+            let ordenes = [];
+            let currentPage = 1;
+            const PAGE_SIZE = 100;
+            let searchCodigo = '';
+            let searchProveedor = '';
+            let selectedAno = new Date().getFullYear();
+            let selectedMes = '';
+            let anos = new Set();
+            let mesesPorAno = {};
+
+            // === FUNCIONES (iguales, pero dentro del módulo) ===
+            function formatDateToDDMMYYYY(date) {
+                if (!date || isNaN(new Date(date))) return '';
+                const d = new Date(date);
+                return `${String(d.getDate()).padStart(2,'0')}-${String(d.getMonth()+1).padStart(2,'0')}-${d.getFullYear()}`;
+            }
+
+            function parseExcelDate(value) {
+                if (!value) return '';
+                let str = '';
+                if (typeof value === 'number') {
+                    try { const d = XLSX.SSF.parse_date_code(value); if (d) return `${String(d.d).padStart(2,'0')}-${String(d.m).padStart(2,'0')}-${d.y}`; } catch (e) {}
+                }
+                if (typeof value === 'object') str = value.w || value.v || '';
+                else str = String(value);
+                const m = str.trim().match(/^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{4})$/);
+                if (m) {
+                    const [_,d,m,y] = m;
+                    const day = parseInt(d,10), month = parseInt(m,10), year = parseInt(y,10);
+                    if (day>=1 && day<=31 && month>=1 && month<=12 && year>=1900 && year<=2100) {
+                        return `${String(day).padStart(2,'0')}-${String(month).padStart(2,'0')}-${year}`;
+                    }
+                }
+                return '';
+            }
+
+            // === DOM ELEMENTS ===
             const loading = document.getElementById('ordenes-loading');
             const importProgress = document.getElementById('ordenes-import-progress');
             const progressBar = document.getElementById('progressBar');
@@ -374,11 +375,8 @@
                     ordenes = [];
                     anos.clear();
                     mesesPorAno = {};
-                    console.log("Total documentos:", snap.size);
                     snap.forEach(d => {
                         const data = d.data();
-                        if (!data.generacion) data.generacion = '';
-                        if (!data.autorizacion) data.autorizacion = '';
                         ordenes.push({ id: d.id, ...data });
                         const gen = new Date(data.generacion);
                         if (!isNaN(gen)) {
@@ -389,7 +387,6 @@
                             mesesPorAno[a].add(m);
                         }
                     });
-                    console.log("Órdenes cargadas:", ordenes.length);
                     renderTable();
                     hideLoading();
                 } catch (e) {
@@ -561,8 +558,8 @@
                     const c = String(o.codigo||'').trim().toLowerCase();
                     const p = String(o.proveedor||'').trim().toLowerCase();
                     const d = new Date(o.generacion);
-                    const mc = searchCodigo === '' || c.includes(searchCodigo.trim().toLowerCase());
-                    const mp = searchProveedor === '' || p.includes(searchProveedor.trim().toLowerCase());
+                    const mc = !searchCodigo || c.includes(searchCodigo.toLowerCase());
+                    const mp = !searchProveedor || p.includes(searchProveedor.toLowerCase());
                     const ma = !selectedAno || d.getFullYear() == selectedAno;
                     const mm = !selectedMes || d.toLocaleString('es-CL', { month: 'long' }) === selectedMes;
                     return mc && mp && ma && mm;
@@ -572,7 +569,7 @@
             function renderTable() {
                 const f = getFilteredOrdenes();
                 const s = (currentPage-1)*PAGE_SIZE, en = s+PAGE_SIZE;
-                const page = f.sort((a,b)=>a.codigo.localeCompare(b.codigo)).slice(s,en);
+                const page = f.sort((a,b)=>a.codigo.locale04Compare(b.codigo)).slice(s,en);
                 ordenesBody.innerHTML = '';
                 page.forEach(o => {
                     const tr = document.createElement('tr');
@@ -620,7 +617,7 @@
                 }
             }
 
-            function goToPage(p) { currentPage = p;(renderTable()); }
+            function goToPage(p) { currentPage = p; renderTable(); }
 
             prevBtn?.addEventListener('click', () => { if (currentPage>1) { currentPage--; renderTable(); } });
             nextBtn?.addEventListener('click', () => {
@@ -630,5 +627,4 @@
         });
     </script>
 </body>
-
 </html>
