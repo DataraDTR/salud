@@ -466,15 +466,15 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 const data = await getIngresosByMes(ano, mes);
                 exportToExcel(data.map(i => ({
-                    fechaIngreso: formatDateToDDMMYYYY(parseDateDDMMYYYY(i.fechaIngreso)),
+                    fechaIngreso: i.fechaIngreso,
                     numeroFactura: i.numeroFactura,
-                    fechaFactura: formatDateToDDMMYYYY(parseDateDDMMYYYY(i.fechaFactura)),
+                    fechaFactura: i.fechaFactura,
                     monto: formatNumberWithThousandsSeparator(i.monto),
                     oc: i.oc,
-                    fechaOc: formatDateToDDMMYYYY(parseDateDDMMYYYY(i.fechaOc)),
+                    fechaOc: i.fechaOc,
                     proveedor: i.proveedor,
                     acta: i.acta,
-                    fechaSalida: formatDateToDDMMYYYY(parseDateDDMMYYYY(i.fechaSalida)),
+                    fechaSalida: i.fechaSalida,
                     salida: i.salida,
                     fullName: i.fullName
                 })), `ingresos_${ano}_${mes}`);
@@ -625,6 +625,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 fechaOcInput.value = '';
             }
         });
+ currently
     }
 
     if (document.getElementById('editOrdenCompra')) {
@@ -772,13 +773,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const normalizeDate = (dateValue) => {
                 if (!dateValue) return '';
-                if (typeof dateValue === 'object' && 'toDate' in dateValue) {
-                    return formatDateToDDMMYYYY(dateValue.toDate());
-                }
                 if (typeof dateValue === 'string') {
                     const cleaned = dateValue.trim().replace(/[\/.]/g, '-');
+                    if (/^\d{2}-\d{2}-\d{4}$/.test(cleaned)) {
+                        return cleaned;
+                    }
                     const parsed = parseDateDDMMYYYY(cleaned);
                     return parsed ? formatDateToDDMMYYYY(parsed) : '';
+                }
+                if (typeof dateValue === 'object' && 'toDate' in dateValue) {
+                    return formatDateToDDMMYYYY(dateValue.toDate());
                 }
                 return '';
             };
@@ -864,7 +868,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     String(ingreso.oc || '').toLowerCase().includes(searchOrdenCompra.toLowerCase()) &&
                     String(ingreso.acta || '').toLowerCase().includes(searchActa.toLowerCase()) &&
                     String(ingreso.salida || '').toLowerCase().includes(searchSalidas.toLowerCase()) &&
-                   (!fechaDesde || parseDateDDMMYYYY(ingreso.fechaIngreso) >= parseDateDDMMYYYY(fechaDesde.replace(/-/g, '/'))) &&
+                    (!fechaDesde || parseDateDDMMYYYY(ingreso.fechaIngreso) >= parseDateDDMMYYYY(fechaDesde.replace(/-/g, '/'))) &&
                     (!fechaHasta || parseDateDDMMYYYY(ingreso.fechaIngreso) <= parseDateDDMMYYYY(fechaHasta.replace(/-/g, '/'))) &&
                     (!selectedAno || parseDateDDMMYYYY(ingreso.fechaIngreso).getFullYear().toString() === selectedAno)
                 );
@@ -932,19 +936,19 @@ document.addEventListener('DOMContentLoaded', () => {
                     const row = document.createElement('tr');
                     row.innerHTML = `
                         <td class="ingresos-actions">
-                            <button title="Editar" class="ingresos-btn-edit" onclick="openEditModal('${ingreso.id}', ${JSON.stringify(ingreso).replace(/"/g, '&quot;')} )"><i class="fas fa-edit"></i></button>
-                            <button title="Eliminar" class="ingresos-btn-delete" onclick="openDeleteModal('${ingreso.id}', '${ingreso.numeroFactura}')"><i class="fas fa-trash"></i></button>
-                            <button title="Ver Historial" class="ingresos-btn-history" onclick="openHistoryModal('${ingreso.id}', '${ingreso.numeroFactura}')"><i class="fas fa-history"></i></button>
+                            <button title="Editar" class="ingresos-btn-edit" onclick="openEditModal('${ingreso.id}', ${JSON.stringify(ingreso).replace(/"/g, '&quot;')} )">Editar</button>
+                            <button title="Eliminar" class="ingresos-btn-delete" onclick="openDeleteModal('${ingreso.id}', '${ingreso.numeroFactura}')">Eliminar</button>
+                            <button title="Ver Historial" class="ingresos-btn-history" onclick="openHistoryModal('${ingreso.id}', '${ingreso.numeroFactura}')">Historial</button>
                         </td>
-                        <td>${formatDateToDDMMYYYY(parseDateDDMMYYYY(ingreso.fechaIngreso))}</td>
+                        <td>${ingreso.fechaIngreso || ''}</td>
                         <td>${ingreso.numeroFactura || ''}</td>
-                        <td>${formatDateToDDMMYYYY(parseDateDDMMYYYY(ingreso.fechaFactura))}</td>
+                        <td>${ingreso.fechaFactura || ''}</td>
                         <td>${formatNumberWithThousandsSeparator(ingreso.monto)}</td>
                         <td>${ingreso.oc || ''}</td>
-                        <td>${formatDateToDDMMYYYY(parseDateDDMMYYYY(ingreso.fechaOc))}</td>
+                        <td>${ingreso.fechaOc || ''}</td>
                         <td>${ingreso.proveedor || ''}</td>
                         <td>${ingreso.acta || ''}</td>
-                        <td>${formatDateToDDMMYYYY(parseDateDDMMYYYY(ingreso.fechaSalida))}</td>
+                        <td>${ingreso.fechaSalida || ''}</td>
                         <td>${ingreso.salida || ''}</td>
                         <td>${ingreso.fullName || ''}</td>
                     `;
@@ -1060,15 +1064,15 @@ document.addEventListener('DOMContentLoaded', () => {
     downloadAll.addEventListener('click', (e) => {
         e.preventDefault();
         exportToExcel(ingresos.map(i => ({
-            fechaIngreso: formatDateToDDMMYYYY(parseDateDDMMYYYY(i.fechaIngreso)),
+            fechaIngreso: i.fechaIngreso,
             numeroFactura: i.numeroFactura,
-            fechaFactura: formatDateToDDMMYYYY(parseDateDDMMYYYY(i.fechaFactura)),
+            fechaFactura: i.fechaFactura,
             monto: formatNumberWithThousandsSeparator(i.monto),
             oc: i.oc,
-            fechaOc: formatDateToDDMMYYYY(parseDateDDMMYYYY(i.fechaOc)),
+            fechaOc: i.fechaOc,
             proveedor: i.proveedor,
             acta: i.acta,
-            fechaSalida: formatDateToDDMMYYYY(parseDateDDMMYYYY(i.fechaSalida)),
+            fechaSalida: i.fechaSalida,
             salida: i.salida,
             fullName: i.fullName
         })), 'todos_ingresos');
@@ -1079,15 +1083,15 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         const currentMesAno = selectedMes && selectedAno ? `${selectedMes} ${selectedAno}` : mesesDisponibles[currentPage - 1];
         const pageData = (ingresosPorMesAno[currentMesAno] || []).map(i => ({
-            fechaIngreso: formatDateToDDMMYYYY(parseDateDDMMYYYY(i.fechaIngreso)),
+            fechaIngreso: i.fechaIngreso,
             numeroFactura: i.numeroFactura,
-            fechaFactura: formatDateToDDMMYYYY(parseDateDDMMYYYY(i.fechaFactura)),
+            fechaFactura: i.fechaFactura,
             monto: formatNumberWithThousandsSeparator(i.monto),
             oc: i.oc,
-            fechaOc: formatDateToDDMMYYYY(parseDateDDMMYYYY(i.fechaOc)),
+            fechaOc: i.fechaOc,
             proveedor: i.proveedor,
             acta: i.acta,
-            fechaSalida: formatDateToDDMMYYYY(parseDateDDMMYYYY(i.fechaSalida)),
+            fechaSalida: i.fechaSalida,
             salida: i.salida,
             fullName: i.fullName
         }));
@@ -1236,7 +1240,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         batch.set(ingresoRef, processedRow);
                         batch.set(doc(collection(db, "ingresos_lab_historial")), {
                             ingresoId: ingresoRef.id,
-            action: 'create',
+                            action: 'create',
                             timestamp: new Date(),
                             userId: auth.currentUser ? auth.currentUser.uid : null,
                             userFullName: window.currentUserData.fullName || 'Usuario Invitado',
