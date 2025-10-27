@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -13,7 +14,8 @@
         window.firebaseModules = { initializeApp, getAuth, onAuthStateChanged, setPersistence, browserSessionPersistence, getFirestore, collection, addDoc, getDocs, query, where, doc, updateDoc };
     </script>
     <style>
-        html, body {
+        html,
+        body {
             margin: 0;
             padding: 0;
             height: 100%;
@@ -22,6 +24,7 @@
             overflow: hidden;
             font-size: 12px;
         }
+
         .ordenes-main-container {
             width: 100%;
             height: 100%;
@@ -30,14 +33,16 @@
             box-sizing: border-box;
             overflow-y: auto;
             border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             position: relative;
         }
+
         .ordenes-title {
             text-align: start;
             margin: 0 0 15px 0;
             font-size: 18px;
         }
+
         .ordenes-fields-container {
             display: flex;
             justify-content: space-between;
@@ -45,12 +50,14 @@
             margin-bottom: 20px;
             align-items: center;
         }
+
         .ordenes-search-section {
             display: flex;
             flex-direction: row;
             gap: 20px;
             flex: 1;
         }
+
         .ordenes-form-group {
             display: flex;
             flex-direction: column;
@@ -60,13 +67,18 @@
             min-width: 0;
             max-width: 200px;
         }
+
         .ordenes-label {
             font-size: 10px;
             font-weight: bold;
             color: #333;
             white-space: nowrap;
         }
-        #buscarCodigo, #buscarProveedor, #selectAno, #selectMes {
+
+        #buscarCodigo,
+        #buscarProveedor,
+        #selectAno,
+        #selectMes {
             width: 100%;
             padding: 8px;
             border: 1px solid #ddd;
@@ -74,14 +86,20 @@
             font-size: 11px;
             box-sizing: border-box;
         }
-        #buscarCodigo:focus, #buscarProveedor:focus, #selectAno:focus, #selectMes:focus {
-            box-shadow: 0 0 12px rgba(0, 123, 255, 0.5);
+
+        #bus carCodigo:focus,
+        #buscarProveedor:focus,
+        #selectAno:focus,
+        #selectMes:focus {
+            box-shadow: 0 0 12px rgba(0, 123, 164, 0.5);
             outline: none;
         }
+
         .ordenes-actions-menu {
             position: relative;
             text-align: right;
         }
+
         #actionsBtn {
             background: none;
             border: none;
@@ -93,10 +111,12 @@
             align-items: center;
             gap: 5px;
         }
+
         #actionsBtn:hover {
             color: #0056b3;
             text-decoration: underline;
         }
+
         .ordenes-dropdown-menu {
             display: none;
             position: absolute;
@@ -104,12 +124,13 @@
             top: 100%;
             background-color: white;
             min-width: 200px;
-            box-shadow: -2px 8px 16px rgba(0,0,0,0.2);
+            box-shadow: -2px 8px 16px rgba(0, 0, 0, 0.2);
             z-index: 1;
             border-radius: 4px;
             overflow: hidden;
             flex-direction: column;
         }
+
         .ordenes-dropdown-menu a {
             color: black;
             padding: 12px 16px;
@@ -118,9 +139,11 @@
             font-size: 12px;
             overflow-wrap: break-word;
         }
+
         .ordenes-dropdown-menu a:hover {
             background-color: #f1f1f1;
         }
+
         .ordenes-table {
             width: 100%;
             border-collapse: collapse;
@@ -128,18 +151,23 @@
             font-size: 11px;
             border: 1px solid #ddd;
         }
-        .ordenes-table th, .ordenes-table td {
+
+        .ordenes-table th,
+        .ordenes-table td {
             padding: 4px;
             text-align: left;
             border: 1px solid #ddd;
         }
+
         .ordenes-table th {
             background-color: #f2f2f2;
             font-size: 11px;
         }
+
         .ordenes-table tbody tr:hover {
             background-color: #f8f9fa;
         }
+
         .ordenes-pagination {
             display: flex;
             justify-content: space-between;
@@ -149,17 +177,20 @@
             border-radius: 4px;
             flex-wrap: nowrap;
         }
+
         .ordenes-pagination-info {
             font-size: 11px;
             flex: 1;
             text-align: left;
         }
+
         .ordenes-pagination-controls {
             display: flex;
             align-items: center;
             gap: 5px;
             flex-shrink: 0;
         }
+
         .ordenes-pagination-controls button {
             padding: 6px 10px;
             background-color: #007bff;
@@ -169,18 +200,22 @@
             cursor: pointer;
             font-size: 11px;
         }
+
         .ordenes-pagination-controls button:hover:not(:disabled) {
             background-color: #0056b3;
         }
+
         .ordenes-pagination-controls button:disabled {
             background-color: #ccc;
             cursor: not-allowed;
         }
+
         .ordenes-page-numbers {
             display: flex;
             gap: 5px;
             align-items: center;
         }
+
         .ordenes-page-numbers button {
             padding: 4px 8px;
             border: 1px solid #ddd;
@@ -189,20 +224,24 @@
             font-size: 11px;
             border-radius: 4px;
         }
+
         .ordenes-page-numbers button.active {
             background-color: #007bff;
             color: white;
             border-color: #007bff;
         }
+
         .ordenes-page-numbers button:hover:not(.active) {
             background-color: #f0f0f0;
         }
+
         .ordenes-page-numbers .ordenes-dots {
             padding: 4px;
             cursor: default;
             font-size: 11px;
             line-height: 1.5;
         }
+
         #ordenes-message {
             margin-bottom: 20px;
             padding: 8px;
@@ -210,16 +249,19 @@
             display: none;
             font-size: 11px;
         }
+
         .ordenes-message-error {
             background-color: #f8d7da;
             color: #721c24;
             border: 1px solid #f5c6cb;
         }
+
         .ordenes-message-success {
             background-color: #d4edda;
             color: #155724;
             border: 1px solid #c3e6cb;
         }
+
         .ordenes-loading {
             display: none;
             position: fixed;
@@ -230,7 +272,7 @@
             height: 80px;
             background: rgba(255, 255, 255, 0.95);
             border-radius: 8px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
             z-index: 1000;
             justify-content: center;
             align-items: center;
@@ -238,9 +280,11 @@
             padding: 16px;
             backdrop-filter: blur(8px);
         }
+
         .ordenes-loading.show {
             display: flex;
         }
+
         .ordenes-loading-spinner {
             width: 32px;
             height: 32px;
@@ -250,12 +294,14 @@
             animation: spin 1s linear infinite;
             margin-bottom: 8px;
         }
+
         .ordenes-loading-text {
             font-size: 12px;
             color: #333;
             font-weight: 500;
             text-align: center;
         }
+
         .ordenes-import-progress {
             display: none;
             position: fixed;
@@ -265,14 +311,16 @@
             width: 300px;
             background: rgba(255, 255, 255, 0.95);
             border-radius: 8px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
             z-index: 1000;
             padding: 20px;
             backdrop-filter: blur(8px);
         }
+
         .ordenes-import-progress.show {
             display: block;
         }
+
         .ordenes-progress-bar-container {
             width: 100%;
             height: 20px;
@@ -281,22 +329,31 @@
             overflow: hidden;
             margin-bottom: 10px;
         }
+
         .ordenes-progress-bar {
             height: 100%;
             background-color: #007bff;
             width: 0%;
             transition: width 0.3s ease;
         }
+
         .ordenes-progress-text {
             font-size: 12px;
             color: #333;
             font-weight: 500;
             text-align: center;
         }
+
         @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
         }
+
         .ordenes-toast {
             position: fixed;
             top: 20px;
@@ -309,20 +366,23 @@
             font-size: 12px;
             z-index: 1001;
             max-width: 300px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
             opacity: 0;
             transform: translateX(100%);
             transition: opacity 0.3s ease, transform 0.3s ease;
         }
+
         .ordenes-toast.show {
             opacity: 1;
             transform: translateX(0);
         }
+
         .ordenes-toast.error {
             background-color: #f8d7da;
             color: #721c24;
             border: 1px solid #f5c6cb;
         }
+
         .modal {
             display: none;
             position: fixed;
@@ -332,8 +392,9 @@
             width: 100%;
             height: 100%;
             overflow: auto;
-            background-color: rgba(0,0,0,0.4);
+            background-color: rgba(0, 0, 0, 0.4);
         }
+
         .modal-content {
             background-color: #fefefe;
             margin: 15% auto;
@@ -342,8 +403,9 @@
             width: 80%;
             max-width: 500px;
             border-radius: 8px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
         }
+
         .close {
             color: #aaa;
             float: right;
@@ -351,33 +413,39 @@
             font-weight: bold;
             cursor: pointer;
         }
+
         .close:hover,
         .close:focus {
             color: black;
             text-decoration: none;
         }
+
         .modal-form-group {
-            display: flex;
-            flex-direction: column;
             margin-bottom: 15px;
         }
+
         .modal-form-group label {
             font-size: 12px;
             font-weight: bold;
             margin-bottom: 5px;
+            display: block;
         }
+
         .modal-form-group select {
+            width: 100%;
             padding: 8px;
             border: 1px solid #ddd;
             border-radius: 4px;
             font-size: 11px;
         }
+
         .modal-buttons {
             display: flex;
             justify-content: flex-end;
             gap: 10px;
             margin-top: 20px;
         }
+
         .modal-btn {
             padding: 8px 16px;
             border: none;
@@ -385,66 +453,81 @@
             cursor: pointer;
             font-size: 12px;
         }
+
         .modal-btn-primary {
             background-color: #007bff;
             color: white;
         }
+
         .modal-btn-secondary {
             background-color: #6c757d;
             color: white;
         }
+
         @media (max-width: 768px) {
             .ordenes-fields-container {
                 flex-direction: column;
                 gap: 20px;
             }
+
             .ordenes-search-section {
                 flex-direction: column;
                 gap: 15px;
             }
+
             .ordenes-form-group {
                 max-width: none;
             }
+
             .ordenes-toast {
                 top: 10px;
                 right: 10px;
                 left: 10px;
                 max-width: none;
             }
+
             .ordenes-loading {
                 width: 100px;
                 height: 70px;
                 padding: 12px;
             }
+
             .ordenes-loading-spinner {
                 width: 28px;
                 height: 28px;
             }
+
             .ordenes-import-progress {
                 width: 90%;
                 max-width: 280px;
                 padding: 15px;
             }
+
             .modal-content {
                 width: 90%;
                 margin: 20% auto;
             }
+
             .ordenes-pagination {
                 flex-direction: row;
                 align-items: center;
                 gap: 10px;
             }
+
             .ordenes-pagination-info {
                 font-size: 10px;
             }
+
             .ordenes-pagination-controls button {
                 padding: 4px 8px;
                 font-size: 10px;
             }
+
             .ordenes-page-numbers button {
                 padding: 3px 6px;
                 font-size: 10px;
             }
+
             .ordenes-dropdown-menu {
                 min-width: 180px;
                 left: calc(-180px + 20px);
@@ -452,6 +535,7 @@
         }
     </style>
 </head>
+
 <body>
     <div class="ordenes-main-container">
         <h1 class="ordenes-title">Importación de Órdenes</h1>
@@ -527,6 +611,7 @@
         </div>
         <div id="ordenes-toast" class="ordenes-toast"></div>
     </div>
+
     <div id="downloadMesModal" class="modal">
         <div class="modal-content">
             <span class="close" id="closeDownloadMes">&times;</span>
@@ -545,9 +630,11 @@
             </div>
         </div>
     </div>
+
     <script type="module">
         const { initializeApp, getAuth, onAuthStateChanged, setPersistence, browserSessionPersistence } = window.firebaseModules;
         const { getFirestore, collection, addDoc, getDocs, query, where, doc, updateDoc } = window.firebaseModules;
+
         const firebaseConfig = {
             apiKey: "AIzaSyD6JY7FaRqjZoN6OzbFHoIXxd-IJL3H-Ek",
             authDomain: "datara-salud.firebaseapp.com",
@@ -557,19 +644,22 @@
             appId: "1:198886910481:web:abbc345203a423a6329fb0",
             measurementId: "G-MLYVTZPPLD"
         };
+
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
         setPersistence(auth, browserSessionPersistence);
+
         let ordenes = [];
         let currentPage = 1;
-        const PAGE_SIZE = 10;
+        const PAGE_SIZE = 100;
         let searchCodigo = '';
         let searchProveedor = '';
         let selectedAno = new Date().getFullYear();
         let selectedMes = '';
         let anos = [];
         let mesesPorAno = {};
+
         function formatDateToDDMMYYYY(date) {
             if (!date || isNaN(new Date(date))) return '';
             const d = new Date(date);
@@ -578,6 +668,39 @@
             const year = d.getFullYear();
             return `${day}-${month}-${year}`;
         }
+
+        // FUNCIÓN CLAVE: PARSEA CUALQUIER FORMATO DE FECHA
+        function parseExcelDate(value) {
+            if (!value) return '';
+
+            if (typeof value === 'number') {
+                const date = XLSX.SSF.parse_date_code(value);
+                if (date) {
+                    return `${String(date.d).padStart(2, '0')}-${String(date.m).padStart(2, '0')}-${date.y}`;
+                }
+            }
+
+            if (typeof value === 'string') {
+                const cleaned = value.trim().replace(/[/\.]/g, '-');
+                const parts = cleaned.split('-');
+                if (parts.length === 3) {
+                    const [d, m, y] = parts.map(p => parseInt(p, 10));
+                    if (!isNaN(d) && !isNaN(m) && !isNaN(y) && d >= 1 && d <= 31 && m >= 1 && m <= 12 && y >= 1900 && y <= 2100) {
+                        return `${String(d).padStart(2, '0')}-${String(m).padStart(2, '0')}-${y}`;
+                    }
+                }
+            }
+
+            if (value instanceof Date && !isNaN(value)) {
+                const d = value.getDate();
+                const m = value.getMonth() + 1;
+                const y = value.getFullYear();
+                return `${String(d).padStart(2, '0')}-${String(m).padStart(2, '0')}-${y}`;
+            }
+
+            return '';
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
             const loading = document.getElementById('ordenes-loading');
             const importProgress = document.getElementById('ordenes-import-progress');
@@ -607,36 +730,29 @@
             const downloadPage = document.getElementById('downloadPage');
             const downloadMes = document.getElementById('downloadMes');
             const fileUpload = document.getElementById('fileUpload');
-            window.showLoading = function() {
-                if (loading) loading.classList.add('show');
-            };
-            window.hideLoading = function() {
-                if (loading) loading.classList.remove('show');
-            };
+
+            window.showLoading = () => loading.classList.add('show');
+            window.hideLoading = () => loading.classList.remove('show');
+
             function showImportProgress(percent) {
-                if (importProgress && progressBar && progressText) {
-                    importProgress.classList.add('show');
-                    progressBar.style.width = `${percent}%`;
-                    progressText.textContent = `Importando: ${Math.round(percent)}%`;
-                }
+                importProgress.classList.add('show');
+                progressBar.style.width = `${percent}%`;
+                progressText.textContent = `Importando: ${Math.round(percent)}%`;
             }
+
             function hideImportProgress() {
-                if (importProgress) {
-                    importProgress.classList.remove('show');
-                    progressBar.style.width = '0%';
-                    progressText.textContent = 'Importando: 0%';
-                }
+                importProgress.classList.remove('show');
+                progressBar.style.width = '0%';
+                progressText.textContent = 'Importando: 0%';
             }
+
             function showToast(text, type = 'success') {
-                if (toast) {
-                    toast.textContent = text;
-                    toast.className = `ordenes-toast ${type}`;
-                    toast.classList.add('show');
-                    setTimeout(() => {
-                        toast.classList.remove('show');
-                    }, 5000);
-                }
+                toast.textContent = text;
+                toast.className = `ordenes-toast ${type}`;
+                toast.classList.add('show');
+                setTimeout(() => toast.classList.remove('show'), 5000);
             }
+
             async function getOrdenByCodigo(codigo) {
                 if (!codigo || typeof codigo !== 'string') return null;
                 const q = query(collection(db, "ordenes"), where("codigo", "==", codigo.trim()));
@@ -647,20 +763,24 @@
                 }
                 return null;
             }
+
             function openDownloadMesModal() {
                 populateAnoSelect(selectDownloadAno);
                 selectDownloadAno.value = selectedAno;
                 populateMesSelect(selectDownloadMes, selectDownloadAno.value);
                 downloadMesModal.style.display = 'block';
             }
+
             function closeDownloadMesModalHandler() {
                 downloadMesModal.style.display = 'none';
             }
+
             closeDownloadMes.addEventListener('click', closeDownloadMesModalHandler);
             cancelDownloadMes.addEventListener('click', closeDownloadMesModalHandler);
             window.addEventListener('click', (e) => {
                 if (e.target === downloadMesModal) closeDownloadMesModalHandler();
             });
+
             confirmDownloadMes.addEventListener('click', async () => {
                 const ano = selectDownloadAno.value;
                 const mes = selectDownloadMes.value;
@@ -693,6 +813,7 @@
                     showToast('Por favor, selecciona año y mes.', 'error');
                 }
             });
+
             onAuthStateChanged(auth, async (user) => {
                 if (!user) {
                     window.location.replace('../../../../../index.html');
@@ -705,6 +826,7 @@
                 populateMesSelect(selectMes, selectedAno);
                 populateAnoSelect(selectDownloadAno);
             });
+
             if (buscarCodigoInput) {
                 buscarCodigoInput.addEventListener('input', (e) => {
                     searchCodigo = e.target.value.trim();
@@ -739,6 +861,7 @@
                     populateMesSelect(selectDownloadMes, e.target.value);
                 });
             }
+
             async function loadOrdenes() {
                 showLoading();
                 try {
@@ -765,6 +888,7 @@
                     showToast('Error al cargar las órdenes: ' + error.message, 'error');
                 }
             }
+
             function populateAnoSelect(select) {
                 select.innerHTML = '<option value="">Todos</option>';
                 Array.from(anos).sort((a, b) => b - a).forEach(ano => {
@@ -774,35 +898,47 @@
                     select.appendChild(option);
                 });
             }
+
             function populateMesSelect(select, ano) {
                 select.innerHTML = '<option value="">Todos</option>';
                 if (ano && mesesPorAno[ano]) {
-                    Array.from(mesesPorAno[ano]).sort((a, b) => new Date(Date.parse('01 ' + a + ' 2000')) - new Date(Date.parse('01 ' + b + ' 2000'))).forEach(mes => {
-                        const option = document.createElement('option');
-                        option.value = mes;
-                        option.textContent = mes;
-                        select.appendChild(option);
-                    });
+                    const mesesOrden = [
+                        'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+                        'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'
+                    ];
+                    Array.from(mesesPorAno[ano])
+                        .sort((a, b) => mesesOrden.indexOf(a.toLowerCase()) - mesesOrden.indexOf(b.toLowerCase()))
+                        .forEach(mes => {
+                            const option = document.createElement('option');
+                            option.value = mes;
+                            option.textContent = mes.charAt(0).toUpperCase() + mes.slice(1); // Capitaliza
+                            select.appendChild(option);
+                        });
                 }
             }
+
             actionsBtn.addEventListener('click', () => {
                 actionsMenu.style.display = actionsMenu.style.display === 'block' ? 'none' : 'block';
             });
+
             window.addEventListener('click', (e) => {
                 if (!actionsBtn.contains(e.target) && !actionsMenu.contains(e.target)) {
                     actionsMenu.style.display = 'none';
                 }
             });
+
             downloadTemplate.addEventListener('click', (e) => {
                 e.preventDefault();
                 downloadImportTemplate();
                 actionsMenu.style.display = 'none';
             });
+
             importExcel.addEventListener('click', (e) => {
                 e.preventDefault();
                 fileUpload.click();
                 actionsMenu.style.display = 'none';
             });
+
             downloadAll.addEventListener('click', (e) => {
                 e.preventDefault();
                 exportToExcel(ordenes.map(o => ({
@@ -822,6 +958,7 @@
                 })), 'todas_ordenes');
                 actionsMenu.style.display = 'none';
             });
+
             downloadPage.addEventListener('click', (e) => {
                 e.preventDefault();
                 const filtered = getFilteredOrdenes();
@@ -845,11 +982,13 @@
                 exportToExcel(pageData, 'pagina_actual_ordenes');
                 actionsMenu.style.display = 'none';
             });
+
             downloadMes.addEventListener('click', (e) => {
                 e.preventDefault();
                 openDownloadMesModal();
                 actionsMenu.style.display = 'none';
             });
+
             fileUpload.addEventListener('change', async (e) => {
                 const file = e.target.files[0];
                 if (file) {
@@ -857,65 +996,61 @@
                     fileUpload.value = '';
                 }
             });
+
             function exportToExcel(data, filename) {
                 const ws = XLSX.utils.json_to_sheet(data, {
-                    dateNF: 'dd-mm-yyyy',
+                    dateNF: 'dd-mm/yyyy',
                     cellDates: true
                 });
                 const wb = XLSX.utils.book_new();
                 XLSX.utils.book_append_sheet(wb, ws, "Órdenes");
                 XLSX.writeFile(wb, filename + '.xlsx');
             }
+
             function downloadImportTemplate() {
-                const ws = XLSX.utils.aoa_to_sheet([[
-                    "Código", "Generación", "Autorización", "Sociedad", "Tipo de compra", "Proveedor", "Digitador", "Nivel actual", "Nivel ox", "Liberada", "Total", "Estado"
-                ], [
-                    "ORD001", "01-10-2025", "01-10-2025", "Ejemplo SA", "Compra Directa", "Proveedor A", "Juan Pérez", "Nivel 1", "Ox 1", "Sí", "10000", "Activo"
-                ]]);
+                const ws = XLSX.utils.aoa_to_sheet([
+                    ["Código", "Generación", "Autorización", "Sociedad", "Tipo de compra", "Proveedor", "Digitador", "Nivel actual", "Nivel ox", "Liberada", "Total", "Estado"],
+                    ["55130", "30-09-2025", "30-09-2025", "CLINICA REGIONAL LIRCAY SPA", "Normal", "WINKLER LTDA", "FRANCISCO SANCHEZ (CAS)", "2", "2", "SI", "420000", "Autorizada"]
+                ]);
                 const wb = XLSX.utils.book_new();
                 XLSX.utils.book_append_sheet(wb, ws, "Template");
                 XLSX.writeFile(wb, 'template_ordenes.xlsx');
             }
+
             async function importFromExcel(file) {
                 try {
                     const reader = new FileReader();
                     reader.onload = async (e) => {
                         const data = new Uint8Array(e.target.result);
-                        const wb = XLSX.read(data, {type: 'array', cellDates: true, dateNF: 'dd-mm-yyyy'});
+                        const wb = XLSX.read(data, { type: 'array', cellDates: true, dateNF: 'dd-mm-yyyy' });
                         const ws = wb.Sheets[wb.SheetNames[0]];
                         const json = XLSX.utils.sheet_to_json(ws, {
                             header: ["codigo", "generacion", "autorizacion", "sociedad", "tipoCompra", "proveedor", "digitador", "nivelActual", "nivelOx", "liberada", "total", "estado"],
                             range: 1,
                             defval: '',
-                            raw: false,
-                            dateNF: 'dd-mm-yyyy'
+                            raw: false
                         });
+
                         let addedCount = 0;
                         let updatedCount = 0;
                         const totalRows = json.length;
                         showImportProgress(0);
+
                         for (let i = 0; i < json.length; i++) {
                             const row = json[i];
-                            let generacion = row.generacion;
-                            let autorizacion = row.autorizacion;
-                            if (typeof generacion === 'number') {
-                                generacion = formatDateToDDMMYYYY(XLSX.SSF.parse_date_code(generacion));
-                            }
-                            if (typeof autorizacion === 'number') {
-                                autorizacion = formatDateToDDMMYYYY(XLSX.SSF.parse_date_code(autorizacion));
-                            }
-                            if (generacion && isNaN(new Date(generacion))) {
-                                showToast(`Fila ${i + 2}: Fecha de generación no válida`, 'error');
+
+                            const generacion = parseExcelDate(row.generacion);
+                            const autorizacion = parseExcelDate(row.autorizacion);
+
+                            if (!generacion || !autorizacion) {
+                                showToast(`Fila ${i + 2}: Fecha de generación o autorización no válida`, 'error');
                                 continue;
                             }
-                            if (autorizacion && isNaN(new Date(autorizacion))) {
-                                showToast(`Fila ${i + 2}: Fecha de autorización no válida`, 'error');
-                                continue;
-                            }
+
                             const processedRow = {
                                 codigo: String(row.codigo || '').trim(),
-                                generacion: generacion ? formatDateToDDMMYYYY(new Date(generacion)) : '',
-                                autorizacion: autorizacion ? formatDateToDDMMYYYY(new Date(autorizacion)) : '',
+                                generacion,
+                                autorizacion,
                                 sociedad: String(row.sociedad || '').trim(),
                                 tipoCompra: String(row.tipoCompra || '').trim(),
                                 proveedor: String(row.proveedor || '').trim(),
@@ -923,41 +1058,42 @@
                                 nivelActual: String(row.nivelActual || '').trim(),
                                 nivelOx: String(row.nivelOx || '').trim(),
                                 liberada: String(row.liberada || '').trim(),
-                                total: String(row.total || '').trim(),
+                                total: String(row.total || '').replace(/[^\d]/g, ''),
                                 estado: String(row.estado || '').trim()
                             };
-                            if (processedRow.codigo && processedRow.generacion && processedRow.autorizacion) {
-                                const existing = await getOrdenByCodigo(processedRow.codigo);
-                                if (existing) {
-                                    const hasChanges = Object.keys(processedRow).some(key =>
-                                        key === 'generacion' || key === 'autorizacion'
-                                        ? processedRow[key] !== formatDateToDDMMYYYY(existing[key])
-                                        : processedRow[key] !== String(existing[key] || '').trim()
-                                    );
-                                    if (hasChanges) {
-                                        await updateDoc(doc(db, "ordenes", existing.id), {
-                                            ...processedRow,
-                                            evento: `Actualizado ${new Date().toLocaleString('es-CL')}`,
-                                            createdAt: new Date()
-                                        });
-                                        updatedCount++;
-                                    }
-                                } else {
-                                    const docRef = await addDoc(collection(db, "ordenes"), {
+
+                            if (!processedRow.codigo) {
+                                showToast(`Fila ${i + 2}: Falta código`, 'error');
+                                continue;
+                            }
+
+                            const existing = await getOrdenByCodigo(processedRow.codigo);
+                            if (existing) {
+                                const hasChanges = Object.keys(processedRow).some(key =>
+                                    processedRow[key] !== String(existing[key] || '').trim()
+                                );
+                                if (hasChanges) {
+                                    await updateDoc(doc(db, "ordenes", existing.id), {
                                         ...processedRow,
-                                        evento: `Importado ${new Date().toLocaleString('es-CL')}`,
+                                        evento: `Actualizado ${new Date().toLocaleString('es-CL')}`,
                                         createdAt: new Date()
                                     });
-                                    addedCount++;
+                                    updatedCount++;
                                 }
                             } else {
-                                showToast(`Fila ${i + 2}: Faltan código, generación o autorización`, 'error');
+                                await addDoc(collection(db, "ordenes"), {
+                                    ...processedRow,
+                                    evento: `Importado ${new Date().toLocaleString('es-CL')}`,
+                                    createdAt: new Date()
+                                });
+                                addedCount++;
                             }
-                            const progress = ((i + 1) / totalRows) * 100;
-                            showImportProgress(progress);
+
+                            showImportProgress(((i + 1) / totalRows) * 100);
                         }
+
                         hideImportProgress();
-                        showToast(`Se han importado ${addedCount} órdenes nuevas y actualizado ${updatedCount} órdenes.`, 'success');
+                        showToast(`Importación completada: ${addedCount} nuevas, ${updatedCount} actualizadas.`, 'success');
                         await loadOrdenes();
                         populateAnoSelect(selectAno);
                         populateAnoSelect(selectDownloadAno);
@@ -965,9 +1101,10 @@
                     reader.readAsArrayBuffer(file);
                 } catch (error) {
                     hideImportProgress();
-                    showToast('Error al importar el archivo: ' + error.message, 'error');
+                    showToast('Error al importar: ' + error.message, 'error');
                 }
             }
+
             async function getOrdenesByMes(ano, mes) {
                 const filtered = ordenes.filter(o => {
                     const generacionDate = new Date(o.generacion);
@@ -975,6 +1112,7 @@
                 });
                 return filtered;
             }
+
             function getFilteredOrdenes() {
                 return ordenes.filter(orden =>
                     String(orden.codigo || '').toLowerCase().includes(searchCodigo.toLowerCase()) &&
@@ -983,11 +1121,13 @@
                     (!selectedMes || new Date(orden.generacion).toLocaleString('es-CL', { month: 'long' }) === selectedMes)
                 );
             }
+
             function renderTable() {
                 const filteredOrdenes = getFilteredOrdenes();
                 const start = (currentPage - 1) * PAGE_SIZE;
                 const end = start + PAGE_SIZE;
                 const pageOrdenes = filteredOrdenes.sort((a, b) => a.codigo.localeCompare(b.codigo)).slice(start, end);
+
                 if (ordenesBody) {
                     ordenesBody.innerHTML = '';
                     pageOrdenes.forEach(orden => {
@@ -1012,6 +1152,7 @@
                 }
                 updatePagination(filteredOrdenes.length);
             }
+
             function updatePagination(total) {
                 const totalPages = Math.ceil(total / PAGE_SIZE);
                 const startPage = Math.max(1, currentPage - 2);
@@ -1040,10 +1181,12 @@
                     }
                 }
             }
+
             function goToPage(page) {
                 currentPage = page;
                 renderTable();
             }
+
             if (prevBtn) {
                 prevBtn.addEventListener('click', () => {
                     if (currentPage > 1) {
@@ -1064,4 +1207,5 @@
         });
     </script>
 </body>
+
 </html>
