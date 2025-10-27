@@ -1027,8 +1027,23 @@
                     const reader = new FileReader();
                     reader.onload = async (e) => {
                         const data = new Uint8Array(e.target.result);
-                        const wb = XLSX.read(data, { type: 'array', cellDates: true, dateNF: 'dd-mm-yyyy' });
+                        const wb = XLSX.read(data, {
+                            type: 'array',
+                            cellDates: true,
+                            cellNF: false,
+                            cellText: false
+                        });
                         const ws = wb.Sheets[wb.SheetNames[0]];
+
+                        // Forzar lectura de celdas como texto
+                        const range = XLSX.utils.decode_range(ws['!ref']);
+                        for (let R = range.s.r + 1; R <= range.e.r; ++R) {
+                            const cellGen = ws[XLSX.utils.encode_cell({ c: 1, r: R })]; // Columna B
+                            const cellAut = ws[XLSX.utils.encode_cell({ c: 2, r: R })]; // Columna C
+                            if (cellGen) cellGen.w = cellGen.w || (cellGen.v ? String(cellGen.v) : '');
+                            if (cellAut) cellAut.w = cellAut.w || (cellAut.v ? String(cellAut.v) : '');
+                        }
+
                         const json = XLSX.utils.sheet_to_json(ws, {
                             header: ["codigo", "generacion", "autorizacion", "sociedad", "tipoCompra", "proveedor", "digitador", "nivelActual", "nivelOx", "liberada", "total", "estado"],
                             range: 1,
@@ -1044,11 +1059,15 @@
                         for (let i = 0; i < json.length; i++) {
                             const row = json[i];
 
-                            const generacion = parseExcelDate(row.generacion);
-                            const autorizacion = parseExcelDate(row.autorizacion);
+                            // USAR .w (texto formateado) si existe
+                            const genRaw = row.generacion && row.generacion.w ? row.generacion.w : String(row.generacion || '').trim();
+                            const autRaw = row.autorizacion && row.autorizacion.w ? row.autorizacion.w : String(row.autorizacion || '').trim();
+
+                            const generacion = parseExcelDate(genRaw);
+                            const autorizacion = parseExcelDate(autRaw);
 
                             if (!generacion || !autorizacion) {
-                                showToast(`Fila ${i + 2}: Fecha de generación o autorización no válida`, 'error');
+                                showToast(`Fila ${i + 2}: Fecha inválida (Gen: "${genRaw}", Aut: "${autRaw}")`, 'error');
                                 continue;
                             }
 
@@ -1098,10 +1117,9 @@
                         }
 
                         hideImportProgress();
-                        showToast(`Importación completada: ${addedCount} nuevas, ${updatedCount} actualizadas.`, 'success');
+                        showToast(`Importadas: ${addedCount} nuevas, ${updatedCount} actualizadas.`, 'success');
                         await loadOrdenes();
-                        populateAnoSelect(selectAno);
-                        populateAnoSelect(selectDownloadAno);
+                        renderTable();
                     };
                     reader.readAsArrayBuffer(file);
                 } catch (error) {
