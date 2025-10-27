@@ -120,12 +120,10 @@ async function fixInvalidDateFormats() {
         const querySnapshot = await getDocs(collection(db, "ingresos_lab"));
         let fixedCount = 0;
         showLoading();
-
         for (const doc of querySnapshot.docs) {
             const data = doc.data();
             let needsUpdate = false;
             const updates = {};
-
             const convertTimestampToString = (value) => {
                 if (value && typeof value === 'object' && 'toDate' in value) {
                     const date = value.toDate();
@@ -133,7 +131,6 @@ async function fixInvalidDateFormats() {
                 }
                 return value;
             };
-
             if (data.fechaIngreso && typeof data.fechaIngreso === 'object' && 'toDate' in data.fechaIngreso) {
                 updates.fechaIngreso = convertTimestampToString(data.fechaIngreso);
                 needsUpdate = true;
@@ -150,13 +147,11 @@ async function fixInvalidDateFormats() {
                 updates.fechaSalida = convertTimestampToString(data.fechaSalida);
                 needsUpdate = true;
             }
-
             if (needsUpdate) {
                 await updateDoc(doc.ref, updates);
                 fixedCount++;
             }
         }
-
         hideLoading();
         showToast(`Se corrigieron ${fixedCount} documentos con fechas inválidas.`, 'success');
         await loadIngresos();
@@ -340,7 +335,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (log.action === 'create') {
                     html += `<div class="history-entry">Creado | ${log.userFullName || 'Desconocido'} | ${log.username || 'desconocido'} | ${date}</div>`;
                 } else if (log.action === 'update') {
-                    html += `<div class="history-entry">Modificado | ${log.userFullName || 'Desconocido'} | ${log.username || 'desconocido'} | ${date} | Factura: ${log.oldData ? log.oldData.numeroFactura : 'N/A'} → ${log.newData ? log.newData.numeroFactura : 'N/A'}</div>`;
+                    html += `<div class="history-entry">Modificado | ${log.userFullName || 'Desconocido'} | ${log.username || 'desconocido'} | ${date} | Factura: ${log.oldData ? log.oldData.numeroFactura : 'N/A'} to ${log.newData ? log.newData.numeroFactura : 'N/A'}</div>`;
                 } else if (log.action === 'delete') {
                     html += `<div class="history-entry">Eliminado | ${log.userFullName || 'Desconocido'} | ${log.username || 'desconocido'} | ${date}</div>`;
                 }
@@ -611,11 +606,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     const orden = await getOrdenByCodigo(codigo);
                     if (orden) {
                         proveedorInput.value = orden.proveedor || '';
-                        // Aquí está la corrección: usar 'generacion' y formatear
                         const fechaGeneracion = orden.generacion;
-                        fechaOcInput.value = fechaGeneracion && fechaGeneracion !== '-'
-                            ? formatDateToDDMMYYYY(fechaGeneracion)
-                            : '';
+                        fechaOcInput.value = fechaGeneracion && fechaGeneracion !== '-' ? formatDateToDDMMYYYY(fechaGeneracion) : '';
                     } else {
                         proveedorInput.value = '';
                         fechaOcInput.value = '';
@@ -645,9 +637,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (orden) {
                         document.getElementById('editProveedor').value = orden.proveedor || '';
                         const fechaGeneracion = orden.generacion;
-                        document.getElementById('editFechaOc').value = fechaGeneracion && fechaGeneracion !== '-'
-                            ? formatDateToDDMMYYYY(fechaGeneracion)
-                            : '';
+                        document.getElementById('editFechaOc').value = fechaGeneracion && fechaGeneracion !== '-' ? formatDateToDDMMYYYY(fechaGeneracion) : '';
                     } else {
                         document.getElementById('editProveedor').value = '';
                         document.getElementById('editFechaOc').value = '';
@@ -709,7 +699,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 hideLoading();
                 showToast(`Ingreso ${numeroFactura} registrado exitosamente`, 'success');
 
-                // Limpiar formulario
                 numeroFacturaInput.value = '';
                 montoInput.value = '';
                 ordenCompraInput.value = '';
@@ -718,13 +707,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 proveedorInput.value = '';
                 fechaOcInput.value = '';
 
-                // Mantener solo la fecha de hoy
                 const today = formatDateToYYYYMMDD(new Date());
                 fechaIngresoInput.value = today;
                 fechaFacturaInput.value = today;
                 fechaSalidaInput.value = today;
 
-                // RECARGAR DATOS Y RESETEAR FILTROS
                 selectedAno = new Date().getFullYear().toString();
                 selectedMes = '';
                 searchNumeroFactura = '';
@@ -735,7 +722,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 fechaDesde = '';
                 fechaHasta = '';
 
-                // Limpiar inputs de búsqueda
                 if (buscarNumeroFacturaInput) buscarNumeroFacturaInput.value = '';
                 if (buscarProveedorInput) buscarProveedorInput.value = '';
                 if (buscarOrdenCompraInput) buscarOrdenCompraInput.value = '';
@@ -744,16 +730,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (fechaDesdeInput) fechaDesdeInput.value = '';
                 if (fechaHastaInput) fechaHastaInput.value = '';
 
-                // Recargar datos y mostrar el nuevo ingreso
                 await loadIngresos();
-
-                // Forzar actualización de selects
                 populateAnoSelect(selectAno);
                 selectAno.value = selectedAno;
                 populateMesSelect(selectMes, selectedAno);
                 selectMes.value = '';
-
-                // Renderizar tabla
                 currentPage = 1;
                 renderTable();
 
@@ -783,29 +764,27 @@ document.addEventListener('DOMContentLoaded', () => {
             ingresosPorMesAno = {};
             mesesDisponibles = [];
 
+            const normalizeDate = (dateValue) => {
+                if (!dateValue) return '';
+                if (typeof dateValue === 'object' && 'toDate' in dateValue) {
+                    return formatDateToDDMMYYYY(dateValue.toDate());
+                }
+                if (typeof dateValue === 'string') {
+                    const cleaned = dateValue.trim().replace(/[\/.]/g, '-');
+                    const parsed = parseDateDDMMYYYY(cleaned);
+                    return parsed ? formatDateToDDMMYYYY(parsed) : '';
+                }
+                return '';
+            };
+
             querySnapshot.forEach((doc) => {
                 const data = doc.data();
-                let fechaIngreso = data.fechaIngreso;
-                let fechaFactura = data.fechaFactura;
-                let fechaOc = data.fechaOc;
-                let fechaSalida = data.fechaSalida;
+                const fechaIngreso = normalizeDate(data.fechaIngreso);
+                const fechaFactura = normalizeDate(data.fechaFactura);
+                const fechaOc = normalizeDate(data.fechaOc);
+                const fechaSalida = normalizeDate(data.fechaSalida);
 
-                if (fechaIngreso && typeof fechaIngreso === 'object' && 'toDate' in fechaIngreso) {
-                    fechaIngreso = formatDateToDDMMYYYY(fechaIngreso.toDate());
-                }
-                if (fechaFactura && typeof fechaFactura === 'object' && 'toDate' in fechaFactura) {
-                    fechaFactura = formatDateToDDMMYYYY(fechaFactura.toDate());
-                }
-                if (fechaOc && typeof fechaOc === 'object' && 'toDate' in fechaOc) {
-                    fechaOc = formatDateToDDMMYYYY(fechaOc.toDate());
-                }
-                if (fechaSalida && typeof fechaSalida === 'object' && 'toDate' in fechaSalida) {
-                    fechaSalida = formatDateToDDMMYYYY(fechaSalida.toDate());
-                }
-
-                if (!fechaIngreso || typeof fechaIngreso !== 'string' || !parseDateDDMMYYYY(fechaIngreso)) {
-                    return;
-                }
+                if (!fechaIngreso) return;
 
                 const ingreso = {
                     id: doc.id,
@@ -888,9 +867,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         let filtered = ingresos.filter(ingreso => {
             const fechaIngresoDate = parseDateDDMMYYYY(ingreso.fechaIngreso);
-            if (!fechaIngresoDate || isNaN(fechaIngresoDate)) {
-                return false;
-            }
+            if (!fechaIngresoDate || isNaN(fechaIngresoDate)) return false;
             return (
                 String(ingreso.numeroFactura || '').toLowerCase().includes(searchNumeroFactura.toLowerCase()) &&
                 String(ingreso.proveedor || '').toLowerCase().includes(searchProveedor.toLowerCase()) &&
@@ -949,7 +926,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const row = document.createElement('tr');
                     row.innerHTML = `
                         <td class="ingresos-actions">
-                            <button title="Editar" class="ingresos-btn-edit" onclick="openEditModal('${ingreso.id}', ${JSON.stringify(ingreso).replace(/"/g, '&quot;')})"><i class="fas fa-edit"></i></button>
+                            <button title="Editar" class="ingresos-btn-edit" onclick="openEditModal('${ingreso.id}', ${JSON.stringify(ingreso).replace(/"/g, '&quot;')} )"><i class="fas fa-edit"></i></button>
                             <button title="Eliminar" class="ingresos-btn-delete" onclick="openDeleteModal('${ingreso.id}', '${ingreso.numeroFactura}')"><i class="fas fa-trash"></i></button>
                             <button title="Ver Historial" class="ingresos-btn-history" onclick="openHistoryModal('${ingreso.id}', '${ingreso.numeroFactura}')"><i class="fas fa-history"></i></button>
                         </td>
