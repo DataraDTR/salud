@@ -712,8 +712,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 fechaFacturaInput.value = today;
                 fechaSalidaInput.value = today;
 
-                selectedAno = new Date().getFullYear().toString();
-                selectedMes = '';
+                await loadIngresos();
+
+                const fechaIngresoDate = parseDateDDMMYYYY(processedRow.fechaIngreso);
+                const nuevoAno = fechaIngresoDate.getFullYear().toString();
+                const nuevoMes = fechaIngresoDate.toLocaleString('es-CL', { month: 'long' });
+
+                selectedAno = nuevoAno;
+                selectedMes = nuevoMes;
+
+                populateAnoSelect(selectAno);
+                selectAno.value = selectedAno;
+                populateMesSelect(selectMes, selectedAno);
+                selectMes.value = selectedMes;
+
                 searchNumeroFactura = '';
                 searchProveedor = '';
                 searchOrdenCompra = '';
@@ -721,7 +733,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 searchSalidas = '';
                 fechaDesde = '';
                 fechaHasta = '';
-
                 if (buscarNumeroFacturaInput) buscarNumeroFacturaInput.value = '';
                 if (buscarProveedorInput) buscarProveedorInput.value = '';
                 if (buscarOrdenCompraInput) buscarOrdenCompraInput.value = '';
@@ -730,18 +741,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (fechaDesdeInput) fechaDesdeInput.value = '';
                 if (fechaHastaInput) fechaHastaInput.value = '';
 
-                await loadIngresos();
-                populateAnoSelect(selectAno);
-                selectAno.value = selectedAno;
-                populateMesSelect(selectMes, selectedAno);
-                selectMes.value = '';
                 currentPage = 1;
                 renderTable();
 
             } catch (error) {
                 hideLoading();
                 showToast('Error al registrar el ingreso: ' + error.message, 'error');
-                console.error("Error al guardar ingreso:", error);
+                console.error("Error:", error);
             }
         });
     }
@@ -858,7 +864,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     String(ingreso.oc || '').toLowerCase().includes(searchOrdenCompra.toLowerCase()) &&
                     String(ingreso.acta || '').toLowerCase().includes(searchActa.toLowerCase()) &&
                     String(ingreso.salida || '').toLowerCase().includes(searchSalidas.toLowerCase()) &&
-                    (!fechaDesde || parseDateDDMMYYYY(ingreso.fechaIngreso) >= parseDateDDMMYYYY(fechaDesde.replace(/-/g, '/'))) &&
+                   (!fechaDesde || parseDateDDMMYYYY(ingreso.fechaIngreso) >= parseDateDDMMYYYY(fechaDesde.replace(/-/g, '/'))) &&
                     (!fechaHasta || parseDateDDMMYYYY(ingreso.fechaIngreso) <= parseDateDDMMYYYY(fechaHasta.replace(/-/g, '/'))) &&
                     (!selectedAno || parseDateDDMMYYYY(ingreso.fechaIngreso).getFullYear().toString() === selectedAno)
                 );
@@ -1117,7 +1123,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const ws = XLSX.utils.aoa_to_sheet([[
             "Fecha de Ingreso", "Número de Factura", "Fecha de Factura", "Monto", "OC", "Fecha de OC", "Proveedor", "Acta", "Fecha de Salida", "Salida", "Nombre Completo"
         ], [
-            "18-06-2025", "FACT001", "18-06-2025", "10000", "OC001", "18-06-2025", "Proveedor A", "ACTA001", "18-06-2025", "Salida 1", "Usuario Ejemplo"
+            "27-10-2025", "FACT123", "27-10-2025", "50000", "OC456", "15-10-2025", "Proveedor XYZ", "ACTA789", "30-10-2025", "Salida 1", "Juan Pérez"
         ]]);
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "Template");
@@ -1143,10 +1149,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 let batch = useBatch ? writeBatch(db) : null;
                 const batchSize = 500;
                 let batchCount = 0;
-
-                if (!useBatch) {
-                    showToast('Advertencia: La importación por lotes no está disponible. Usando método alternativo (más lento).', 'warning');
-                }
 
                 showImportProgress(0);
 
@@ -1234,7 +1236,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         batch.set(ingresoRef, processedRow);
                         batch.set(doc(collection(db, "ingresos_lab_historial")), {
                             ingresoId: ingresoRef.id,
-                            action: 'create',
+            action: 'create',
                             timestamp: new Date(),
                             userId: auth.currentUser ? auth.currentUser.uid : null,
                             userFullName: window.currentUserData.fullName || 'Usuario Invitado',
