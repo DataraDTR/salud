@@ -629,524 +629,523 @@
 
     <!-- UN SOLO SCRIPT MODULE: CARGA FIREBASE + LÓGICA -->
     <script type="module">
-        // 1. IMPORTAR Y DEFINIR MÓDULOS ANTES DE USARLOS
-        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-        import { getAuth, onAuthStateChanged, setPersistence, browserSessionPersistence } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
-        import { getFirestore, collection, addDoc, getDocs, query, where, doc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+    // 1. IMPORTAR Y DEFINIR MÓDULOS ANTES DE USARLOS
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+    import { getAuth, onAuthStateChanged, setPersistence, browserSessionPersistence } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+    import { getFirestore, collection, addDoc, getDocs, query, where, doc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
-        // EXPONER EN window ANTES DE CUALQUIER USO
-        window.firebaseModules = {
-            initializeApp, getAuth, onAuthStateChanged, setPersistence, browserSessionPersistence,
-            getFirestore, collection, addDoc, getDocs, query, where, doc, updateDoc
+    // EXPONER EN window ANTES DE CUALQUIER USO
+    window.firebaseModules = {
+        initializeApp, getAuth, onAuthStateChanged, setPersistence, browserSessionPersistence,
+        getFirestore, collection, addDoc, getDocs, query, where, doc, updateDoc
+    };
+
+    // 2. ESPERAR AL DOM Y USAR LOS MÓDULOS
+    document.addEventListener('DOMContentLoaded', () => {
+        const { initializeApp: initApp, getAuth, onAuthStateChanged, setPersistence, browserSessionPersistence } = window.firebaseModules;
+        const { getFirestore, collection, addDoc, getDocs, query, where, doc, updateDoc } = window.firebaseModules;
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyD6JY7FaRqjZoN6OzbFHoIXxd-IJL3H-Ek",
+            authDomain: "datara-salud.firebaseapp.com",
+            projectId: "datara-salud",
+            storageBucket: "datara-salud.firebasestorage.app",
+            messagingSenderId: "198886910481",
+            appId: "1:198886910481:web:abbc345203a423a6329fb0",
+            measurementId: "G-MLYVTZPPLD"
         };
 
-        // 2. ESPERAR AL DOM Y USAR LOS MÓDULOS
-        document.addEventListener('DOMContentLoaded', () => {
-            const { initializeApp: initApp, getAuth, onAuthStateChanged, setPersistence, browserSessionPersistence } = window.firebaseModules;
-            const { getFirestore, collection, addDoc, getDocs, query, where, doc, updateDoc } = window.firebaseModules;
+        const app = initApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        setPersistence(auth, browserSessionPersistence);
 
-            const firebaseConfig = {
-                apiKey: "AIzaSyD6JY7FaRqjZoN6OzbFHoIXxd-IJL3H-Ek",
-                authDomain: "datara-salud.firebaseapp.com",
-                projectId: "datara-salud",
-                storageBucket: "datara-salud.firebasestorage.app",
-                messagingSenderId: "198886910481",
-                appId: "1:198886910481:web:abbc345203a423a6329fb0",
-                measurementId: "G-MLYVTZPPLD"
-            };
+        // === VARIABLES GLOBALES ===
+        let ordenes = [];
+        let currentPage = 1;
+        const PAGE_SIZE = 100;
+        let searchCodigo = '';
+        let searchProveedor = '';
+        let selectedAno = new Date().getFullYear();
+        let selectedMes = '';
+        let anos = new Set();
+        let mesesPorAno = {};
 
-            const app = initApp(firebaseConfig);
-            const auth = getAuth(app);
-            const db = getFirestore(app);
-            setPersistence(auth, browserSessionPersistence);
+        // === UTILIDADES DE FECHAS ===
+        function formatDateToDDMMYYYY(isoString) {
+            if (!isoString) return '';
+            const date = new Date(isoString);
+            if (isNaN(date)) return '';
+            const day = String(date.getDate()).padStart(2, '0');
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const year = date.getFullYear();
+            return `${day}-${month}-${year}`;
+        }
 
-            // === TODA LA LÓGICA (igual que antes, pero dentro del módulo) ===
-            let ordenes = [];
-            let currentPage = 1;
-            const PAGE_SIZE = 100;
-            let searchCodigo = '';
-            let searchProveedor = '';
-            let selectedAno = new Date().getFullYear();
-            let selectedMes = '';
-            let anos = new Set();
-            let mesesPorAno = {};
+        function parseExcelDate(value) {
+            if (!value) return null;
 
-            function formatDateToDDMMYYYY(date) {
-                if (!date || isNaN(new Date(date))) return '';
-                const d = new Date(date);
-                const day = String(d.getDate()).padStart(2, '0');
-                const month = String(d.getMonth() + 1).padStart(2, '0');
-                const year = d.getFullYear();
-                return `${day}-${month}-${year}`;
+            // Caso 1: número serial de Excel
+            if (typeof value === 'number') {
+                const date = XLSX.SSF.parse_date_code(value);
+                if (date) {
+                    const d = new Date(date.y, date.m - 1, date.d);
+                    return d.toISOString();
+                }
             }
 
-            function parseExcelDate(value) {
-                if (!value) return '';
-
-                if (typeof value === 'number') {
-                    const date = XLSX.SSF.parse_date_code(value);
-                    if (date) return `${String(date.d).padStart(2, '0')}-${String(date.m).padStart(2, '0')}-${date.y}`;
-                }
-
-                if (typeof value === 'string') {
-                    const cleaned = value.trim().replace(/[/\.]/g, '-');
-                    const parts = cleaned.split('-');
-                    if (parts.length === 3) {
-                        const [d, m, y] = parts.map(p => parseInt(p, 10));
-                        if (!isNaN(d) && !isNaN(m) && !isNaN(y) && d >= 1 && d <= 31 && m >= 1 && m <= 12 && y >= 1900 && y <= 2100) {
-                            return `${String(d).padStart(2, '0')}-${String(m).padStart(2, '0')}-${y}`;
-                        }
+            // Caso 2: string en formato DD-MM-YYYY, DD/MM/YYYY o DD.MM.YYYY
+            if (typeof value === 'string') {
+                const cleaned = value.trim().replace(/[/\.]/g, '-');
+                const match = cleaned.match(/^(\d{1,2})-(\d{1,2})-(\d{4})$/);
+                if (match) {
+                    const [_, d, m, y] = match.map(Number);
+                    if (d >= 1 && d <= 31 && m >= 1 && m <= 12 && y >= 1900 && y <= 2100) {
+                        const date = new Date(y, m - 1, d);
+                        return date.toISOString();
                     }
                 }
-
-                if (value instanceof Date && !isNaN(value)) {
-                    const d = value.getDate();
-                    const m = value.getMonth() + 1;
-                    const y = value.getFullYear();
-                    return `${String(d).padStart(2, '0')}-${String(m).padStart(2, '0')}-${y}`;
-                }
-
-                return '';
             }
 
-            // === ELEMENTOS DOM ===
-            const loading = document.getElementById('ordenes-loading');
-            const importProgress = document.getElementById('ordenes-import-progress');
-            const progressBar = document.getElementById('progressBar');
-            const progressText = document.getElementById('progressText');
-            const toast = document.getElementById('ordenes-toast');
-            const ordenesBody = document.getElementById('ordenesBody');
-            const prevBtn = document.getElementById('prevBtn');
-            const nextBtn = document.getElementById('nextBtn');
-            const pageNumbers = document.getElementById('pageNumbers');
-            const paginationInfo = document.getElementById('paginationInfo');
-            const buscarCodigoInput = document.getElementById('buscarCodigo');
-            const buscarProveedorInput = document.getElementById('buscarProveedor');
-            const selectAno = document.getElementById('selectAno');
-            const selectMes = document.getElementById('selectMes');
-            const downloadMesModal = document.getElementById('downloadMesModal');
-            const closeDownloadMes = document.getElementById('closeDownloadMes');
-            const cancelDownloadMes = document.getElementById('cancelDownloadMes');
-            const confirmDownloadMes = document.getElementById('confirmDownloadMes');
-            const selectDownloadAno = document.getElementById('selectDownloadAno');
-            const selectDownloadMes = document.getElementById('selectDownloadMes');
-            const actionsBtn = document.getElementById('actionsBtn');
-            const actionsMenu = document.getElementById('actionsMenu');
-            const downloadTemplate = document.getElementById('downloadTemplate');
-            const importExcel = document.getElementById('importExcel');
-            const downloadAll = document.getElementById('downloadAll');
-            const downloadPage = document.getElementById('downloadPage');
-            const downloadMes = document.getElementById('downloadMes');
-            const fileUpload = document.getElementById('fileUpload');
-
-            window.showLoading = () => loading.classList.add('show');
-            window.hideLoading = () => loading.classList.remove('show');
-
-            function showImportProgress(percent) {
-                importProgress.classList.add('show');
-                progressBar.style.width = `${percent}%`;
-                progressText.textContent = `Importando: ${Math.round(percent)}%`;
+            // Caso 3: objeto XLSX con .w (texto) o .v (valor)
+            if (value && typeof value === 'object') {
+                return parseExcelDate(value.w || value.v || '');
             }
 
-            function hideImportProgress() {
-                importProgress.classList.remove('show');
-                progressBar.style.width = '0%';
-                progressText.textContent = 'Importando: 0%';
+            return null;
+        }
+
+        // === ELEMENTOS DOM ===
+        const loading = document.getElementById('ordenes-loading');
+        const importProgress = document.getElementById('ordenes-import-progress');
+        const progressBar = document.getElementById('progressBar');
+        const progressText = document.getElementById('progressText');
+        const toast = document.getElementById('ordenes-toast');
+        const ordenesBody = document.getElementById('ordenesBody');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const pageNumbers = document.getElementById('pageNumbers');
+        const paginationInfo = document.getElementById('paginationInfo');
+        const buscarCodigoInput = document.getElementById('buscarCodigo');
+        const buscarProveedorInput = document.getElementById('buscarProveedor');
+        const selectAno = document.getElementById('selectAno');
+        const selectMes = document.getElementById('selectMes');
+        const downloadMesModal = document.getElementById('downloadMesModal');
+        const closeDownloadMes = document.getElementById('closeDownloadMes');
+        const cancelDownloadMes = document.getElementById('cancelDownloadMes');
+        const confirmDownloadMes = document.getElementById('confirmDownloadMes');
+        const selectDownloadAno = document.getElementById('selectDownloadAno');
+        const selectDownloadMes = document.getElementById('selectDownloadMes');
+        const actionsBtn = document.getElementById('actionsBtn');
+        const actionsMenu = document.getElementById('actionsMenu');
+        const downloadTemplate = document.getElementById('downloadTemplate');
+        const importExcel = document.getElementById('importExcel');
+        const downloadAll = document.getElementById('downloadAll');
+        const downloadPage = document.getElementById('downloadPage');
+        const downloadMes = document.getElementById('downloadMes');
+        const fileUpload = document.getElementById('fileUpload');
+
+        // === HELPERS ===
+        window.showLoading = () => loading.classList.add('show');
+        window.hideLoading = () => loading.classList.remove('show');
+
+        function showImportProgress(percent) {
+            importProgress.classList.add('show');
+            progressBar.style.width = `${percent}%`;
+            progressText.textContent = `Importando: ${Math.round(percent)}%`;
+        }
+
+        function hideImportProgress() {
+            importProgress.classList.remove('show');
+            progressBar.style.width = '0%';
+            progressText.textContent = 'Importando: 0%';
+        }
+
+        function showToast(text, type = 'success') {
+            toast.textContent = text;
+            toast.className = `ordenes-toast ${type}`;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 5000);
+        }
+
+        async function getOrdenByCodigo(codigo) {
+            if (!codigo || typeof codigo !== 'string') return null;
+            const q = query(collection(db, "ordenes"), where("codigo", "==", codigo.trim()));
+            const querySnapshot = await getDocs(q);
+            if (!querySnapshot.empty) {
+                const docSnap = querySnapshot.docs[0];
+                return { id: docSnap.id, ...docSnap.data() };
             }
+            return null;
+        }
 
-            function showToast(text, type = 'success') {
-                toast.textContent = text;
-                toast.className = `ordenes-toast ${type}`;
-                toast.classList.add('show');
-                setTimeout(() => toast.classList.remove('show'), 5000);
-            }
+        // === MODALES ===
+        function openDownloadMesModal() {
+            populateAnoSelect(selectDownloadAno);
+            selectDownloadAno.value = selectedAno;
+            populateMesSelect(selectDownloadMes, selectDownloadAno.value);
+            downloadMesModal.style.display = 'block';
+        }
 
-            async function getOrdenByCodigo(codigo) {
-                if (!codigo || typeof codigo !== 'string') return null;
-                const q = query(collection(db, "ordenes"), where("codigo", "==", codigo.trim()));
-                const querySnapshot = await getDocs(q);
-                if (!querySnapshot.empty) {
-                    const doc = querySnapshot.docs[0];
-                    return { id: doc.id, ...doc.data() };
-                }
-                return null;
-            }
+        function closeDownloadMesModalHandler() {
+            downloadMesModal.style.display = 'none';
+        }
 
-            function openDownloadMesModal() {
-                populateAnoSelect(selectDownloadAno);
-                selectDownloadAno.value = selectedAno;
-                populateMesSelect(selectDownloadMes, selectDownloadAno.value);
-                downloadMesModal.style.display = 'block';
-            }
+        closeDownloadMes.addEventListener('click', closeDownloadMesModalHandler);
+        cancelDownloadMes.addEventListener('click', closeDownloadMesModalHandler);
+        window.addEventListener('click', (e) => {
+            if (e.target === downloadMesModal) closeDownloadMesModalHandler();
+        });
 
-            function closeDownloadMesModalHandler() {
-                downloadMesModal.style.display = 'none';
-            }
-
-            closeDownloadMes.addEventListener('click', closeDownloadMesModalHandler);
-            cancelDownloadMes.addEventListener('click', closeDownloadMesModalHandler);
-            window.addEventListener('click', (e) => {
-                if (e.target === downloadMesModal) closeDownloadMesModalHandler();
-            });
-
-            confirmDownloadMes.addEventListener('click', async () => {
-                const ano = selectDownloadAno.value;
-                const mes = selectDownloadMes.value;
-                if (ano && mes) {
-                    showLoading();
-                    try {
-                        const data = await getOrdenesByMes(ano, mes);
-                        exportToExcel(data.map(o => ({
-                            codigo: o.codigo,
-                            generacion: formatDateToDDMMYYYY(o.generacion),
-                            autorizacion: formatDateToDDMMYYYY(o.autorizacion),
-                            sociedad: o.sociedad,
-                            tipoCompra: o.tipoCompra,
-                            proveedor: o.proveedor,
-                            digitador: o.digitador,
-                            nivelActual: o.nivelActual,
-                            nivelOx: o.nivelOx,
-                            liberada: o.liberada,
-                            total: o.total,
-                            estado: o.estado,
-                            evento: o.evento
-                        })), `ordenes_${ano}_${mes}`);
-                        hideLoading();
-                        closeDownloadMesModalHandler();
-                    } catch (error) {
-                        hideLoading();
-                        showToast('Error al descargar el mes: ' + error.message, 'error');
-                    }
-                } else {
-                    showToast('Por favor, selecciona año y mes.', 'error');
-                }
-            });
-
-            onAuthStateChanged(auth, async (user) => {
-                if (!user) {
-                    window.location.replace('../../../../../index.html');
-                    return;
-                }
-                window.currentUserData = { fullName: user.displayName || 'Usuario Invitado', username: user.email || 'invitado' };
-                await loadOrdenes();
-                populateAnoSelect(selectAno);
-                selectAno.value = selectedAno;
-                populateMesSelect(selectMes, selectedAno);
-                populateAnoSelect(selectDownloadAno);
-            });
-
-            buscarCodigoInput?.addEventListener('input', (e) => {
-                searchCodigo = e.target.value.trim();
-                currentPage = 1;
-                renderTable();
-            });
-            buscarProveedorInput?.addEventListener('input', (e) => {
-                searchProveedor = e.target.value.trim();
-                currentPage = 1;
-                renderTable();
-            });
-            selectAno?.addEventListener('change', (e) => {
-                selectedAno = e.target.value;
-                populateMesSelect(selectMes, selectedAno);
-                currentPage = 1;
-                renderTable();
-            });
-            selectMes?.addEventListener('change', (e) => {
-                selectedMes = e.target.value;
-                currentPage = 1;
-                renderTable();
-            });
-            selectDownloadAno?.addEventListener('change', (e) => {
-                populateMesSelect(selectDownloadMes, e.target.value);
-            });
-
-            async function loadOrdenes() {
+        confirmDownloadMes.addEventListener('click', async () => {
+            const ano = selectDownloadAno.value;
+            const mes = selectDownloadMes.value;
+            if (ano && mes) {
                 showLoading();
                 try {
-                    const querySnapshot = await getDocs(collection(db, "ordenes"));
-                    ordenes = [];
-                    anos = new Set();
-                    mesesPorAno = {};
+                    const data = await getOrdenesByMes(ano, mes);
+                    exportToExcel(data.map(o => formatRow(o)), `ordenes_${ano}_${mes}`);
+                    hideLoading();
+                    closeDownloadMesModalHandler();
+                } catch (error) {
+                    hideLoading();
+                    showToast('Error al descargar el mes: ' + error.message, 'error');
+                }
+            } else {
+                showToast('Por favor, selecciona año y mes.', 'error');
+            }
+        });
 
-                    querySnapshot.forEach((doc) => {
-                        const data = doc.data();
-                        ordenes.push({ id: doc.id, ...data });
+        // === AUTENTICACIÓN Y CARGA INICIAL ===
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) {
+                window.location.replace('../../../../../index.html');
+                return;
+            }
+            window.currentUserData = { fullName: user.displayName || 'Usuario Invitado', username: user.email || 'invitado' };
+            await loadOrdenes();
+            populateAnoSelect(selectAno);
+            selectAno.value = selectedAno;
+            populateMesSelect(selectMes, selectedAno);
+            populateAnoSelect(selectDownloadAno);
+        });
 
-                        const generacionDate = new Date(data.generacion);
-                        if (!isNaN(generacionDate)) {
-                            const ano = generacionDate.getFullYear();
-                            const mes = generacionDate.toLocaleString('es-CL', { month: 'long' });
-                            anos.add(ano);
-                            if (!mesesPorAno[ano]) mesesPorAno[ano] = new Set();
-                            mesesPorAno[ano].add(mes);
-                        }
+        // === FILTROS ===
+        buscarCodigoInput?.addEventListener('input', (e) => {
+            searchCodigo = e.target.value.trim();
+            currentPage = 1;
+            renderTable();
+        });
+        buscarProveedorInput?.addEventListener('input', (e) => {
+            searchProveedor = e.target.value.trim();
+            currentPage = 1;
+            renderTable();
+        });
+        selectAno?.addEventListener('change', (e) => {
+            selectedAno = e.target.value;
+            populateMesSelect(selectMes, selectedAno);
+            currentPage = 1;
+            renderTable();
+        });
+        selectMes?.addEventListener('change', (e) => {
+            selectedMes = e.target.value;
+            currentPage = 1;
+            renderTable();
+        });
+        selectDownloadAno?.addEventListener('change', (e) => {
+            populateMesSelect(selectDownloadMes, e.target.value);
+        });
+
+        // === CARGA DE DATOS ===
+        async function loadOrdenes() {
+            showLoading();
+            try {
+                const querySnapshot = await getDocs(collection(db, "ordenes"));
+                ordenes = [];
+                anos = new Set();
+                mesesPorAno = {};
+
+                querySnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    ordenes.push({ id: doc.id, ...data });
+
+                    const generacionDate = new Date(data.generacion);
+                    if (!isNaN(generacionDate)) {
+                        const ano = generacionDate.getFullYear();
+                        const mes = generacionDate.toLocaleString('es-CL', { month: 'long' });
+                        anos.add(ano);
+                        if (!mesesPorAno[ano]) mesesPorAno[ano] = new Set();
+                        mesesPorAno[ano].add(mes);
+                    }
+                });
+
+                renderTable();
+                hideLoading();
+            } catch (error) {
+                hideLoading();
+                showToast('Error al cargar las órdenes: ' + error.message, 'error');
+            }
+        }
+
+        function populateAnoSelect(select) {
+            select.innerHTML = '<option value="">Todos</option>';
+            Array.from(anos).sort((a, b) => b - a).forEach(ano => {
+                const option = document.createElement('option');
+                option.value = ano;
+                option.textContent = ano;
+                select.appendChild(option);
+            });
+        }
+
+        function populateMesSelect(select, ano) {
+            select.innerHTML = '<option value="">Todos</option>';
+            if (ano && mesesPorAno[ano]) {
+                const mesesOrden = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+                Array.from(mesesPorAno[ano])
+                    .sort((a, b) => mesesOrden.indexOf(a.toLowerCase()) - mesesOrden.indexOf(b.toLowerCase()))
+                    .forEach(mes => {
+                        const option = document.createElement('option');
+                        option.value = mes;
+                        option.textContent = mes.charAt(0).toUpperCase() + mes.slice(1);
+                        select.appendChild(option);
+                    });
+            }
+        }
+
+        // === ACCIONES ===
+        actionsBtn.addEventListener('click', () => {
+            actionsMenu.style.display = actionsMenu.style.display === 'block' ? 'none' : 'block';
+        });
+
+        window.addEventListener('click', (e) => {
+            if (!actionsBtn.contains(e.target) && !actionsMenu.contains(e.target)) {
+                actionsMenu.style.display = 'none';
+            }
+        });
+
+        downloadTemplate.addEventListener('click', (e) => { e.preventDefault(); downloadImportTemplate(); actionsMenu.style.display = 'none'; });
+        importExcel.addEventListener('click', (e) => { e.preventDefault(); fileUpload.click(); actionsMenu.style.display = 'none'; });
+        downloadAll.addEventListener('click', (e) => { e.preventDefault(); exportToExcel(ordenes.map(o => formatRow(o)), 'todas_ordenes'); actionsMenu.style.display = 'none'; });
+        downloadPage.addEventListener('click', (e) => {
+            e.preventDefault();
+            const filtered = getFilteredOrdenes();
+            const start = (currentPage - 1) * PAGE_SIZE;
+            const end = start + PAGE_SIZE;
+            exportToExcel(filtered.slice(start, end).map(o => formatRow(o)), 'pagina_actual_ordenes');
+            actionsMenu.style.display = 'none';
+        });
+        downloadMes.addEventListener('click', (e) => { e.preventDefault(); openDownloadMesModal(); actionsMenu.style.display = 'none'; });
+
+        fileUpload.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                await importFromExcel(file);
+                fileUpload.value = '';
+            }
+        });
+
+        // === EXPORTAR / IMPORTAR ===
+        function formatRow(o) {
+            return {
+                codigo: o.codigo,
+                generacion: formatDateToDDMMYYYY(o.generacion),
+                autorizacion: formatDateToDDMMYYYY(o.autorizacion),
+                sociedad: o.sociedad,
+                tipoCompra: o.tipoCompra,
+                proveedor: o.proveedor,
+                digitador: o.digitador,
+                nivelActual: o.nivelActual,
+                nivelOx: o.nivelOx,
+                liberada: o.liberada,
+                total: o.total,
+                estado: o.estado,
+                evento: o.evento
+            };
+        }
+
+        function exportToExcel(data, filename) {
+            const ws = XLSX.utils.json_to_sheet(data, { dateNF: 'dd-mm-yyyy', cellDates: true });
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Órdenes");
+            XLSX.writeFile(wb, filename + '.xlsx');
+        }
+
+        function downloadImportTemplate() {
+            const ws = XLSX.utils.aoa_to_sheet([
+                ["Código", "Generación", "Autorización", "Sociedad", "Tipo de compra", "Proveedor", "Digitador", "Nivel actual", "Nivel ox", "Liberada", "Total", "Estado"],
+                ["55130", "30-09-2025", "30-09-2025", "CLINICA REGIONAL LIRCAY SPA", "Normal", "WINKLER LTDA", "FRANCISCO SANCHEZ (CAS)", "2", "2", "SI", "420000", "Autorizada"]
+            ]);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Template");
+            XLSX.writeFile(wb, 'template_ordenes.xlsx');
+        }
+
+        async function importFromExcel(file) {
+            try {
+                const reader = new FileReader();
+                reader.onload = async (e) => {
+                    const data = new Uint8Array(e.target.result);
+                    const wb = XLSX.read(data, { type: 'array', cellDates: true, dateNF: 'dd-mm-yyyy' });
+                    const ws = wb.Sheets[wb.SheetNames[0]];
+                    const json = XLSX.utils.sheet_to_json(ws, {
+                        header: ["codigo", "generacion", "autorizacion", "sociedad", "tipoCompra", "proveedor", "digitador", "nivelActual", "nivelOx", "liberada", "total", "estado"],
+                        range: 1, defval: '', raw: false
                     });
 
-                    renderTable();
-                    hideLoading();
-                } catch (error) {
-                    hideLoading();
-                    showToast('Error al cargar las órdenes: ' + error.message, 'error');
-                }
-            }
+                    let addedCount = 0;
+                    let updatedCount = 0;
+                    const totalRows = json.length;
+                    showImportProgress(0);
 
-            function populateAnoSelect(select) {
-                select.innerHTML = '<option value="">Todos</option>';
-                Array.from(anos).sort((a, b) => b - a).forEach(ano => {
-                    const option = document.createElement('option');
-                    option.value = ano;
-                    option.textContent = ano;
-                    select.appendChild(option);
-                });
-            }
+                    for (let i = 0; i < json.length; i++) {
+                        const row = json[i];
 
-            function populateMesSelect(select, ano) {
-                select.innerHTML = '<option value="">Todos</option>';
-                if (ano && mesesPorAno[ano]) {
-                    const mesesOrden = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
-                    Array.from(mesesPorAno[ano])
-                        .sort((a, b) => mesesOrden.indexOf(a.toLowerCase()) - mesesOrden.indexOf(b.toLowerCase()))
-                        .forEach(mes => {
-                            const option = document.createElement('option');
-                            option.value = mes;
-                            option.textContent = mes.charAt(0).toUpperCase() + mes.slice(1);
-                            select.appendChild(option);
-                        });
-                }
-            }
+                        const generacionISO = parseExcelDate(row.generacion);
+                        const autorizacionISO = parseExcelDate(row.autorizacion);
 
-            actionsBtn.addEventListener('click', () => {
-                actionsMenu.style.display = actionsMenu.style.display === 'block' ? 'none' : 'block';
-            });
-
-            window.addEventListener('click', (e) => {
-                if (!actionsBtn.contains(e.target) && !actionsMenu.contains(e.target)) {
-                    actionsMenu.style.display = 'none';
-                }
-            });
-
-            downloadTemplate.addEventListener('click', (e) => { e.preventDefault(); downloadImportTemplate(); actionsMenu.style.display = 'none'; });
-            importExcel.addEventListener('click', (e) => { e.preventDefault(); fileUpload.click(); actionsMenu.style.display = 'none'; });
-            downloadAll.addEventListener('click', (e) => { e.preventDefault(); exportToExcel(ordenes.map(o => formatRow(o)), 'todas_ordenes'); actionsMenu.style.display = 'none'; });
-            downloadPage.addEventListener('click', (e) => {
-                e.preventDefault();
-                const filtered = getFilteredOrdenes();
-                const start = (currentPage - 1) * PAGE_SIZE;
-                const end = start + PAGE_SIZE;
-                exportToExcel(filtered.slice(start, end).map(o => formatRow(o)), 'pagina_actual_ordenes');
-                actionsMenu.style.display = 'none';
-            });
-            downloadMes.addEventListener('click', (e) => { e.preventDefault(); openDownloadMesModal(); actionsMenu.style.display = 'none'; });
-
-            fileUpload.addEventListener('change', async (e) => {
-                const file = e.target.files[0];
-                if (file) {
-                    await importFromExcel(file);
-                    fileUpload.value = '';
-                }
-            });
-
-            function formatRow(o) {
-                return {
-                    codigo: o.codigo,
-                    generacion: formatDateToDDMMYYYY(o.generacion),
-                    autorizacion: formatDateToDDMMYYYY(o.autorizacion),
-                    sociedad: o.sociedad,
-                    tipoCompra: o.tipoCompra,
-                    proveedor: o.proveedor,
-                    digitador: o.digitador,
-                    nivelActual: o.nivelActual,
-                    nivelOx: o.nivelOx,
-                    liberada: o.liberada,
-                    total: o.total,
-                    estado: o.estado,
-                    evento: o.evento
-                };
-            }
-
-            function exportToExcel(data, filename) {
-                const ws = XLSX.utils.json_to_sheet(data, { dateNF: 'dd-mm-yyyy', cellDates: true });
-                const wb = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(wb, ws, "Órdenes");
-                XLSX.writeFile(wb, filename + '.xlsx');
-            }
-
-            function downloadImportTemplate() {
-                const ws = XLSX.utils.aoa_to_sheet([
-                    ["Código", "Generación", "Autorización", "Sociedad", "Tipo de compra", "Proveedor", "Digitador", "Nivel actual", "Nivel ox", "Liberada", "Total", "Estado"],
-                    ["55130", "30-09-2025", "30-09-2025", "CLINICA REGIONAL LIRCAY SPA", "Normal", "WINKLER LTDA", "FRANCISCO SANCHEZ (CAS)", "2", "2", "SI", "420000", "Autorizada"]
-                ]);
-                const wb = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(wb, ws, "Template");
-                XLSX.writeFile(wb, 'template_ordenes.xlsx');
-            }
-
-            async function importFromExcel(file) {
-                try {
-                    const reader = new FileReader();
-                    reader.onload = async (e) => {
-                        const data = new Uint8Array(e.target.result);
-                        const wb = XLSX.read(data, { type: 'array', cellDates: true, dateNF: 'dd-mm-yyyy' });
-                        const ws = wb.Sheets[wb.SheetNames[0]];
-                        const json = XLSX.utils.sheet_to_json(ws, {
-                            header: ["codigo", "generacion", "autorizacion", "sociedad", "tipoCompra", "proveedor", "digitador", "nivelActual", "nivelOx", "liberada", "total", "estado"],
-                            range: 1, defval: '', raw: false
-                        });
-
-                        let addedCount = 0;
-                        let updatedCount = 0;
-                        const totalRows = json.length;
-                        showImportProgress(0);
-
-                        for (let i = 0; i < json.length; i++) {
-                            const row = json[i];
-                            let generacion = '', autorizacion = '';
-
-                            if (typeof row.generacion === 'string') generacion = parseExcelDate(row.generacion);
-                            else if (row.generacion?.w) generacion = parseExcelDate(row.generacion.w);
-                            else if (row.generacion?.v) generacion = parseExcelDate(row.generacion.v);
-                            else generacion = parseExcelDate(String(row.generacion || ''));
-
-                            if (typeof row.autorizacion === 'string') autorizacion = parseExcelDate(row.autorizacion);
-                            else if (row.autorizacion?.w) autorizacion = parseExcelDate(row.autorizacion.w);
-                            else if (row.autorizacion?.v) autorizacion = parseExcelDate(row.autorizacion.v);
-                            else autorizacion = parseExcelDate(String(row.autorizacion || ''));
-
-                            if (!generacion || !autorizacion) {
-                                showToast(`Fila ${i + 2}: Fecha inválida`, 'error');
-                                continue;
-                            }
-
-                            const processedRow = {
-                                codigo: String(row.codigo || '').trim(),
-                                generacion, autorizacion,
-                                sociedad: String(row.sociedad || '').trim(),
-                                tipoCompra: String(row.tipoCompra || '').trim(),
-                                proveedor: String(row.proveedor || '').trim(),
-                                digitador: String(row.digitador || '').trim(),
-                                nivelActual: String(row.nivelActual || '').trim(),
-                                nivelOx: String(row.nivelOx || '').trim(),
-                                liberada: String(row.liberada || '').trim(),
-                                total: String(row.total || '').replace(/[^\d]/g, ''),
-                                estado: String(row.estado || '').trim()
-                            };
-
-                            if (!processedRow.codigo) {
-                                showToast(`Fila ${i + 2}: Falta código`, 'error');
-                                continue;
-                            }
-
-                            const existing = await getOrdenByCodigo(processedRow.codigo);
-                            if (existing) {
-                                const hasChanges = Object.keys(processedRow).some(k => processedRow[k] !== String(existing[k] || '').trim());
-                                if (hasChanges) {
-                                    await updateDoc(doc(db, "ordenes", existing.id), {
-                                        ...processedRow,
-                                        evento: `Actualizado ${new Date().toLocaleString('es-CL')}`,
-                                        createdAt: new Date()
-                                    });
-                                    updatedCount++;
-                                }
-                            } else {
-                                await addDoc(collection(db, "ordenes"), {
-                                    ...processedRow,
-                                    evento: `Importado ${new Date().toLocaleString('es-CL')}`,
-                                    createdAt: new Date()
-                                });
-                                addedCount++;
-                            }
-
-                            showImportProgress(((i + 1) / totalRows) * 100);
+                        if (!generacionISO || !autorizacionISO) {
+                            showToast(`Fila ${i + 2}: Fecha inválida`, 'error');
+                            continue;
                         }
 
-                        hideImportProgress();
-                        showToast(`Importadas: ${addedCount} nuevas, ${updatedCount} actualizadas.`, 'success');
-                        await loadOrdenes();
-                        renderTable();
-                    };
-                    reader.readAsArrayBuffer(file);
-                } catch (error) {
-                    hideImportProgress();
-                    showToast('Error al importar: ' + error.message, 'error');
-                }
-            }
+                        const processedRow = {
+                            codigo: String(row.codigo || '').trim(),
+                            generacion: generacionISO,
+                            autorizacion: autorizacionISO,
+                            sociedad: String(row.sociedad || '').trim(),
+                            tipoCompra: String(row.tipoCompra || '').trim(),
+                            proveedor: String(row.proveedor || '').trim(),
+                            digitador: String(row.digitador || '').trim(),
+                            nivelActual: String(row.nivelActual || '').trim(),
+                            nivelOx: String(row.nivelOx || '').trim(),
+                            liberada: String(row.liberada || '').trim(),
+                            total: String(row.total || '').replace(/[^\d]/g, ''),
+                            estado: String(row.estado || '').trim()
+                        };
 
-            async function getOrdenesByMes(ano, mes) {
-                return ordenes.filter(o => {
-                    const d = new Date(o.generacion);
-                    return d.getFullYear() == ano && d.toLocaleString('es-CL', { month: 'long' }) === mes;
-                });
-            }
+                        if (!processedRow.codigo) {
+                            showToast(`Fila ${i + 2}: Falta código`, 'error');
+                            continue;
+                        }
 
-            function getFilteredOrdenes() {
-                return ordenes.filter(o => {
-                    const c = String(o.codigo || '').trim().toLowerCase();
-                    const p = String(o.proveedor || '').trim().toLowerCase();
-                    const d = new Date(o.generacion);
-                    return (!searchCodigo || c.includes(searchCodigo.toLowerCase())) &&
-                           (!searchProveedor || p.includes(searchProveedor.toLowerCase())) &&
-                           (!selectedAno || d.getFullYear() == selectedAno) &&
-                           (!selectedMes || d.toLocaleString('es-CL', { month: 'long' }) === selectedMes);
-                });
-            }
+                        const existing = await getOrdenByCodigo(processedRow.codigo);
+                        if (existing) {
+                            const hasChanges = Object.keys(processedRow).some(k => {
+                                if (k === 'generacion' || k === 'autorizacion') {
+                                    return processedRow[k] !== (existing[k] || '');
+                                }
+                                return processedRow[k] !== String(existing[k] || '').trim();
+                            });
+                            if (hasChanges) {
+                                await updateDoc(doc(db, "ordenes", existing.id), {
+                                    ...processedRow,
+                                    evento: `Actualizado ${new Date().toLocaleString('es-CL')}`,
+                                    createdAt: new Date()
+                                });
+                                updatedCount++;
+                            }
+                        } else {
+                            await addDoc(collection(db, "ordenes"), {
+                                ...processedRow,
+                                evento: `Importado ${new Date().toLocaleString('es-CL')}`,
+                                createdAt: new Date()
+                            });
+                            addedCount++;
+                        }
 
-            function renderTable() {
-                const filtered = getFilteredOrdenes();
-                const start = (currentPage - 1) * PAGE_SIZE;
-                const end = start + PAGE_SIZE;
-                const page = filtered.sort((a, b) => a.codigo.localeCompare(b.codigo)).slice(start, end);
-                ordenesBody.innerHTML = '';
-                page.forEach(o => {
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `
-                        <td>${o.codigo||''}</td>
-                        <td>${formatDateToDDMMYYYY(o.generacion)||''}</td>
-                        <td>${formatDateToDDMMYYYY(o.autorizacion)||''}</td>
-                        <td>${o.sociedad||''}</td>
-                        <td>${o.tipoCompra||''}</td>
-                        <td>${o.proveedor||''}</td>
-                        <td>${o.digitador||''}</td>
-                        <td>${o.nivelActual||''}</td>
-                        <td>${o.nivelOx||''}</td>
-                        <td>${o.liberada||''}</td>
-                        <td>${o.total||''}</td>
-                        <td>${o.estado||''}</td>
-                        <td>${o.evento||'N/A'}</td>`;
-                    ordenesBody.appendChild(tr);
-                });
-                updatePagination(filtered.length);
-            }
-
-            function updatePagination(total) {
-                const pages = Math.ceil(total / PAGE_SIZE);
-                const start = Math.max(1, currentPage - 2);
-                const end = Math.min(pages, start + 4);
-                paginationInfo.textContent = `Página ${currentPage} de ${pages} | ${Math.min(PAGE_SIZE, total - (currentPage-1)*PAGE_SIZE)} registros en esta página de ${total}`;
-                prevBtn.disabled = currentPage === 1;
-                nextBtn.disabled = currentPage === pages;
-                pageNumbers.innerHTML = '';
-                for (let i = start; i <= end; i++) {
-                    if (i > start && i < end && end - start > 3) {
-                        const dots = document.createElement('span');
-                        dots.textContent = '...'; dots.className = 'ordenes-dots';
-                        pageNumbers.appendChild(dots);
-                        i = end - 1;
-                        continue;
+                        showImportProgress(((i + 1) / totalRows) * 100);
                     }
-                    const btn = document.createElement('button');
-                    btn.textContent = i;
-                    btn.className = i === currentPage ? 'active' : '';
-                    btn.addEventListener('click', () => { currentPage = i; renderTable(); });
-                    pageNumbers.appendChild(btn);
-                }
-            }
 
-            prevBtn.addEventListener('click', () => { if (currentPage > 1) { currentPage--; renderTable(); } });
-            nextBtn.addEventListener('click', () => {
-                const totalPages = Math.ceil(getFilteredOrdenes().length / PAGE_SIZE);
-                if (currentPage < totalPages) { currentPage++; renderTable(); }
+                    hideImportProgress();
+                    showToast(`Importadas: ${addedCount} nuevas, ${updatedCount} actualizadas.`, 'success');
+                    await loadOrdenes();
+                    renderTable();
+                };
+                reader.readAsArrayBuffer(file);
+            } catch (error) {
+                hideImportProgress();
+                showToast('Error al importar: ' + error.message, 'error');
+            }
+        }
+
+        // === FILTROS Y RENDER ===
+        async function getOrdenesByMes(ano, mes) {
+            return ordenes.filter(o => {
+                const d = new Date(o.generacion);
+                return d.getFullYear() == ano && d.toLocaleString('es-CL', { month: 'long' }) === mes;
             });
+        }
+
+        function getFilteredOrdenes() {
+            return ordenes.filter(o => {
+                const c = String(o.codigo || '').trim().toLowerCase();
+                const p = String(o.proveedor || '').trim().toLowerCase();
+                const d = new Date(o.generacion);
+                return (!searchCodigo || c.includes(searchCodigo.toLowerCase())) &&
+                       (!searchProveedor || p.includes(searchProveedor.toLowerCase())) &&
+                       (!selectedAno || d.getFullYear() == selectedAno) &&
+                       (!selectedMes || d.toLocaleString('es-CL', { month: 'long' }) === selectedMes);
+            });
+        }
+
+        function renderTable() {
+            const filtered = getFilteredOrdenes();
+            const start = (currentPage - 1) * PAGE_SIZE;
+            const end = start + PAGE_SIZE;
+            const page = filtered.sort((a, b) => a.codigo.localeCompare(b.codigo)).slice(start, end);
+            ordenesBody.innerHTML = '';
+            page.forEach(o => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${o.codigo || ''}</td>
+                    <td>${formatDateToDDMMYYYY(o.generacion) || ''}</td>
+                    <td>${formatDateToDDMMYYYY(o.autorizacion) || ''}</td>
+                    <td>${o.sociedad || ''}</td>
+                    <td>${o.tipoCompra || ''}</td>
+                    <td>${o.proveedor || ''}</td>
+                    <td>${o.digitador || ''}</td>
+                    <td>${o.nivelActual || ''}</td>
+                    <td>${o.nivelOx || ''}</td>
+                    <td>${o.liberada || ''}</td>
+                    <td>${o.total || ''}</td>
+                    <td>${o.estado || ''}</td>
+                    <td>${o.evento || 'N/A'}</td>`;
+                ordenesBody.appendChild(tr);
+            });
+            updatePagination(filtered.length);
+        }
+
+        function updatePagination(total) {
+            const pages = Math.ceil(total / PAGE_SIZE);
+            const start = Math.max(1, currentPage - 2);
+            const end = Math.min(pages, start + 4);
+            paginationInfo.textContent = `Página ${currentPage} de ${pages} | ${Math.min(PAGE_SIZE, total - (currentPage - 1) * PAGE_SIZE)} registros en esta página de ${total}`;
+            prevBtn.disabled = currentPage === 1;
+            nextBtn.disabled = currentPage === pages;
+            pageNumbers.innerHTML = '';
+            for (let i = start; i <= end; i++) {
+                if (i > start && i < end && end - start > 3) {
+                    const dots = document.createElement('span');
+                    dots.textContent = '...'; dots.className = 'ordenes-dots';
+                    pageNumbers.appendChild(dots);
+                    i = end - 1;
+                    continue;
+                }
+                const btn = document.createElement('button');
+                btn.textContent = i;
+                btn.className = i === currentPage ? 'active' : '';
+                btn.addEventListener('click', () => { currentPage = i; renderTable(); });
+                pageNumbers.appendChild(btn);
+            }
+        }
+
+        prevBtn.addEventListener('click', () => { if (currentPage > 1) { currentPage--; renderTable(); } });
+        nextBtn.addEventListener('click', () => {
+            const totalPages = Math.ceil(getFilteredOrdenes().length / PAGE_SIZE);
+            if (currentPage < totalPages) { currentPage++; renderTable(); }
         });
-    </script>
+    });
+</script>
 </body>
+
 </html>
