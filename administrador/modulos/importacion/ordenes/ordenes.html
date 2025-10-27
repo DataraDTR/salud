@@ -869,9 +869,11 @@
                     ordenes = [];
                     anos = new Set();
                     mesesPorAno = {};
+
                     querySnapshot.forEach((doc) => {
                         const data = doc.data();
                         ordenes.push({ id: doc.id, ...data });
+
                         const generacionDate = new Date(data.generacion);
                         if (!isNaN(generacionDate)) {
                             const ano = generacionDate.getFullYear();
@@ -881,6 +883,9 @@
                             mesesPorAno[ano].add(mes);
                         }
                     });
+
+                    console.log("Órdenes cargadas:", ordenes); // VERIFICA AQUÍ
+
                     renderTable();
                     hideLoading();
                 } catch (error) {
@@ -1114,12 +1119,18 @@
             }
 
             function getFilteredOrdenes() {
-                return ordenes.filter(orden =>
-                    String(orden.codigo || '').toLowerCase().includes(searchCodigo.toLowerCase()) &&
-                    String(orden.proveedor || '').toLowerCase().includes(searchProveedor.toLowerCase()) &&
-                    (!selectedAno || new Date(orden.generacion).getFullYear() == selectedAno) &&
-                    (!selectedMes || new Date(orden.generacion).toLocaleString('es-CL', { month: 'long' }) === selectedMes)
-                );
+                return ordenes.filter(orden => {
+                    const codigo = String(orden.codigo || '').trim().toLowerCase();
+                    const proveedor = String(orden.proveedor || '').trim().toLowerCase();
+                    const generacionDate = new Date(orden.generacion);
+
+                    const matchesCodigo = searchCodigo === '' || codigo.includes(searchCodigo.trim().toLowerCase());
+                    const matchesProveedor = searchProveedor === '' || proveedor.includes(searchProveedor.trim().toLowerCase());
+                    const matchesAno = !selectedAno || generacionDate.getFullYear() == selectedAno;
+                    const matchesMes = !selectedMes || generacionDate.toLocaleString('es-CL', { month: 'long' }) === selectedMes;
+
+                    return matchesCodigo && matchesProveedor && matchesAno && matchesMes;
+                });
             }
 
             function renderTable() {
