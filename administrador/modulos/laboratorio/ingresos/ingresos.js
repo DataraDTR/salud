@@ -611,7 +611,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     const orden = await getOrdenByCodigo(codigo);
                     if (orden) {
                         proveedorInput.value = orden.proveedor || '';
-                        fechaOcInput.value = formatDateToDDMMYYYY(parseDateDDMMYYYY(orden.generacion)) || '';
+                        // Aquí está la corrección: usar 'generacion' y formatear
+                        const fechaGeneracion = orden.generacion;
+                        fechaOcInput.value = fechaGeneracion && fechaGeneracion !== '-'
+                            ? formatDateToDDMMYYYY(fechaGeneracion)
+                            : '';
                     } else {
                         proveedorInput.value = '';
                         fechaOcInput.value = '';
@@ -640,7 +644,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     const orden = await getOrdenByCodigo(codigo);
                     if (orden) {
                         document.getElementById('editProveedor').value = orden.proveedor || '';
-                        document.getElementById('editFechaOc').value = formatDateToDDMMYYYY(parseDateDDMMYYYY(orden.generacion)) || '';
+                        const fechaGeneracion = orden.generacion;
+                        document.getElementById('editFechaOc').value = fechaGeneracion && fechaGeneracion !== '-'
+                            ? formatDateToDDMMYYYY(fechaGeneracion)
+                            : '';
                     } else {
                         document.getElementById('editProveedor').value = '';
                         document.getElementById('editFechaOc').value = '';
