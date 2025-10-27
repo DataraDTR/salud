@@ -673,9 +673,9 @@
 
         // === UTILIDADES DE FECHAS ===
         function formatDateToDDMMYYYY(isoString) {
-            if (!isoString) return '';
+            if (!isoString || isoString === '-') return '-';
             const date = new Date(isoString);
-            if (isNaN(date)) return '';
+            if (isNaN(date)) return '-';
             const day = String(date.getDate()).padStart(2, '0');
             const month = String(date.getMonth() + 1).padStart(2, '0');
             const year = date.getFullYear();
@@ -973,13 +973,14 @@
         function downloadImportTemplate() {
             const ws = XLSX.utils.aoa_to_sheet([
                 ["Código", "Generación", "Autorización", "Sociedad", "Tipo de compra", "Proveedor", "Digitador", "Nivel actual", "Nivel ox", "Liberada", "Total", "Estado"],
-                ["55130", "30-09-2025", "30-09-2025", "CLINICA REGIONAL LIRCAY SPA", "Normal", "WINKLER LTDA", "FRANCISCO SANCHEZ (CAS)", "2", "2", "SI", "420000", "Autorizada"]
+                ["55130", "30-09-2025", "", "CLINICA REGIONAL LIRCAY SPA", "Normal", "WINKLER LTDA", "FRANCISCO SANCHEZ (CAS)", "2", "2", "SI", "420000", "Pendiente"]
             ]);
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, "Template");
             XLSX.writeFile(wb, 'template_ordenes.xlsx');
         }
 
+        // === IMPORTAR EXCEL (FIX: AUTORIZACIÓN VACÍA → "-") ===
         async function importFromExcel(file) {
             try {
                 const reader = new FileReader();
@@ -1003,15 +1004,16 @@
                         const generacionISO = parseExcelDate(row.generacion);
                         const autorizacionISO = parseExcelDate(row.autorizacion);
 
-                        if (!generacionISO || !autorizacionISO) {
-                            showToast(`Fila ${i + 2}: Fecha inválida`, 'error');
+                        // SOLO RECHAZAR SI FALTA GENERACIÓN
+                        if (!generacionISO) {
+                            showToast(`Fila ${i + 2}: Fecha de generación inválida o vacía`, 'error');
                             continue;
                         }
 
                         const processedRow = {
                             codigo: String(row.codigo || '').trim(),
                             generacion: generacionISO,
-                            autorizacion: autorizacionISO,
+                            autorizacion: autorizacionISO || '-',   // ← SI ESTÁ VACÍA → "-"
                             sociedad: String(row.sociedad || '').trim(),
                             tipoCompra: String(row.tipoCompra || '').trim(),
                             proveedor: String(row.proveedor || '').trim(),
@@ -1098,8 +1100,8 @@
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td>${o.codigo || ''}</td>
-                    <td>${formatDateToDDMMYYYY(o.generacion) || ''}</td>
-                    <td>${formatDateToDDMMYYYY(o.autorizacion) || ''}</td>
+                    <td>${formatDateToDDMMYYYY(o.generacion)}</td>
+                    <td>${formatDateToDDMMYYYY(o.autorizacion)}</td>
                     <td>${o.sociedad || ''}</td>
                     <td>${o.tipoCompra || ''}</td>
                     <td>${o.proveedor || ''}</td>
