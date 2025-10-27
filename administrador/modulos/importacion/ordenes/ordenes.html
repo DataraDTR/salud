@@ -8,7 +8,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
-    <!-- ESTILO ORIGINAL SIN CAMBIOS -->
     <style>
         html,
         body {
@@ -140,10 +139,19 @@
             background-color: #f1f1f1;
         }
 
+        .ordenes-table-container {
+            max-height: 500px;
+            overflow-y: auto;
+            overflow-x: auto;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+
         .ordenes-table {
+            table-layout: fixed;
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 20px;
             font-size: 11px;
             border: 1px solid #ddd;
         }
@@ -153,16 +161,37 @@
             padding: 4px;
             text-align: left;
             border: 1px solid #ddd;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .ordenes-table th {
             background-color: #f2f2f2;
             font-size: 11px;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.1);
         }
 
         .ordenes-table tbody tr:hover {
-            background-color: #f8f9fa;
+            background-color: #f8f9fa !important;
         }
+
+        .ordenes-table th:nth-child(1), .ordenes-table td:nth-child(1) { width: 8%; }
+        .ordenes-table th:nth-child(2), .ordenes-table td:nth-child(2) { width: 9%; }
+        .ordenes-table th:nth-child(3), .ordenes-table td:nth-child(3) { width: 9%; }
+        .ordenes-table th:nth-child(4), .ordenes-table td:nth-child(4) { width: 12%; }
+        .ordenes-table th:nth-child(5), .ordenes-table td:nth-child(5) { width: 10%; }
+        .ordenes-table th:nth-child(6), .ordenes-table td:nth-child(6) { width: 12%; }
+        .ordenes-table th:nth-child(7), .ordenes-table td:nth-child(7) { width: 10%; }
+        .ordenes-table th:nth-child(8), .ordenes-table td:nth-child(8) { width: 6%; }
+        .ordenes-table th:nth-child(9), .ordenes-table td:nth-child(9) { width: 6%; }
+        .ordenes-table th:nth-child(10), .ordenes-table td:nth-child(10) { width: 6%; }
+        .ordenes-table th:nth-child(11), .ordenes-table td:nth-child(11) { width: 7%; }
+        .ordenes-table th:nth-child(12), .ordenes-table td:nth-child(12) { width: 8%; }
+        .ordenes-table th:nth-child(13), .ordenes-table td:nth-child(13) { width: 15%; }
 
         .ordenes-pagination {
             display: flex;
@@ -341,13 +370,8 @@
         }
 
         @keyframes spin {
-            0% {
-                transform: rotate(0deg);
-            }
-
-            100% {
-                transform: rotate(360deg);
-            }
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
 
         .ordenes-toast {
@@ -528,6 +552,10 @@
                 min-width: 180px;
                 left: calc(-180px + 20px);
             }
+
+            .ordenes-table-container {
+                max-height: 400px;
+            }
         }
     </style>
 </head>
@@ -566,26 +594,30 @@
                 </div>
             </div>
         </div>
-        <table id="ordenesTable" class="ordenes-table">
-            <thead>
-                <tr>
-                    <th>Código</th>
-                    <th>Generación</th>
-                    <th>Autorización</th>
-                    <th>Sociedad</th>
-                    <th>Tipo de compra</th>
-                    <th>Proveedor</th>
-                    <th>Digitador</th>
-                    <th>Nivel actual</th>
-                    <th>Nivel ox</th>
-                    <th>Liberada</th>
-                    <th>Total</th>
-                    <th>Estado</th>
-                    <th>Evento</th>
-                </tr>
-            </thead>
-            <tbody id="ordenesBody"></tbody>
-        </table>
+
+        <div class="ordenes-table-container">
+            <table id="ordenesTable" class="ordenes-table">
+                <thead>
+                    <tr>
+                        <th>Código</th>
+                        <th>Generación</th>
+                        <th>Autorización</th>
+                        <th>Sociedad</th>
+                        <th>Tipo de compra</th>
+                        <th>Proveedor</th>
+                        <th>Digitador</th>
+                        <th>Nivel actual</th>
+                        <th>Nivel ox</th>
+                        <th>Liberada</th>
+                        <th>Total</th>
+                        <th>Estado</th>
+                        <th>Evento</th>
+                    </tr>
+                </thead>
+                <tbody id="ordenesBody"></tbody>
+            </table>
+        </div>
+
         <div class="ordenes-pagination" id="pagination">
             <div class="ordenes-pagination-info" id="paginationInfo"></div>
             <div class="ordenes-pagination-controls">
@@ -594,6 +626,7 @@
                 <button id="nextBtn">Siguiente</button>
             </div>
         </div>
+
         <input type="file" id="fileUpload" style="display:none;" accept=".xlsx, .xls">
         <div id="ordenes-loading" class="ordenes-loading">
             <div class="ordenes-loading-spinner"></div>
@@ -610,7 +643,7 @@
 
     <div id="downloadMesModal" class="modal">
         <div class="modal-content">
-            <span class="close" id="closeDownloadMes">&times;</span>
+            <span class="close" id="closeDownloadMes">×</span>
             <h2>Descargar por Mes</h2>
             <div class="modal-form-group">
                 <label for="selectDownloadAno">Año:</label>
@@ -627,20 +660,16 @@
         </div>
     </div>
 
-    <!-- UN SOLO SCRIPT MODULE: CARGA FIREBASE + LÓGICA -->
     <script type="module">
-    // 1. IMPORTAR Y DEFINIR MÓDULOS ANTES DE USARLOS
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
     import { getAuth, onAuthStateChanged, setPersistence, browserSessionPersistence } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
     import { getFirestore, collection, addDoc, getDocs, query, where, doc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
-    // EXPONER EN window ANTES DE CUALQUIER USO
     window.firebaseModules = {
         initializeApp, getAuth, onAuthStateChanged, setPersistence, browserSessionPersistence,
         getFirestore, collection, addDoc, getDocs, query, where, doc, updateDoc
     };
 
-    // 2. ESPERAR AL DOM Y USAR LOS MÓDULOS
     document.addEventListener('DOMContentLoaded', () => {
         const { initializeApp: initApp, getAuth, onAuthStateChanged, setPersistence, browserSessionPersistence } = window.firebaseModules;
         const { getFirestore, collection, addDoc, getDocs, query, where, doc, updateDoc } = window.firebaseModules;
@@ -660,7 +689,6 @@
         const db = getFirestore(app);
         setPersistence(auth, browserSessionPersistence);
 
-        // === VARIABLES GLOBALES ===
         let ordenes = [];
         let currentPage = 1;
         const PAGE_SIZE = 100;
@@ -671,7 +699,6 @@
         let anos = new Set();
         let mesesPorAno = {};
 
-        // === UTILIDADES DE FECHAS ===
         function formatDateToDDMMYYYY(isoString) {
             if (!isoString || isoString === '-') return '-';
             const date = new Date(isoString);
@@ -684,8 +711,6 @@
 
         function parseExcelDate(value) {
             if (!value) return null;
-
-            // Caso 1: número serial de Excel
             if (typeof value === 'number') {
                 const date = XLSX.SSF.parse_date_code(value);
                 if (date) {
@@ -693,8 +718,6 @@
                     return d.toISOString();
                 }
             }
-
-            // Caso 2: string en formato DD-MM-YYYY, DD/MM/YYYY o DD.MM.YYYY
             if (typeof value === 'string') {
                 const cleaned = value.trim().replace(/[/\.]/g, '-');
                 const match = cleaned.match(/^(\d{1,2})-(\d{1,2})-(\d{4})$/);
@@ -706,16 +729,12 @@
                     }
                 }
             }
-
-            // Caso 3: objeto XLSX con .w (texto) o .v (valor)
             if (value && typeof value === 'object') {
                 return parseExcelDate(value.w || value.v || '');
             }
-
             return null;
         }
 
-        // === ELEMENTOS DOM ===
         const loading = document.getElementById('ordenes-loading');
         const importProgress = document.getElementById('ordenes-import-progress');
         const progressBar = document.getElementById('progressBar');
@@ -745,7 +764,6 @@
         const downloadMes = document.getElementById('downloadMes');
         const fileUpload = document.getElementById('fileUpload');
 
-        // === HELPERS ===
         window.showLoading = () => loading.classList.add('show');
         window.hideLoading = () => loading.classList.remove('show');
 
@@ -779,7 +797,6 @@
             return null;
         }
 
-        // === MODALES ===
         function openDownloadMesModal() {
             populateAnoSelect(selectDownloadAno);
             selectDownloadAno.value = selectedAno;
@@ -816,7 +833,6 @@
             }
         });
 
-        // === AUTENTICACIÓN Y CARGA INICIAL ===
         onAuthStateChanged(auth, async (user) => {
             if (!user) {
                 window.location.replace('../../../../../index.html');
@@ -830,7 +846,6 @@
             populateAnoSelect(selectDownloadAno);
         });
 
-        // === FILTROS ===
         buscarCodigoInput?.addEventListener('input', (e) => {
             searchCodigo = e.target.value.trim();
             currentPage = 1;
@@ -856,7 +871,6 @@
             populateMesSelect(selectDownloadMes, e.target.value);
         });
 
-        // === CARGA DE DATOS ===
         async function loadOrdenes() {
             showLoading();
             try {
@@ -912,7 +926,6 @@
             }
         }
 
-        // === ACCIONES ===
         actionsBtn.addEventListener('click', () => {
             actionsMenu.style.display = actionsMenu.style.display === 'block' ? 'none' : 'block';
         });
@@ -944,7 +957,6 @@
             }
         });
 
-        // === EXPORTAR / IMPORTAR ===
         function formatRow(o) {
             return {
                 codigo: o.codigo,
@@ -980,7 +992,6 @@
             XLSX.writeFile(wb, 'template_ordenes.xlsx');
         }
 
-        // === IMPORTAR EXCEL (FIX: AUTORIZACIÓN VACÍA → "-") ===
         async function importFromExcel(file) {
             try {
                 const reader = new FileReader();
@@ -1004,7 +1015,6 @@
                         const generacionISO = parseExcelDate(row.generacion);
                         const autorizacionISO = parseExcelDate(row.autorizacion);
 
-                        // SOLO RECHAZAR SI FALTA GENERACIÓN
                         if (!generacionISO) {
                             showToast(`Fila ${i + 2}: Fecha de generación inválida o vacía`, 'error');
                             continue;
@@ -1013,7 +1023,7 @@
                         const processedRow = {
                             codigo: String(row.codigo || '').trim(),
                             generacion: generacionISO,
-                            autorizacion: autorizacionISO || '-',   // ← SI ESTÁ VACÍA → "-"
+                            autorizacion: autorizacionISO || '-',
                             sociedad: String(row.sociedad || '').trim(),
                             tipoCompra: String(row.tipoCompra || '').trim(),
                             proveedor: String(row.proveedor || '').trim(),
@@ -1070,7 +1080,6 @@
             }
         }
 
-        // === FILTROS Y RENDER ===
         async function getOrdenesByMes(ano, mes) {
             return ordenes.filter(o => {
                 const d = new Date(o.generacion);
@@ -1147,7 +1156,7 @@
             if (currentPage < totalPages) { currentPage++; renderTable(); }
         });
     });
-</script>
+    </script>
 </body>
 
 </html>
