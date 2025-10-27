@@ -670,53 +670,97 @@ document.addEventListener('DOMContentLoaded', () => {
     if (ingresarBtn) {
         ingresarBtn.addEventListener('click', async (e) => {
             e.preventDefault();
+
+            const fechaIngresoRaw = fechaIngresoInput.value;
+            const numeroFactura = numeroFacturaInput.value.trim();
+
+            if (!fechaIngresoRaw || !numeroFactura) {
+                showToast('Faltan número de factura o fecha de ingreso', 'error');
+                return;
+            }
+
             const processedRow = {
-                fechaIngreso: fechaIngresoInput.value ? formatDateToDDMMYYYY(parseDateDDMMYYYY(fechaIngresoInput.value.replace(/-/g, '/'))) : '',
-                numeroFactura: numeroFacturaInput.value.trim(),
-                fechaFactura: fechaFacturaInput.value ? formatDateToDDMMYYYY(parseDateDDMMYYYY(fechaFacturaInput.value.replace(/-/g, '/'))) : '',
+                fechaIngreso: formatDateToDDMMYYYY(fechaIngresoRaw),
+                numeroFactura,
+                fechaFactura: fechaFacturaInput.value ? formatDateToDDMMYYYY(fechaFacturaInput.value) : '',
                 monto: montoInput.value.replace(/[^\d]/g, ''),
                 oc: ordenCompraInput.value.trim(),
                 fechaOc: fechaOcInput.value,
                 proveedor: proveedorInput.value,
                 acta: actaInput.value.trim(),
-                fechaSalida: fechaSalidaInput.value ? formatDateToDDMMYYYY(parseDateDDMMYYYY(fechaSalidaInput.value.replace(/-/g, '/'))) : '',
+                fechaSalida: fechaSalidaInput.value ? formatDateToDDMMYYYY(fechaSalidaInput.value) : '',
                 salida: salidaInput.value.trim(),
-                fullName: window.currentUserData.fullName
+                fullName: window.currentUserData?.fullName || 'Usuario Invitado',
+                createdAt: new Date()
             };
 
-            if (processedRow.numeroFactura && processedRow.fechaIngreso) {
-                showLoading();
-                try {
-                    const existing = await getIngresoByUniqueKey(processedRow.numeroFactura);
-                    if (existing) {
-                        hideLoading();
-                        showToast('El número de factura ya existe.', 'error');
-                        return;
-                    }
-                    const docRef = await addDoc(collection(db, "ingresos_lab"), {
-                        ...processedRow,
-                        createdAt: new Date()
-                    });
-                    await logAction(docRef.id, 'create', null, processedRow);
+            showLoading();
+            try {
+                const existing = await getIngresoByUniqueKey(numeroFactura);
+                if (existing) {
                     hideLoading();
-                    showToast(`Ingreso ${processedRow.numeroFactura} registrado exitosamente`, 'success');
-                    fechaIngresoInput.value = today;
-                    numeroFacturaInput.value = '';
-                    fechaFacturaInput.value = today;
-                    montoInput.value = '';
-                    ordenCompraInput.value = '';
-                    actaInput.value = '';
-                    salidaInput.value = '';
-                    fechaOcInput.value = '';
-                    proveedorInput.value = '';
-                    fechaSalidaInput.value = today;
-                    await loadIngresos();
-                } catch (error) {
-                    hideLoading();
-                    showToast('Error al registrar el ingreso: ' + error.message, 'error');
+                    showToast('El número de factura ya existe.', 'error');
+                    return;
                 }
-            } else {
-                showToast('Faltan número de factura o fecha de ingreso', 'error');
+
+                const docRef = await addDoc(collection(db, "ingresos_lab"), processedRow);
+                await logAction(docRef.id, 'create', null, processedRow);
+
+                hideLoading();
+                showToast(`Ingreso ${numeroFactura} registrado exitosamente`, 'success');
+
+                // Limpiar formulario
+                numeroFacturaInput.value = '';
+                montoInput.value = '';
+                ordenCompraInput.value = '';
+                actaInput.value = '';
+                salidaInput.value = '';
+                proveedorInput.value = '';
+                fechaOcInput.value = '';
+
+                // Mantener solo la fecha de hoy
+                const today = formatDateToYYYYMMDD(new Date());
+                fechaIngresoInput.value = today;
+                fechaFacturaInput.value = today;
+                fechaSalidaInput.value = today;
+
+                // RECARGAR DATOS Y RESETEAR FILTROS
+                selectedAno = new Date().getFullYear().toString();
+                selectedMes = '';
+                searchNumeroFactura = '';
+                searchProveedor = '';
+                searchOrdenCompra = '';
+                searchActa = '';
+                searchSalidas = '';
+                fechaDesde = '';
+                fechaHasta = '';
+
+                // Limpiar inputs de búsqueda
+                if (buscarNumeroFacturaInput) buscarNumeroFacturaInput.value = '';
+                if (buscarProveedorInput) buscarProveedorInput.value = '';
+                if (buscarOrdenCompraInput) buscarOrdenCompraInput.value = '';
+                if (buscarActaInput) buscarActaInput.value = '';
+                if (buscarSalidasInput) buscarSalidasInput.value = '';
+                if (fechaDesdeInput) fechaDesdeInput.value = '';
+                if (fechaHastaInput) fechaHastaInput.value = '';
+
+                // Recargar datos y mostrar el nuevo ingreso
+                await loadIngresos();
+
+                // Forzar actualización de selects
+                populateAnoSelect(selectAno);
+                selectAno.value = selectedAno;
+                populateMesSelect(selectMes, selectedAno);
+                selectMes.value = '';
+
+                // Renderizar tabla
+                currentPage = 1;
+                renderTable();
+
+            } catch (error) {
+                hideLoading();
+                showToast('Error al registrar el ingreso: ' + error.message, 'error');
+                console.error("Error al guardar ingreso:", error);
             }
         });
     }
