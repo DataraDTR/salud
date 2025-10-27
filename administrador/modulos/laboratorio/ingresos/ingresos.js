@@ -30,7 +30,7 @@ let searchActa = '';
 let searchSalidas = '';
 let fechaDesde = '';
 let fechaHasta = '';
-let selectedAno = new Date().getFullYear().toString();
+let selectedAno = '';
 let selectedMes = '';
 
 function parseDateDDMMYYYY(dateStr) {
@@ -213,8 +213,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const deleteModal = document.getElementById('deleteModal');
     const historyModal = document.getElementById('historyModal');
     const closeEditModal = document.getElementById('closeEditModal');
-    const/* Continuación del código */
-    cancelEdit = document.getElementById('cancelEdit');
+    const cancelEdit = document.getElementById('cancelEdit');
     const editForm = document.getElementById('editForm');
     const closeDeleteModal = document.getElementById('closeDeleteModal');
     const cancelDelete = document.getElementById('cancelDelete');
@@ -715,18 +714,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 await loadIngresos();
 
-                const fechaIngresoDate = parseDateDDMMYYYY(processedRow.fechaIngreso);
-                const nuevoAno = fechaIngresoDate.getFullYear().toString();
-                const nuevoMes = fechaIngresoDate.toLocaleString('es-CL', { month: 'long' });
-
-                selectedAno = nuevoAno;
-                selectedMes = nuevoMes;
-
+                // No forzamos la selección del mes/año del nuevo ingreso
                 populateAnoSelect(selectAno);
-                selectAno.value = selectedAno;
                 populateMesSelect(selectMes, selectedAno);
-                selectMes.value = selectedMes;
-
+                // Mantener los filtros de búsqueda vacíos
                 searchNumeroFactura = '';
                 searchProveedor = '';
                 searchOrdenCompra = '';
@@ -859,22 +850,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function getFilteredIngresos() {
-        if (selectedMes && selectedAno) {
-            const mesAno = `${selectedMes} ${selectedAno}`;
-            return (ingresosPorMesAno[mesAno] || []).filter(ingreso => {
-                return (
-                    String(ingreso.numeroFactura || '').toLowerCase().includes(searchNumeroFactura.toLowerCase()) &&
-                    String(ingreso.proveedor || '').toLowerCase().includes(searchProveedor.toLowerCase()) &&
-                    String(ingreso.oc || '').toLowerCase().includes(searchOrdenCompra.toLowerCase()) &&
-                    String(ingreso.acta || '').toLowerCase().includes(searchActa.toLowerCase()) &&
-                    String(ingreso.salida || '').toLowerCase().includes(searchSalidas.toLowerCase()) &&
-                    (!fechaDesde || parseDateDDMMYYYY(ingreso.fechaIngreso) >= parseDateDDMMYYYY(fechaDesde.replace(/-/g, '/'))) &&
-                    (!fechaHasta || parseDateDDMMYYYY(ingreso.fechaIngreso) <= parseDateDDMMYYYY(fechaHasta.replace(/-/g, '/'))) &&
-                    (!selectedAno || parseDateDDMMYYYY(ingreso.fechaIngreso).getFullYear().toString() === selectedAno)
-                );
-            }).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-        }
-
         let filtered = ingresos.filter(ingreso => {
             const fechaIngresoDate = parseDateDDMMYYYY(ingreso.fechaIngreso);
             if (!fechaIngresoDate || isNaN(fechaIngresoDate)) return false;
@@ -886,29 +861,29 @@ document.addEventListener('DOMContentLoaded', () => {
                 String(ingreso.salida || '').toLowerCase().includes(searchSalidas.toLowerCase()) &&
                 (!fechaDesde || parseDateDDMMYYYY(ingreso.fechaIngreso) >= parseDateDDMMYYYY(fechaDesde.replace(/-/g, '/'))) &&
                 (!fechaHasta || parseDateDDMMYYYY(ingreso.fechaIngreso) <= parseDateDDMMYYYY(fechaHasta.replace(/-/g, '/'))) &&
-                (!selectedAno || fechaIngresoDate.getFullYear().toString() === selectedAno)
+                (!selectedAno || fechaIngresoDate.getFullYear().toString() === selectedAno) &&
+                (!selectedMes || fechaIngresoDate.toLocaleString('es-CL', { month: 'long' }) === selectedMes)
             );
         }).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
-        if (!selectedMes) {
-            const tempIngresosPorMesAno = {};
-            filtered.forEach(ingreso => {
-                const fechaIngresoDate = parseDateDDMMYYYY(ingreso.fechaIngreso);
-                const mes = fechaIngresoDate.toLocaleString('es-CL', { month: 'long' });
-                const ano = fechaIngresoDate.getFullYear();
-                const mesAno = `${mes} ${ano}`;
-                if (!tempIngresosPorMesAno[mesAno]) tempIngresosPorMesAno[mesAno] = [];
-                tempIngresosPorMesAno[mesAno].push(ingreso);
-            });
-            mesesDisponibles = Object.keys(tempIngresosPorMesAno).sort((a, b) => {
-                const [mesA, anoA] = a.split(' ');
-                const [mesB, anoB] = b.split(' ');
-                const dateA = new Date(`${mesA} 1, ${anoA}`);
-                const dateB = new Date(`${mesB} 1, ${anoB}`);
-                return dateA - dateB;
-            });
-            ingresosPorMesAno = tempIngresosPorMesAno;
-        }
+        // Actualizar mesesDisponibles e ingresosPorMesAno según los filtros
+        const tempIngresosPorMesAno = {};
+        filtered.forEach(ingreso => {
+            const fechaIngresoDate = parseDateDDMMYYYY(ingreso.fechaIngreso);
+            const mes = fechaIngresoDate.toLocaleString('es-CL', { month: 'long' });
+            const ano = fechaIngresoDate.getFullYear();
+            const mesAno = `${mes} ${ano}`;
+            if (!tempIngresosPorMesAno[mesAno]) tempIngresosPorMesAno[mesAno] = [];
+            tempIngresosPorMesAno[mesAno].push(ingreso);
+        });
+        mesesDisponibles = Object.keys(tempIngresosPorMesAno).sort((a, b) => {
+            const [mesA, anoA] = a.split(' ');
+            const [mesB, anoB] = b.split(' ');
+            const dateA = new Date(`${mesA} 1, ${anoA}`);
+            const dateB = new Date(`${mesB} 1, ${anoB}`);
+            return dateA - dateB;
+        });
+        ingresosPorMesAno = tempIngresosPorMesAno;
 
         return filtered;
     }
@@ -917,14 +892,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const filteredIngresos = getFilteredIngresos();
         let pageIngresos = [];
 
-        if (selectedMes && selectedAno) {
-            const mesAno = `${selectedMes} ${selectedAno}`;
+        if (mesesDisponibles.length > 0 && currentPage <= mesesDisponibles.length) {
+            const mesAno = mesesDisponibles[currentPage - 1];
             pageIngresos = ingresosPorMesAno[mesAno] || [];
-        } else {
-            if (mesesDisponibles.length > 0 && currentPage <= mesesDisponibles.length) {
-                const mesAno = mesesDisponibles[currentPage - 1];
-                pageIngresos = ingresosPorMesAno[mesAno] || [];
-            }
         }
 
         if (ingresosBody) {
@@ -967,57 +937,55 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function updatePagination(total) {
-        const totalPages = selectedMes && selectedAno ? 1 : mesesDisponibles.length;
-        const currentMesAno = selectedMes && selectedAno ? `${selectedMes} ${selectedAno}` : (mesesDisponibles[currentPage - 1] || 'Sin datos');
+        const totalPages = mesesDisponibles.length;
+        const currentMesAno = mesesDisponibles[currentPage - 1] || 'Sin datos';
 
         if (paginationInfo) {
             paginationInfo.textContent = `Mostrando ${currentMesAno} | ${total} registros`;
         }
 
-        if (prevBtn) prevBtn.disabled = currentPage === 1 || (selectedMes && selectedAno);
-        if (nextBtn) nextBtn.disabled = currentPage === totalPages || (selectedMes && selectedAno);
+        if (prevBtn) prevBtn.disabled = currentPage === 1;
+        if (nextBtn) nextBtn.disabled = currentPage === totalPages;
 
         if (pageNumbers) {
             pageNumbers.innerHTML = '';
-            if (!(selectedMes && selectedAno)) {
-                const startPage = Math.max(1, currentPage - 2);
-                const endPage = Math.min(totalPages, startPage + 4);
+            const startPage = Math.max(1, currentPage - 2);
+            const endPage = Math.min(totalPages, startPage + 4);
 
-                if (startPage > 1) {
-                    const btn = document.createElement('button');
-                    btn.textContent = mesesDisponibles[0];
-                    btn.className = 1 === currentPage ? 'active' : '';
-                    btn.addEventListener('click', () => goToPage(1));
-                    pageNumbers.appendChild(btn);
-                    if (startPage > 2) {
-                        const dots = document.createElement('span');
-                        dots.textContent = '...';
-                        dots.className = 'ingresos-dots';
-                        pageNumbers.appendChild(dots);
-                    }
+            if (startPage > 1) {
+                const btn = document.createElement('button');
+                btn.textContent = mesesDisponibles[0];
+                btn.className = 1 === currentPage ? 'active' : '';
+                btn.addEventListener('click', () => goToPage(1));
+                pageNumbers.appendChild(btn);
+                if (startPage > 2) {
+                    const dots = document.createElement('span');
+                    dots.textContent = '...';
+                    dots.className = 'ingresos-dots';
+                    pageNumbers.appendChild(dots);
                 }
+            }
 
-                for (let i = startPage; i <= endPage; i++) {
-                    const btn = document.createElement('button');
-                    btn.textContent = mesesDisponibles[i - 1];
-                    btn.className = i === currentPage ? 'active' : '';
-                    btn.addEventListener('click', () => goToPage(i));
-                    pageNumbers.appendChild(btn);
-                }
+            for (let i = startPage; i <= endPage; i++) {
+                const btn = document.createElement('button');
+                btn.textContent = mesesDisponibles[i - 1];
+                btn.className = i === currentPage ? 'active' : '';
+                btn.addEventListener('click', () => goToPage(i));
+                pageNumbers.appendChild(btn);
+            }
 
-                if (endPage < totalPages) {
-                    if (endPage < totalPages - 1) {
-                        const dots = document.createElement('span');
-                        dots.textContent = '...';
-                        dots.className = 'ingresos-dots';
-                        pageNumbers.appendChild(dots);
-                    }
-                    const btn = document.createElement('button');
-                    btn.textContent = mesesDisponibles[totalPages - 1];
-                    btn.className = totalPages === currentPage ? 'active' : '';
-                    btn.addEventListener('click', () => goToPage(totalPages));
-                    pageNumbers.appendChild(btn);
+            if (endPage < totalPages) {
+                if (endPage < totalPages - 1) {
+                    const dots = document.createElement('span');
+                    dots.textContent = '...';
+                    dots.className = 'ingresos-dots';
+                    pageNumbers.appendChild(dots);
                 }
+                const btn = document.createElement('button');
+                btn.textContent = mesesDisponibles[totalPages - 1];
+                btn.className = totalPages === currentPage ? 'active' : '';
+                btn.addEventListener('click', () => goToPage(totalPages));
+                pageNumbers.appendChild(btn);
             }
         }
     }
@@ -1029,7 +997,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (prevBtn) {
         prevBtn.addEventListener('click', () => {
-            if (currentPage > 1 && !(selectedMes && selectedAno)) {
+            if (currentPage > 1) {
                 currentPage--;
                 renderTable();
             }
@@ -1038,7 +1006,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (nextBtn) {
         nextBtn.addEventListener('click', () => {
-            if (currentPage < mesesDisponibles.length && !(selectedMes && selectedAno)) {
+            if (currentPage < mesesDisponibles.length) {
                 currentPage++;
                 renderTable();
             }
@@ -1087,7 +1055,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     downloadPage.addEventListener('click', (e) => {
         e.preventDefault();
-        const currentMesAno = selectedMes && selectedAno ? `${selectedMes} ${selectedAno}` : mesesDisponibles[currentPage - 1];
+        const currentMesAno = mesesDisponibles[currentPage - 1];
         const pageData = (ingresosPorMesAno[currentMesAno] || []).map(i => ({
             fechaIngreso: i.fechaIngreso,
             numeroFactura: i.numeroFactura,
