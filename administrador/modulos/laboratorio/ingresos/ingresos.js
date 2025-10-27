@@ -625,7 +625,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 fechaOcInput.value = '';
             }
         });
- currently
     }
 
     if (document.getElementById('editOrdenCompra')) {
@@ -936,9 +935,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     const row = document.createElement('tr');
                     row.innerHTML = `
                         <td class="ingresos-actions">
-                            <button title="Editar" class="ingresos-btn-edit" onclick="openEditModal('${ingreso.id}', ${JSON.stringify(ingreso).replace(/"/g, '&quot;')} )">Editar</button>
-                            <button title="Eliminar" class="ingresos-btn-delete" onclick="openDeleteModal('${ingreso.id}', '${ingreso.numeroFactura}')">Eliminar</button>
-                            <button title="Ver Historial" class="ingresos-btn-history" onclick="openHistoryModal('${ingreso.id}', '${ingreso.numeroFactura}')">Historial</button>
+                            <button title="Editar" class="ingresos-btn-edit" onclick="openEditModal('${ingreso.id}', ${JSON.stringify(ingreso).replace(/"/g, '&quot;')} )">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button title="Eliminar" class="ingresos-btn-delete" onclick="openDeleteModal('${ingreso.id}', '${ingreso.numeroFactura}')">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                            <button title="Ver Historial" class="ingresos-btn-history" onclick="openHistoryModal('${ingreso.id}', '${ingreso.numeroFactura}')">
+                                <i class="fas fa-history"></i>
+                            </button>
                         </td>
                         <td>${ingreso.fechaIngreso || ''}</td>
                         <td>${ingreso.numeroFactura || ''}</td>

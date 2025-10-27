@@ -4,14 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Importación de Ingresos</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="ingresos.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
         import { getAuth, onAuthStateChanged, setPersistence, browserSessionPersistence } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
-        import { getFirestore, collection, addDoc, getDocs, query, where, doc, updateDoc, deleteDoc, orderBy, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
-        window.firebaseModules = { initializeApp, getAuth, onAuthStateChanged, setPersistence, browserSessionPersistence, getFirestore, collection, addDoc, getDocs, query, where, doc, updateDoc, deleteDoc, orderBy, getDoc };
+        import { getFirestore, collection, addDoc, getDocs, query, where, doc, updateDoc, deleteDoc, orderBy, getDoc, writeBatch } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+        window.firebaseModules = { initializeApp, getAuth, onAuthStateChanged, setPersistence, browserSessionPersistence, getFirestore, collection, addDoc, getDocs, query, where, doc, updateDoc, deleteDoc, orderBy, getDoc, writeBatch };
     </script>
     <script type="module" src="ingresos.js"></script>
 </head>
@@ -164,6 +164,7 @@
 
         <div id="ingresos-toast" class="ingresos-toast"></div>
 
+        <!-- MODAL EDITAR -->
         <div id="editModal" class="modal">
             <div class="modal-content">
                 <span class="close" id="closeEditModal">&times;</span>
@@ -218,6 +219,7 @@
             </div>
         </div>
 
+        <!-- MODAL ELIMINAR -->
         <div id="deleteModal" class="modal">
             <div class="modal-content">
                 <span class="close" id="closeDeleteModal">&times;</span>
@@ -230,6 +232,7 @@
             </div>
         </div>
 
+        <!-- MODAL HISTORIAL -->
         <div id="historyModal" class="modal">
             <div class="modal-content">
                 <span class="close" id="closeHistory">&times;</span>
@@ -242,6 +245,7 @@
             </div>
         </div>
 
+        <!-- MODAL DESCARGAR MES -->
         <div id="downloadMesModal" class="modal">
             <div class="modal-content">
                 <span class="close" id="closeDownloadMes">&times;</span>
