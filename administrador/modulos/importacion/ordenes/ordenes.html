@@ -1031,25 +1031,22 @@
                             type: 'array',
                             cellDates: true,
                             cellNF: false,
-                            cellText: false
+                            cellText: true  // CAMBIO: Fuerza texto para fechas
                         });
                         const ws = wb.Sheets[wb.SheetNames[0]];
 
-                        // Forzar lectura de celdas como texto
-                        const range = XLSX.utils.decode_range(ws['!ref']);
-                        for (let R = range.s.r + 1; R <= range.e.r; ++R) {
-                            const cellGen = ws[XLSX.utils.encode_cell({ c: 1, r: R })]; // Columna B
-                            const cellAut = ws[XLSX.utils.encode_cell({ c: 2, r: R })]; // Columna C
-                            if (cellGen) cellGen.w = cellGen.w || (cellGen.v ? String(cellGen.v) : '');
-                            if (cellAut) cellAut.w = cellAut.w || (cellAut.v ? String(cellAut.v) : '');
-                        }
+                        // DEBUG: Imprimir raw del worksheet
+                        console.log('Raw worksheet:', ws);
 
                         const json = XLSX.utils.sheet_to_json(ws, {
                             header: ["codigo", "generacion", "autorizacion", "sociedad", "tipoCompra", "proveedor", "digitador", "nivelActual", "nivelOx", "liberada", "total", "estado"],
                             range: 1,
                             defval: '',
-                            raw: false
+                            raw: false,  // CAMBIO: No raw, para obtener formato
+                            dateNF: 'dd-mm-yyyy'  // CAMBIO: Fuerza formato dd-mm-yyyy
                         });
+
+                        console.log('JSON de Excel:', json); // DEBUG: Ver qué lee XLSX
 
                         let addedCount = 0;
                         let updatedCount = 0;
@@ -1058,16 +1055,39 @@
 
                         for (let i = 0; i < json.length; i++) {
                             const row = json[i];
+                            console.log(`Fila ${i + 2} raw:`, row); // DEBUG: Ver cada fila
 
-                            // USAR .w (texto formateado) si existe
-                            const genRaw = row.generacion && row.generacion.w ? row.generacion.w : String(row.generacion || '').trim();
-                            const autRaw = row.autorizacion && row.autorizacion.w ? row.autorizacion.w : String(row.autorizacion || '').trim();
+                            // MEJORADO: Extraer valor de cualquier tipo (string, number, Date, objeto)
+                            let genRaw = '';
+                            let autRaw = '';
+
+                            if (row.generacion) {
+                                if (typeof row.generacion === 'string') genRaw = row.generacion;
+                                else if (typeof row.generacion === 'number') genRaw = XLSX.SSF.format('dd-mm-yyyy', row.generacion); // Formatear serial
+                                else if (row.generacion instanceof Date) genRaw = formatDateToDDMMYYYY(row.generacion);
+                                else if (row.generacion.w) genRaw = row.generacion.w; // Formato visible
+                                else genRaw = String(row.generacion.v || row.generacion.t || '');
+                            }
+
+                            if (row.autorizacion) {
+                                if (typeof row.autorizacion === 'string') autRaw = row.autorizacion;
+                                else if (typeof row.autorizacion === 'number') autRaw = XLSX.SSF.format('dd-mm-yyyy', row.autorizacion);
+                                else if (row.autorizacion instanceof Date) autRaw = formatDateToDDMMYYYY(row.autorizacion);
+                                else if (row.autorizacion.w) autRaw = row.autorizacion.w;
+                                else autRaw = String(row.autorizacion.v || row.autorizacion.t || '');
+                            }
+
+                            console.log(`Fila ${i + 2} genRaw: "${genRaw}" (tipo: ${typeof row.generacion})`); // DEBUG
+                            console.log(`Fila ${i + 2} autRaw: "${autRaw}" (tipo: ${typeof row.autorizacion})`); // DEBUG
 
                             const generacion = parseExcelDate(genRaw);
                             const autorizacion = parseExcelDate(autRaw);
 
+                            console.log(`Fila ${i + 2} parsed gen: "${generacion}"`); // DEBUG
+                            console.log(`Fila ${i + 2} parsed aut: "${autorizacion}"`); // DEBUG
+
                             if (!generacion || !autorizacion) {
-                                showToast(`Fila ${i + 2}: Fecha inválida (Gen: "${genRaw}", Aut: "${autRaw}")`, 'error');
+                                showToast(`Fila ${i + 2}: Fecha inválida (Gen: "${genRaw}" → "${generacion}", Aut: "${autRaw}" → "${autorizacion}")`, 'error');
                                 continue;
                             }
 
@@ -1085,6 +1105,8 @@
                                 total: String(row.total || '').replace(/[^\d]/g, ''),
                                 estado: String(row.estado || '').trim()
                             };
+
+                            console.log(`Fila ${i + 2} processedRow:`, processedRow); // DEBUG FINAL
 
                             if (!processedRow.codigo) {
                                 showToast(`Fila ${i + 2}: Falta código`, 'error');
@@ -1125,6 +1147,7 @@
                 } catch (error) {
                     hideImportProgress();
                     showToast('Error al importar: ' + error.message, 'error');
+                    console.error('Error completo:', error); // DEBUG
                 }
             }
 
