@@ -33,6 +33,21 @@ let fechaHasta = '';
 let selectedAno = '';
 let selectedMes = '';
 
+const monthMap = {
+    'enero': 1,
+    'febrero': 2,
+    'marzo': 3,
+    'abril': 4,
+    'mayo': 5,
+    'junio': 6,
+    'julio': 7,
+    'agosto': 8,
+    'septiembre': 9,
+    'octubre': 10,
+    'noviembre': 11,
+    'diciembre': 12
+};
+
 function parseDateDDMMYYYY(dateStr) {
     if (!dateStr) return null;
     if (typeof dateStr === 'object' && 'toDate' in dateStr) {
@@ -407,6 +422,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 showToast(`Ingreso ${processedRow.numeroFactura} actualizado exitosamente`, 'success');
                 closeEditModalHandler();
                 await loadIngresos();
+                currentPage = mesesDisponibles.length || 1;
+                renderTable();
             } catch (error) {
                 hideLoading();
                 showToast('Error al actualizar el ingreso: ' + error.message, 'error');
@@ -430,6 +447,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 showToast(`Ingreso ${currentDeleteNumeroFactura} eliminado exitosamente`, 'success');
                 closeDeleteModalHandler();
                 await loadIngresos();
+                currentPage = mesesDisponibles.length || 1;
+                renderTable();
             } else {
                 hideLoading();
                 showToast('El ingreso no existe.', 'error');
@@ -512,7 +531,7 @@ document.addEventListener('DOMContentLoaded', () => {
             showToast('Error al cargar datos del usuario.', 'error');
         }
         await loadIngresos();
-        currentPage = mesesDisponibles.length || 1;
+        setInitialPage();
         renderTable();
         populateAnoSelect(selectAno);
         selectAno.value = selectedAno;
@@ -715,13 +734,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 fechaSalidaInput.value = today;
 
                 await loadIngresos();
-
-                currentPage = mesesDisponibles.length || 1;
+                setInitialPage();
                 renderTable();
 
-                // No forzamos la selección del mes/año del nuevo ingreso
-                populateAnoSelect(selectAno);
-                populateMesSelect(selectMes, selectedAno);
                 // Mantener los filtros de búsqueda vacíos
                 searchNumeroFactura = '';
                 searchProveedor = '';
@@ -752,6 +767,39 @@ document.addEventListener('DOMContentLoaded', () => {
             fixInvalidDateFormats();
             actionsMenu.style.display = 'none';
         });
+    }
+
+    function setInitialPage() {
+        if (mesesDisponibles.length === 0) {
+            currentPage = 1;
+            return;
+        }
+
+        const today = new Date();
+        const currentMonth = today.toLocaleString('es-CL', { month: 'long' });
+        const currentYear = today.getFullYear();
+        const currentMesAno = `${currentMonth} ${currentYear}`;
+
+        // Buscar si hay datos en el mes actual
+        const currentMonthIndex = mesesDisponibles.indexOf(currentMesAno);
+        if (currentMonthIndex !== -1) {
+            currentPage = currentMonthIndex + 1;
+            return;
+        }
+
+        // Si no hay datos en el mes actual, buscar el mes anterior
+        const previousMonthDate = new Date(today.getFullYear(), today.getMonth() - 1);
+        const previousMonth = previousMonthDate.toLocaleString('es-CL', { month: 'long' });
+        const previousYear = previousMonthDate.getFullYear();
+        const previousMesAno = `${previousMonth} ${previousYear}`;
+        const previousMonthIndex = mesesDisponibles.indexOf(previousMesAno);
+        if (previousMonthIndex !== -1) {
+            currentPage = previousMonthIndex + 1;
+            return;
+        }
+
+        // Si no hay datos en el mes anterior, mostrar el último mes disponible
+        currentPage = mesesDisponibles.length || 1;
     }
 
     async function loadIngresos() {
@@ -815,9 +863,14 @@ document.addEventListener('DOMContentLoaded', () => {
             mesesDisponibles = Object.keys(ingresosPorMesAno).sort((a, b) => {
                 const [mesA, anoA] = a.split(' ');
                 const [mesB, anoB] = b.split(' ');
-                const dateA = new Date(`${mesA} 1, ${anoA}`);
-                const dateB = new Date(`${mesB} 1, ${anoB}`);
-                return dateA - dateB;
+                const yearA = parseInt(anoA);
+                const yearB = parseInt(anoB);
+                const monthA = monthMap[mesA.toLowerCase()];
+                const monthB = monthMap[mesB.toLowerCase()];
+                if (yearA !== yearB) {
+                    return yearA - yearB;
+                }
+                return monthA - monthB;
             });
 
             ingresos.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
@@ -841,7 +894,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function populateMesSelect(select, ano) {
         select.innerHTML = '<option value="">Todos</option>';
         if (ano && mesesPorAno[ano]) {
-            Array.from(mesesPorAno[ano]).sort((a, b) => new Date(Date.parse('01 ' + a + ' 2000')) - new Date(Date.parse('01 ' + b + ' 2000'))).forEach(mes => {
+            Array.from(mesesPorAno[ano]).sort((a, b) => monthMap[a.toLowerCase()] - monthMap[b.toLowerCase()]).forEach(mes => {
                 const option = document.createElement('option');
                 option.value = mes;
                 option.textContent = mes;
@@ -880,9 +933,14 @@ document.addEventListener('DOMContentLoaded', () => {
         mesesDisponibles = Object.keys(tempIngresosPorMesAno).sort((a, b) => {
             const [mesA, anoA] = a.split(' ');
             const [mesB, anoB] = b.split(' ');
-            const dateA = new Date(`${mesA} 1, ${anoA}`);
-            const dateB = new Date(`${mesB} 1, ${anoB}`);
-            return dateA - dateB;
+            const yearA = parseInt(anoA);
+            const yearB = parseInt(anoB);
+            const monthA = monthMap[mesA.toLowerCase()];
+            const monthB = monthMap[mesB.toLowerCase()];
+            if (yearA !== yearB) {
+                return yearA - yearB;
+            }
+            return monthA - monthB;
         });
         ingresosPorMesAno = tempIngresosPorMesAno;
 
@@ -1256,7 +1314,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 hideImportProgress();
                 showToast(`Importación completada: ${addedCount} ingresos añadidos.`, 'success');
                 await loadIngresos();
-                currentPage = mesesDisponibles.length || 1;
+                setInitialPage();
                 renderTable();
             };
             reader.readAsArrayBuffer(file);
